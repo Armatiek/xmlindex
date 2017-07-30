@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  
+  <name>XMLIndex - spatial</name>  
+  <artifactId>xmlindex-spatial</artifactId>
+  
+  <parent>
+    <groupId>nl.armatiek.xmlindex</groupId>
+    <artifactId>xmlindex-master-pom</artifactId>
+    <version>0.1</version>
+  </parent>
+  
+  <repositories>
+    <repository>
+      <id>boundless-repo</id>
+      <name>Geotools Repo</name>
+      <url>http://download.osgeo.org/webdav/geotools</url>
+    </repository>
+  </repositories>
+  
+  <dependencies> 
+    <dependency>
+      <groupId>nl.armatiek.xmlindex</groupId>
+      <artifactId>xmlindex-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-spatial</artifactId>
+    </dependency>    
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-spatial-extras</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-spatial3d</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.locationtech.spatial4j</groupId>
+      <artifactId>spatial4j</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.noggit</groupId>
+      <artifactId>noggit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.vividsolutions</groupId>
+      <artifactId>jts-core</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>xerces</groupId>
+          <artifactId>xercesImpl</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.vividsolutions</groupId>
+      <artifactId>jts-io</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>nl.pdok</groupId>
+      <artifactId>gml3-jts</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>com.vividsolutions</groupId>
+          <artifactId>jts</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-epsg-hsql</artifactId>
+    </dependency>
+  </dependencies>
+  
+</project>
