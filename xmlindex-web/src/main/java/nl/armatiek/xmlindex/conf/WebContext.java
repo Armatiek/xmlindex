@@ -149,7 +149,7 @@ public class WebContext {
   }
   
   private void initProperties() throws Exception {
-    File propsFile = new File(homeDir, "config" + File.separatorChar + WebDefinitions.FILENAME_PROPERTIES);
+    File propsFile = new File(homeDir, WebDefinitions.FILENAME_PROPERTIES);
     this.properties = XMLIndexWebUtils.readProperties(propsFile);
     this.trustAllCerts = new Boolean(properties.getProperty(WebDefinitions.PROPERTYNAME_TRUST_ALL_CERTS, "false"));
     if (trustAllCerts) {
@@ -225,7 +225,7 @@ public class WebContext {
     return this.trustAllCerts;    
   }
   
-  public File indexesDir() {
+  public File getIndexesDir() {
     return indexesDir;
   }
   

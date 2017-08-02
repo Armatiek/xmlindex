@@ -17,6 +17,8 @@ import org.exquery.serialization.annotation.MethodAnnotation.SupportedMethod;
 import org.exquery.xquery.Sequence;
 import org.exquery.xquery.Type;
 import org.exquery.xquery.TypedValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.QName;
@@ -27,6 +29,8 @@ import nl.armatiek.xmlindex.restxq.adapter.SequenceAdapter;
 
 public class RestXqServiceSerializerImpl extends AbstractRestXqServiceSerializer {
 
+  private static final Logger logger = LoggerFactory.getLogger(RestXqServiceSerializerImpl.class);
+  
   private Processor processor;
   
   public RestXqServiceSerializerImpl(Processor processor) { 
@@ -57,8 +61,12 @@ public class RestXqServiceSerializerImpl extends AbstractRestXqServiceSerializer
       Serializer serializer = processor.newSerializer(writer);
       Enumeration<?> e = outputProperties.propertyNames();
       while (e.hasMoreElements()) {
-        String key = (String) e.nextElement();
-        serializer.setOutputProperty(new QName(key), outputProperties.getProperty(key));
+        String key = ((String) e.nextElement()).replace('_', '-');
+        try {
+          serializer.setOutputProperty(new QName(key), outputProperties.getProperty(key));
+        } catch (IllegalArgumentException iae) {
+          logger.warn("Unsupported serialization property \"" + key + "\"", iae);
+        }
       }
       serializer.serializeXdmValue(((SequenceAdapter) result).getSaxonXdmValue());
       writer.flush();

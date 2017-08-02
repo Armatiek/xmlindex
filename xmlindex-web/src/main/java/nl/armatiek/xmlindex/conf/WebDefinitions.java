@@ -17,6 +17,7 @@
 
 package nl.armatiek.xmlindex.conf;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -31,7 +32,7 @@ public class WebDefinitions extends Definitions {
   public final static String PROJECT_NAME                      = "xmlindex";
   public final static String PROJECT_VERSION                   = "1.0.0-alpha1";
   public final static String FILENAME_PROPERTIES               = "xmlindex.properties";
-  public final static String FILENAME_RESTXQ                   = "restxq.xqm";
+  public final static String FILENAME_RESTXQ                   = "restxq" + File.separatorChar + "restxq.xqm";
   //public final static String FILENAME_QUARTZ                   = "xslweb-quartz.properties";
   //public final static String FILENAME_EHCACHE                  = "xslweb-ehcache.xml";
   

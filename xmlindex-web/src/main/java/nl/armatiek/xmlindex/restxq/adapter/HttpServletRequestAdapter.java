@@ -24,9 +24,11 @@ public class HttpServletRequestAdapter implements HttpRequest {
 
   private final HttpServletRequest request;
   private Map<String, List<String>> formFields = null;
+  private final String path;
 
-  public HttpServletRequestAdapter(final HttpServletRequest request) {
+  public HttpServletRequestAdapter(final HttpServletRequest request, String path) {
     this.request = request;
+    this.path = path;
   }
 
   @Override
@@ -56,7 +58,7 @@ public class HttpServletRequestAdapter implements HttpRequest {
 
   @Override
   public String getPath() {
-    return request.getPathInfo();
+    return path;
   }
 
   @Override

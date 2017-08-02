@@ -27,6 +27,23 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.exquery</groupId>
+      <artifactId>exquery-restxq-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.exquery</groupId>
+      <artifactId>exquery-restxq</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.exquery</groupId>
+      <artifactId>exquery-common</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+    </dependency>
+    <!--
+    <dependency>
       <groupId>io.milton</groupId>
       <artifactId>milton-api</artifactId>
     </dependency>
@@ -34,6 +51,7 @@
       <groupId>io.milton</groupId>
       <artifactId>milton-server-ce</artifactId>
     </dependency>
+    -->
   </dependencies>
   
 </project>

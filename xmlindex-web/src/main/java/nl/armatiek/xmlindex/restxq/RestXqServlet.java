@@ -8,8 +8,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.exquery.http.HttpRequest;
 import org.exquery.restxq.RestXqService;
+import org.exquery.restxq.RestXqServiceRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,13 +28,15 @@ public class RestXqServlet extends HttpServlet {
   private static final Logger logger = LoggerFactory.getLogger(RestXqServlet.class);
   
   private File homeDir;
+  private File indexesDir;
   private WebContext context;
   
   public void init() throws ServletException {    
     super.init();   
     try {                    
       context = WebContext.getInstance();
-      homeDir = context.getHomeDir();      
+      homeDir = context.getHomeDir();    
+      indexesDir = context.getIndexesDir();
     } catch (Exception e) {
       logger.error(e.getMessage());
       throw new ServletException(e);
@@ -53,11 +57,16 @@ public class RestXqServlet extends HttpServlet {
   @Override
   protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     try {
+      String pathInfo = req.getPathInfo();
+      if (StringUtils.equalsAny(pathInfo, "", "/")) {
+        resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Index name not specified in path");
+        return;
+      }
       String indexName = req.getPathInfo().split("/")[1];
       IndexInfo indexInfo = context.getIndexInfo(indexName.toLowerCase());
       if (indexInfo == null) {
         // TODO: concurrency:
-        File indexDir = new File(homeDir, "indexes" + File.separatorChar + indexName);
+        File indexDir = new File(indexesDir, indexName);
         if (!indexDir.isDirectory()) {
           resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Index \"" + indexName + "\" not found");
           return;
@@ -68,8 +77,12 @@ public class RestXqServlet extends HttpServlet {
       XMLIndex index = indexInfo.getIndex();
       Session session = index.aquireSession();
       try {
-        final HttpRequest requestAdapter = new HttpServletRequestAdapter(req);
-        RestXqService service = indexInfo.getServiceRegistryManager().findService(requestAdapter);
+        String path = pathInfo.substring(indexName.length() + 1);
+        path = path.length() == 0 ? "/" : path;
+        final HttpRequest requestAdapter = new HttpServletRequestAdapter(req, path);
+
+        RestXqServiceRegistry registry = indexInfo.getServiceRegistryManager();
+        RestXqService service = registry.findService(requestAdapter);
         if (service != null) {
           if (logger.isTraceEnabled())
             logger.trace("Received " + requestAdapter.getMethod().name() + " request for \"" + requestAdapter.getPath() + "\" and found Resource Function \"" + service.getResourceFunction().getFunctionSignature() + "\" in  module \"" + service.getResourceFunction().getXQueryLocation() + "\"");

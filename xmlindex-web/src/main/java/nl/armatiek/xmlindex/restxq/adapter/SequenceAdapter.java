@@ -5,11 +5,17 @@ import java.util.Iterator;
 import org.exquery.xquery.Sequence;
 import org.exquery.xquery.Type;
 import org.exquery.xquery.TypedValue;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 
 import net.sf.saxon.Configuration;
+import net.sf.saxon.dom.NodeOverNodeInfo;
 import net.sf.saxon.s9api.XdmItem;
+import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmSequenceIterator;
 import net.sf.saxon.s9api.XdmValue;
+import nl.armatiek.xmlindex.error.XMLIndexException;
 
 public class SequenceAdapter implements Sequence<XdmItem> {
 
@@ -63,9 +69,19 @@ public class SequenceAdapter implements Sequence<XdmItem> {
 
       @Override
       public XdmItem getValue() {
-        return item;
+        if (item instanceof XdmNode) {
+          Node node = NodeOverNodeInfo.wrap(((XdmNode) item).getUnderlyingNode());
+          if (node instanceof Element) 
+            return new XdmDOMElementAdapter((Element) node);
+          if (node instanceof Document)
+            return new XdmDOMDocumentAdapter((Document) node);
+          else
+            throw new XMLIndexException("Could not convert XdmNode to DOM node");
+        } else {
+          return item;
+        }
       }
-      
+ 
     };
     
   }

@@ -3,10 +3,17 @@ package nl.armatiek.xmlindex.restxq.adapter;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
+import net.sf.saxon.pattern.ContentTypeTest;
+import net.sf.saxon.pattern.LocalNameTest;
+import net.sf.saxon.pattern.NameTest;
+import net.sf.saxon.pattern.NamespaceTest;
+import net.sf.saxon.pattern.NodeKindTest;
 import net.sf.saxon.pattern.NodeTest;
+import net.sf.saxon.pattern.SameNameTest;
 import net.sf.saxon.type.AnyItemType;
 import net.sf.saxon.type.BuiltInAtomicType;
 import net.sf.saxon.type.ItemType;
+import net.sf.saxon.type.Type;
 
 public class TypeAdapter {
 
@@ -71,13 +78,43 @@ public class TypeAdapter {
   }
 
   public static org.exquery.xquery.Type toExQueryType(ItemType itemType) {
-    if (!itemType.isAtomicType()) {
-      throw new UnsupportedOperationException("toExQueryType");
+    int nodeKind = -1;
+    if (itemType instanceof SameNameTest)
+      nodeKind = ((SameNameTest) itemType).getNodeKind();
+    else if (itemType instanceof ContentTypeTest)
+      nodeKind = ((ContentTypeTest) itemType).getNodeKind();
+    else if (itemType instanceof ContentTypeTest)
+      nodeKind = ((ContentTypeTest) itemType).getNodeKind();
+    else if (itemType instanceof LocalNameTest)
+      nodeKind = ((LocalNameTest) itemType).getNodeKind();
+    else if (itemType instanceof ContentTypeTest)
+      nodeKind = ((ContentTypeTest) itemType).getNodeKind();
+    else if (itemType instanceof NameTest)
+      nodeKind = ((NameTest) itemType).getNodeKind();
+    else if (itemType instanceof NamespaceTest)
+      nodeKind = ((NamespaceTest) itemType).getNodeKind();
+    else if (itemType instanceof NodeKindTest)
+      nodeKind = ((NodeKindTest) itemType).getNodeKind();
+    else if (itemType instanceof ContentTypeTest)
+      nodeKind = ((ContentTypeTest) itemType).getNodeKind();
+    
+    if (nodeKind != -1) {
+      switch (nodeKind) {
+        case Type.DOCUMENT:
+          return org.exquery.xquery.Type.DOCUMENT;
+        case Type.ELEMENT:
+          return org.exquery.xquery.Type.ELEMENT;
+        case Type.ATTRIBUTE:
+          return org.exquery.xquery.Type.ATTRIBUTE;
+        case Type.TEXT:
+          return org.exquery.xquery.Type.TEXT;
+        case Type.COMMENT:
+          return org.exquery.xquery.Type.COMMENT;
+        case Type.PROCESSING_INSTRUCTION:
+          return org.exquery.xquery.Type.PROCESSING_INSTRUCTION;
+      }
     }
-    if (itemType instanceof NodeTest) {
-      // NodeTest nt = (NodeTest) itemType;
-      throw new UnsupportedOperationException("toExQueryType");
-    }
+    
     org.exquery.xquery.Type exQueryType = (org.exquery.xquery.Type) mappings.get(itemType);
     if (exQueryType == null)
       exQueryType = org.exquery.xquery.Type.ANY_TYPE;
