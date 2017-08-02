@@ -12,8 +12,7 @@ package nl.armatiek.xmlindex.saxon.functions.expath.httpclient.impl;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
 import org.apache.http.Header;
 
 import nl.armatiek.xmlindex.saxon.functions.expath.httpclient.ContentType;
@@ -265,7 +264,7 @@ public class BodyFactory
         }
     }
 
-    private static Log LOG = LogFactory.getLog(BodyFactory.class);
+    // private static Log LOG = LogFactory.getLog(BodyFactory.class);
 }
 
 

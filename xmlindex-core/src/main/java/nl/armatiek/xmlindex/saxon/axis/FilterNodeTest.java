@@ -6,7 +6,6 @@ import net.sf.saxon.om.NodeName;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.pattern.NodeTest;
 import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.tree.tiny.TinyTree;
 import net.sf.saxon.type.AtomicType;
 import net.sf.saxon.type.ItemType;
 import net.sf.saxon.type.SchemaComponentVisitor;
@@ -127,11 +126,6 @@ public class FilterNodeTest extends NodeTest {
   @Override
   public boolean matches(Item item, TypeHierarchy th) {
     return nodeTest.matches(item, th);
-  }
-
-  @Override
-  public boolean matches(TinyTree tree, int nodeNr) {
-    return nodeTest.matches(tree, nodeNr);
   }
 
   @Override

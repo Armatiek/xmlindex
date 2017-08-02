@@ -11,6 +11,7 @@ package nl.armatiek.xmlindex.saxon.functions.expath.tools.saxon.fun;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.Item;
 import net.sf.saxon.om.NodeInfo;
@@ -26,6 +27,7 @@ import nl.armatiek.xmlindex.saxon.functions.expath.tools.ToolsException;
 import nl.armatiek.xmlindex.saxon.functions.expath.tools.model.Element;
 import nl.armatiek.xmlindex.saxon.functions.expath.tools.saxon.model.SaxonElement;
 import nl.armatiek.xmlindex.saxon.functions.expath.tools.saxon.model.SaxonSequence;
+import nl.armatiek.xmlindex.saxon.util.MemorySequenceIterator;
 
 /**
  * Utilities for extension functions parameters for Saxon.
@@ -339,7 +341,7 @@ public class Parameters
         }
         Sequence param = myParams[pos];
         SequenceIterator it = param.iterate();
-        SequenceIterator res = it.getAnother();
+        SequenceIterator res = new MemorySequenceIterator(it);
         if ( it.next() == null ) {
             if ( optional ) {
                 return null;

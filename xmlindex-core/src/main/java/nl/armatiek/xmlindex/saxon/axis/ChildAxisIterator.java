@@ -9,7 +9,6 @@ import org.apache.lucene.search.BooleanQuery.Builder;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.pattern.NodeTest;
 import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.tree.iter.AxisIterator;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.lucene.query.HitIterator;
@@ -40,11 +39,6 @@ public class ChildAxisIterator extends SearchResultsForwardAxisIterator  {
   @Override
   protected XMLIndexNodeInfo getXMLIndexNodeInfo(Node node) {
     return new XMLIndexNodeInfo(session, node, this.contextNode);
-  }
-  
-  @Override
-  public AxisIterator getAnother() {    
-    return new ChildAxisIterator(session, contextNode, nodeTest, xpathContext);
   }
   
 }

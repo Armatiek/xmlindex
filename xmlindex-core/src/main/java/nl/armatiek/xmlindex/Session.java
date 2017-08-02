@@ -28,6 +28,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -48,6 +49,7 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.om.AxisInfo;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.pattern.NodeKindTest;
+import net.sf.saxon.query.XQueryFunction;
 import net.sf.saxon.s9api.Destination;
 import net.sf.saxon.s9api.MessageListener;
 import net.sf.saxon.s9api.QName;
@@ -158,7 +160,6 @@ public class Session {
       ErrorListener errorListener, MessageListener messageListener) throws IOException, SaxonApiException {
     checkOpen();
     XQueryCompiler comp = index.getSaxonProcessor().newXQueryCompiler();
-    comp.setLanguageVersion("3.1");
     comp.setBaseURI(baseURI);
     if (errorListener != null)
       comp.setErrorListener(errorListener);

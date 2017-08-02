@@ -16,7 +16,7 @@ import nl.armatiek.xmlindex.node.Element;
 import nl.armatiek.xmlindex.node.Node;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
 
-public class AttributeAxisIterator implements AxisIterator, LastPositionFinder<XMLIndexNodeInfo>, LookaheadIterator {
+public class AttributeAxisIterator implements AxisIterator, LastPositionFinder, LookaheadIterator {
   
   protected Session context;
   protected XMLIndexNodeInfo contextNode;
@@ -72,11 +72,6 @@ public class AttributeAxisIterator implements AxisIterator, LastPositionFinder<X
   @Override
   public boolean hasNext() {
     return attrsIter == null ? false : attrsIter.hasNext();        
-  }
-  
-  @Override
-  public AxisIterator getAnother() {    
-    return new AttributeAxisIterator(context, contextNode, nodeTest);
   }
   
 }

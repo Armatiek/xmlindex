@@ -6,7 +6,6 @@ import org.apache.lucene.search.BooleanQuery.Builder;
 
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.pattern.NodeTest;
-import net.sf.saxon.tree.iter.AxisIterator;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.node.HierarchyNode;
@@ -31,11 +30,6 @@ public class AncestorAxisIterator extends SearchResultsReversedAxisIterator  {
   @Override
   protected XMLIndexNodeInfo getXMLIndexNodeInfo(Node node) {
     return new XMLIndexNodeInfo(session, node);
-  }
-  
-  @Override
-  public AxisIterator getAnother() {    
-    return new AncestorAxisIterator(session, contextNode, nodeTest, includeSelf, xpathContext);
   }
   
 }

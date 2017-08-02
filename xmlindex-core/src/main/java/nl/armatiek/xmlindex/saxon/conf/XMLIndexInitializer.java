@@ -26,7 +26,11 @@ import javax.xml.transform.TransformerException;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.lib.ExtensionFunctionDefinition;
 import net.sf.saxon.lib.FeatureKeys;
+import net.sf.saxon.lib.FunctionAnnotationHandler;
 import net.sf.saxon.lib.Initializer;
+import net.sf.saxon.query.Annotation;
+import net.sf.saxon.query.AnnotationList;
+import net.sf.saxon.trans.XPathException;
 import nl.armatiek.xmlindex.saxon.functions.expath.httpclient.expath.pkg.saxon.EXPathFunctionDefinition;
 import nl.armatiek.xmlindex.saxon.functions.expath.httpclient.saxon.SendRequestFunction;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.AddDocument;
@@ -84,8 +88,6 @@ public class XMLIndexInitializer implements Initializer {
     registerFunction(new RemovePluggableIndex(), configuration);
     registerFunction(new RemoveTypedValueDef(), configuration);
     registerFunction(new RemoveVirtualAttributeDef(), configuration);
-    
-    registerFunction(new SendRequestFunction(), configuration);
   }
   
   public void initializeConfiguration(Configuration configuration) throws IOException {

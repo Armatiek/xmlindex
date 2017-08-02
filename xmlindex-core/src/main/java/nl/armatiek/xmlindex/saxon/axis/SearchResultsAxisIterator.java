@@ -42,7 +42,7 @@ import nl.armatiek.xmlindex.lucene.query.HitQuery;
 import nl.armatiek.xmlindex.node.Node;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
 
-public abstract class SearchResultsAxisIterator implements AxisIterator, LastPositionFinder<XMLIndexNodeInfo>, LookaheadIterator {
+public abstract class SearchResultsAxisIterator implements AxisIterator, LastPositionFinder, LookaheadIterator {
   
   @SuppressWarnings("unused")
   private static final Logger logger = LoggerFactory.getLogger(SearchResultsAxisIterator.class);

@@ -370,6 +370,21 @@ public class XMLIndexNodeInfo implements NodeInfo, VirtualNode /*, SteppingNode<
   public int getNodeKind() {    
     return node.type;
   }
+  
+  @Override
+  public int getFingerprint() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean hasFingerprint() {
+    return false;
+  }
+
+  @Override
+  public boolean isStreamed() {
+    return false;
+  }
 
   @Override
   public XMLIndexNodeInfo getParent() {
@@ -701,5 +716,5 @@ public class XMLIndexNodeInfo implements NodeInfo, VirtualNode /*, SteppingNode<
     documentURI = doc.get(Definitions.FIELDNAME_URI);
     return documentURI;
   }
-  
+
 }

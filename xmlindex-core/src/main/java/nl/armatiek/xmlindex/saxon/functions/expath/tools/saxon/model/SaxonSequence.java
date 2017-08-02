@@ -11,8 +11,10 @@ package nl.armatiek.xmlindex.saxon.functions.expath.tools.saxon.model;
 
 import java.io.OutputStream;
 import java.util.Properties;
+
 import javax.xml.namespace.QName;
 import javax.xml.transform.OutputKeys;
+
 import net.sf.saxon.Configuration;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.lib.SaxonOutputKeys;
@@ -24,6 +26,7 @@ import net.sf.saxon.tree.iter.SingletonIterator;
 import nl.armatiek.xmlindex.saxon.functions.expath.tools.ToolsException;
 import nl.armatiek.xmlindex.saxon.functions.expath.tools.model.Sequence;
 import nl.armatiek.xmlindex.saxon.functions.expath.tools.serial.SerialParameters;
+import nl.armatiek.xmlindex.saxon.util.MemorySequenceIterator;
 
 /**
  * Saxon implementation of {@link Sequence}, relying on {@link SequenceIterator}.
@@ -35,20 +38,15 @@ public class SaxonSequence
 {
     public SaxonSequence(SequenceIterator it, XPathContext ctxt)
     {
-        myIt = it;
+        myIt = new MemorySequenceIterator(it);
         myCtxt = ctxt;
     }
 
     @Override
     public boolean isEmpty()
             throws ToolsException
-    {
-        try {
-            return myIt == null || myIt.getAnother().next() == null;
-        }
-        catch ( XPathException ex ) {
-            throw new ToolsException("Error getting another iterator", ex);
-        }
+    {        
+        return myIt == null || myIt.isEmpty();   
     }
 
     @Override
@@ -214,7 +212,7 @@ public class SaxonSequence
         }
     }
 
-    private final SequenceIterator myIt;
+    private final MemorySequenceIterator myIt;
     private final XPathContext myCtxt;
 }
 
