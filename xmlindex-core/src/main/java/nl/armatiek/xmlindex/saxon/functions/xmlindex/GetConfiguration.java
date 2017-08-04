@@ -82,11 +82,11 @@ public class GetConfiguration extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new GetConfigurationCall();
   }
   
-  private static class GetConfigurationCall extends ExtensionFunctionCall {
+  private static class GetConfigurationCall extends XMLIndexExtensionFunctionCall {
 
     private void writeElem(TinyBuilder builder, String localName, String content) throws XPathException {
       builder.startElement(new FingerprintedQName("", "", localName), 

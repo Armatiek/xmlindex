@@ -97,7 +97,7 @@ public class LocalVariableReferencer extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new LocalVariableReferencerCall();
   }
   
@@ -106,7 +106,7 @@ public class LocalVariableReferencer extends ExtensionFunctionDefinition {
     return true;
   }
   
-  public static class LocalVariableReferencerCall extends ExtensionFunctionCall {
+  public static class LocalVariableReferencerCall extends XMLIndexExtensionFunctionCall {
 
     @Override
     public BooleanValue call(XPathContext context, Sequence[] arguments) throws XPathException {            

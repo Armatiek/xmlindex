@@ -80,11 +80,11 @@ public class CopyToMemory extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new CopyToMemoryCall();
   }
   
-  private static class CopyToMemoryCall extends ExtensionFunctionCall {
+  private static class CopyToMemoryCall extends XMLIndexExtensionFunctionCall {
 
     @Override
     public NodeInfo call(XPathContext context, Sequence[] arguments) throws XPathException {            

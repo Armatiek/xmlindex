@@ -63,11 +63,11 @@ public class PluggableIndexExists extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new PluggableIndexExistsCall();
   }
   
-  private static class PluggableIndexExistsCall extends ExtensionFunctionCall {
+  private static class PluggableIndexExistsCall extends XMLIndexExtensionFunctionCall {
     
     @Override
     public BooleanValue call(XPathContext context, Sequence[] arguments) throws XPathException {            

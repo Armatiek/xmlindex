@@ -80,7 +80,7 @@ public class AddVirtualAttributeDef extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new AddVirtualAttributeDefCall();
   }
   
@@ -89,7 +89,7 @@ public class AddVirtualAttributeDef extends ExtensionFunctionDefinition {
     return true;
   }
   
-  private static class AddVirtualAttributeDefCall extends ExtensionFunctionCall {
+  private static class AddVirtualAttributeDefCall extends XMLIndexExtensionFunctionCall {
 
     @Override
     public BooleanValue call(XPathContext context, Sequence[] arguments) throws XPathException {            

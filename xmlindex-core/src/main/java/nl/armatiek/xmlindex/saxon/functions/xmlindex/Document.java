@@ -83,11 +83,11 @@ public class Document extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new DocumentCall();
   }
   
-  private static class DocumentCall extends ExtensionFunctionCall {
+  private static class DocumentCall extends XMLIndexExtensionFunctionCall {
 
     @Override
     public ZeroOrOne<NodeInfo> call(XPathContext context, Sequence[] arguments) throws XPathException {            

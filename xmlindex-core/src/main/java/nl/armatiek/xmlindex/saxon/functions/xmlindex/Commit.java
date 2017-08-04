@@ -62,7 +62,7 @@ public class Commit extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new CommitCall();
   }
   
@@ -71,7 +71,7 @@ public class Commit extends ExtensionFunctionDefinition {
     return true;
   }
   
-  private static class CommitCall extends ExtensionFunctionCall {
+  private static class CommitCall extends XMLIndexExtensionFunctionCall {
 
     @Override
     public Sequence call(XPathContext context, Sequence[] arguments) throws XPathException {  

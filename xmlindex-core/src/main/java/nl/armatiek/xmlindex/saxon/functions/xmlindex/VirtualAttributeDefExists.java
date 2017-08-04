@@ -63,11 +63,11 @@ public class VirtualAttributeDefExists extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new VirtualAttributeDefExistsCall();
   }
   
-  private static class VirtualAttributeDefExistsCall extends ExtensionFunctionCall {
+  private static class VirtualAttributeDefExistsCall extends XMLIndexExtensionFunctionCall {
     
     @Override
     public BooleanValue call(XPathContext context, Sequence[] arguments) throws XPathException {            

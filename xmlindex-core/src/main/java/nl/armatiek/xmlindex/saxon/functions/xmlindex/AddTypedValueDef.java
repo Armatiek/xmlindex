@@ -72,7 +72,7 @@ public class AddTypedValueDef extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new AddTypedValueDefCall();
   }
   
@@ -81,7 +81,7 @@ public class AddTypedValueDef extends ExtensionFunctionDefinition {
     return true;
   }
   
-  private static class AddTypedValueDefCall extends ExtensionFunctionCall {
+  private static class AddTypedValueDefCall extends XMLIndexExtensionFunctionCall {
 
     @Override
     public BooleanValue call(XPathContext context, Sequence[] arguments) throws XPathException {            

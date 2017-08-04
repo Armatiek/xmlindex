@@ -76,7 +76,7 @@ public class AddPluggableIndex extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new AddPluggableIndexCall();
   }
   
@@ -85,7 +85,7 @@ public class AddPluggableIndex extends ExtensionFunctionDefinition {
     return true;
   }
   
-  private static class AddPluggableIndexCall extends ExtensionFunctionCall {
+  private static class AddPluggableIndexCall extends XMLIndexExtensionFunctionCall {
     
     private Map<String, String> mapToParams(HashTrieMap map) throws XPathException {
       if (map == null)

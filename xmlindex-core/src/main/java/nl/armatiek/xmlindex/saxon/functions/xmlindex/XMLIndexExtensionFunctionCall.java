@@ -18,10 +18,6 @@
 package nl.armatiek.xmlindex.saxon.functions.xmlindex;
 
 import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.AxisInfo;
-import net.sf.saxon.om.NodeInfo;
-import net.sf.saxon.pattern.NodeKindTest;
-import net.sf.saxon.type.Type;
 import net.sf.saxon.value.ObjectValue;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.conf.Definitions;
@@ -30,17 +26,10 @@ import nl.armatiek.xmlindex.conf.Definitions;
  * @author Maarten Kroon
  *
  */
-public abstract class ExtensionFunctionCall extends net.sf.saxon.lib.ExtensionFunctionCall {
+public abstract class XMLIndexExtensionFunctionCall extends nl.armatiek.xmlindex.saxon.functions.ExtensionFunctionCall {
   
   protected Session getSession(XPathContext context) {
     return (Session) ((ObjectValue<?>) context.getController().getParameter(Definitions.PARAM_SESSION_SQN)).getObject();
-  }
-  
-  protected NodeInfo unwrapNodeInfo(NodeInfo nodeInfo) {
-    if (nodeInfo != null && nodeInfo.getNodeKind() == Type.DOCUMENT) {
-      nodeInfo = nodeInfo.iterateAxis(AxisInfo.CHILD, NodeKindTest.ELEMENT).next();
-    }
-    return nodeInfo;
   }
   
 }

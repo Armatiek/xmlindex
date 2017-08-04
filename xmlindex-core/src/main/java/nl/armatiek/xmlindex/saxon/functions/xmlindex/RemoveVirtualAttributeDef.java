@@ -64,7 +64,7 @@ public class RemoveVirtualAttributeDef extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new RemoveVirtualAttributeDefCall();
   }
   
@@ -73,7 +73,7 @@ public class RemoveVirtualAttributeDef extends ExtensionFunctionDefinition {
     return true;
   }
   
-  private static class RemoveVirtualAttributeDefCall extends ExtensionFunctionCall {
+  private static class RemoveVirtualAttributeDefCall extends XMLIndexExtensionFunctionCall {
     
     @Override
     public BooleanValue call(XPathContext context, Sequence[] arguments) throws XPathException {            

@@ -62,11 +62,11 @@ public class DocumentAvailable extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new DocumentAvailableCall();
   }
   
-  private static class DocumentAvailableCall extends ExtensionFunctionCall {
+  private static class DocumentAvailableCall extends XMLIndexExtensionFunctionCall {
 
     @Override
     public BooleanValue call(XPathContext context, Sequence[] arguments) throws XPathException {            

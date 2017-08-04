@@ -63,7 +63,7 @@ public class RemoveTypedValueDef extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new RemoveTypedValueDefCall();
   }
   
@@ -72,7 +72,7 @@ public class RemoveTypedValueDef extends ExtensionFunctionDefinition {
     return true;
   }
   
-  private static class RemoveTypedValueDefCall extends ExtensionFunctionCall {
+  private static class RemoveTypedValueDefCall extends XMLIndexExtensionFunctionCall {
     
     @Override
     public BooleanValue call(XPathContext context, Sequence[] arguments) throws XPathException {            

@@ -64,7 +64,7 @@ public class RemovePluggableIndex extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new RemovePluggableIndexCall();
   }
   
@@ -73,7 +73,7 @@ public class RemovePluggableIndex extends ExtensionFunctionDefinition {
     return true;
   }
   
-  private static class RemovePluggableIndexCall extends ExtensionFunctionCall {
+  private static class RemovePluggableIndexCall extends XMLIndexExtensionFunctionCall {
     
     @Override
     public BooleanValue call(XPathContext context, Sequence[] arguments) throws XPathException {            

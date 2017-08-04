@@ -78,11 +78,11 @@ public class Collection extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new CollectionCall();
   }
   
-  private static class CollectionCall extends ExtensionFunctionCall {
+  private static class CollectionCall extends XMLIndexExtensionFunctionCall {
 
     @Override
     public Sequence call(XPathContext context, Sequence[] arguments) throws XPathException {            

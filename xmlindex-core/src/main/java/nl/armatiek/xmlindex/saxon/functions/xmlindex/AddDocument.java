@@ -75,7 +75,7 @@ public class AddDocument extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new AddDocumentCall();
   }
   
@@ -84,7 +84,7 @@ public class AddDocument extends ExtensionFunctionDefinition {
     return true;
   }
   
-  private static class AddDocumentCall extends ExtensionFunctionCall {
+  private static class AddDocumentCall extends XMLIndexExtensionFunctionCall {
 
     @Override
     public ZeroOrOne<BooleanValue> call(XPathContext context, Sequence[] arguments) throws XPathException {            

@@ -78,11 +78,11 @@ public class DocumentURI extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new DocumentURICall();
   }
   
-  private static class DocumentURICall extends ExtensionFunctionCall {
+  private static class DocumentURICall extends XMLIndexExtensionFunctionCall {
 
     @Override
     public StringValue call(XPathContext context, Sequence[] arguments) throws XPathException {            

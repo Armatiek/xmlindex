@@ -77,11 +77,11 @@ public class OwnerDocument extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new OwnerDocumentCall();
   }
   
-  private static class OwnerDocumentCall extends ExtensionFunctionCall {
+  private static class OwnerDocumentCall extends XMLIndexExtensionFunctionCall {
 
     @Override
     public NodeInfo call(XPathContext context, Sequence[] arguments) throws XPathException {            

@@ -63,7 +63,7 @@ public class RemoveDocument extends ExtensionFunctionDefinition {
   }
 
   @Override
-  public ExtensionFunctionCall makeCallExpression() {
+  public XMLIndexExtensionFunctionCall makeCallExpression() {
     return new RemoveDocumentCall();
   }
   
@@ -72,7 +72,7 @@ public class RemoveDocument extends ExtensionFunctionDefinition {
     return true;
   }
   
-  private static class RemoveDocumentCall extends ExtensionFunctionCall {
+  private static class RemoveDocumentCall extends XMLIndexExtensionFunctionCall {
 
     @Override
     public ZeroOrOne<BooleanValue> call(XPathContext context, Sequence[] arguments) throws XPathException {            
