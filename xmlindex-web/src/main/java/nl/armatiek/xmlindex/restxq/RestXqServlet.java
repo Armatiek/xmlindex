@@ -46,8 +46,10 @@ public class RestXqServlet extends HttpServlet {
   @Override
   public void destroy() {
     try {
-      for (IndexInfo indexInfo : context.getIndexInfos())
+      for (IndexInfo indexInfo : context.getIndexInfos()) {
+        logger.info("Closing index \"" + indexInfo.getIndex().getIndexName() + "\" ... ");
         indexInfo.close();
+      }
     } catch (Exception e) {
       logger.error("Error closing IndexInfo", e);
     } 
@@ -89,7 +91,7 @@ public class RestXqServlet extends HttpServlet {
           service.service(
               requestAdapter,
               new HttpServletResponseAdapter(resp),
-              new ResourceFunctionExecutorImpl(index.getSaxonConfiguration(), indexInfo.getRestXQuery(), req.getContextPath() + req.getServletPath(), req.getRequestURI()),
+              new ResourceFunctionExecutorImpl(index.getSaxonConfiguration(), indexInfo.getRestXQuery(), req.getContextPath() + req.getServletPath(), req.getRequestURI(), index.getIndexName()),
               new RestXqServiceSerializerImpl(index.getSaxonProcessor()));
         } else {
           if (logger.isTraceEnabled())

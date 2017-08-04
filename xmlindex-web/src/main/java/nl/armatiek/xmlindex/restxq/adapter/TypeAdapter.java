@@ -30,7 +30,7 @@ public class TypeAdapter {
     mappings.put(Type.DOCUMENT, org.exquery.xquery.Type.DOCUMENT);
     */
     mappings.put(AnyItemType.getInstance(), org.exquery.xquery.Type.ITEM);
-    mappings.put(AnyItemType.getInstance(), org.exquery.xquery.Type.ANY_TYPE); // ?
+    // mappings.put(AnyItemType.getInstance(), org.exquery.xquery.Type.ANY_TYPE); // ?
     mappings.put(BuiltInAtomicType.ANY_ATOMIC, org.exquery.xquery.Type.ANY_SIMPLE_TYPE);
     mappings.put(BuiltInAtomicType.UNTYPED_ATOMIC, org.exquery.xquery.Type.UNTYPED); // ?
     mappings.put(BuiltInAtomicType.STRING, org.exquery.xquery.Type.STRING);

@@ -66,11 +66,15 @@ public final class RestXqServiceRegistryManager {
           XQueryFunction func = iter.next();
           Set<Annotation> annotations = new HashSet<Annotation>();
           for (net.sf.saxon.query.Annotation an : func.getAnnotations()) {
-            final org.exquery.xquery3.Annotation restAnnotation = RestAnnotationFactory.getAnnotation(new AnnotationAdapter(an, func));
-            annotations.add(restAnnotation);
+            if (RestAnnotationFactory.isRestXqAnnotation(an.getAnnotationQName().toJaxpQName())) {
+              final org.exquery.xquery3.Annotation restAnnotation = RestAnnotationFactory.getAnnotation(new AnnotationAdapter(an, func));
+              annotations.add(restAnnotation);
+            }
           }
-          ResourceFunction resourceFunction = ResourceFunctionFactory.create(restXqFile.toURI(), annotations);
-          registry.register(new RestXqServiceImpl(resourceFunction, index.getSaxonConfiguration()));
+          if (!annotations.isEmpty()) {
+            ResourceFunction resourceFunction = ResourceFunctionFactory.create(restXqFile.toURI(), annotations);
+            registry.register(new RestXqServiceImpl(resourceFunction, index.getSaxonConfiguration()));
+          }
         }
         logger.info("RESTXQ is ready.");
       }

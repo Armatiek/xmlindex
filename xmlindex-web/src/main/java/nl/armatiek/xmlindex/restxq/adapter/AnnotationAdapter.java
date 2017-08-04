@@ -15,7 +15,7 @@ public class AnnotationAdapter implements Annotation {
 
   private QName name;
   private LiteralValueAdapter literals[];
-  private FunctionSignatureAdapter functionSignature;
+  private FunctionSignature functionSignature;
 
   public AnnotationAdapter(final net.sf.saxon.query.Annotation annotation, final XQueryFunction func) {
     this(annotation, new FunctionSignatureAdapter(func));
@@ -43,6 +43,10 @@ public class AnnotationAdapter implements Annotation {
   @Override
   public FunctionSignature getFunctionSignature() {
     return functionSignature;
+  }
+  
+  public void setFunctionSignature(FunctionSignature sig) {
+    this.functionSignature = sig; 
   }
   
 }

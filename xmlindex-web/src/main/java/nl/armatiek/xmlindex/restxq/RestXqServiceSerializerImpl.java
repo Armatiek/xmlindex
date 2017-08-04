@@ -37,6 +37,7 @@ public class RestXqServiceSerializerImpl extends AbstractRestXqServiceSerializer
     this.processor = processor;
   }
 
+  @SuppressWarnings({ "rawtypes", "unchecked" })
   @Override
   protected void serializeBinaryBody(final Sequence result, final HttpResponse response) throws RestXqServiceException {
     for (final TypedValue typedValue : (Iterable<TypedValue>) result) {
@@ -54,6 +55,7 @@ public class RestXqServiceSerializerImpl extends AbstractRestXqServiceSerializer
     }
   }
 
+  @SuppressWarnings("rawtypes")
   @Override
   protected void serializeNodeBody(final Sequence result, final HttpResponse response, final Map<SerializationProperty, String> serializationProperties) throws RestXqServiceException {
     try (final Writer writer = new OutputStreamWriter(response.getOutputStream(), serializationProperties.get(SerializationProperty.ENCODING))) {
