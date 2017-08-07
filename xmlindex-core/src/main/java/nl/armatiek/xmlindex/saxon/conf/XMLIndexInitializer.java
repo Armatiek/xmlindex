@@ -162,7 +162,7 @@ public class XMLIndexInitializer implements Initializer {
     }
   }
   
-  private void registerFunction(ExtensionFunctionDefinition function, Configuration configuration) {              
+  protected void registerFunction(ExtensionFunctionDefinition function, Configuration configuration) {              
     configuration.registerExtensionFunction(function);
     functionClassNames.add(function.getClass().getName());
     if (function instanceof EXPathFunctionDefinition) {

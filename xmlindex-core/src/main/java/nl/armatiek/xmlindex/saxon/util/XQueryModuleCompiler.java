@@ -7,7 +7,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XQueryCompiler;
@@ -17,7 +16,8 @@ public class XQueryModuleCompiler {
 
   public static XQueryExecutable compile(XQueryCompiler compiler, File moduleFile) throws IOException, SaxonApiException {
     String moduleCode = FileUtils.readFileToString(moduleFile, StandardCharsets.UTF_8);
-    moduleCode = StringUtils.replaceAll(moduleCode, "\\(:.*?:\\)", "");
+    moduleCode = moduleCode.replaceAll("\\(:.*?:\\)", ""); // Strip comments
+    moduleCode = moduleCode.replaceAll("import\\s+module", ""); // Make sure import module statements don't match 
     String prefix = null;
     String moduleNamespace = null;
     Matcher matcher = Pattern.compile("module\\s+namespace\\s+([\\w+-\\.])\\s*=\\s*[\\\"|'](.*?)[\\\"|']").matcher(moduleCode);
