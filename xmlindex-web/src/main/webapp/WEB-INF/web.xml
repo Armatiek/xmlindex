@@ -31,6 +31,15 @@
   </filter-mapping>
   
   <servlet>
+    <servlet-name>IDERestXqServlet</servlet-name>
+    <servlet-class>nl.armatiek.xmlindex.restxq.IDERestXqServlet</servlet-class>    
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>IDERestXqServlet</servlet-name>
+    <url-pattern>/ide</url-pattern>
+  </servlet-mapping>
+  
+  <servlet>
     <servlet-name>StaticServlet</servlet-name>
     <servlet-class>nl.armatiek.xmlindex.web.servlet.StaticServlet</servlet-class>    
   </servlet>

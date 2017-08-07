@@ -9,9 +9,11 @@ import org.exquery.http.HttpStatus;
 public class HttpServletResponseAdapter implements HttpResponse {
 
   private final HttpServletResponse response;
+  private final OutputStream os;
 
-  public HttpServletResponseAdapter(final HttpServletResponse response) {
+  public HttpServletResponseAdapter(final HttpServletResponse response, OutputStream os) {
     this.response = response;
+    this.os = os;
   }
 
   @Override
@@ -42,7 +44,7 @@ public class HttpServletResponseAdapter implements HttpResponse {
 
   @Override
   public OutputStream getOutputStream() throws IOException {
-    return response.getOutputStream();
+    return os;
   }
 
   @Override

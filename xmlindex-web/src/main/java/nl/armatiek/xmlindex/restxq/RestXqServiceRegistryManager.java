@@ -38,13 +38,10 @@ public final class RestXqServiceRegistryManager {
       throws IOException, ExQueryException, SaxonApiException {
     try {
       if (true || registry == null) {
-        logger.info("Initializing RESTXQ...");
+        logger.info("Initializing RESTXQ service regostry ...");
         registry = new RestXqServiceRegistryImpl();
         registry.addListener(new RestXqServiceRegistryLogger());
-  
-        // add compiled cache cleanup listener
-        // registry.addListener(new RestXqServiceCompiledXQueryCacheCleanupListener());
-  
+        
         File restXqFile = new File(index.getIndexPath().toFile(), WebDefinitions.FILENAME_RESTXQ);
         if (!restXqFile.isFile()) {
           logger.info("Creating RestXQ module: \"" + WebDefinitions.FILENAME_RESTXQ + "\" ...");
@@ -76,7 +73,7 @@ public final class RestXqServiceRegistryManager {
             registry.register(new RestXqServiceImpl(resourceFunction, index.getSaxonConfiguration()));
           }
         }
-        logger.info("RESTXQ is ready.");
+        logger.info("RESTXQ service registry initialized");
       }
     } catch (Exception e) {
       registry = null;

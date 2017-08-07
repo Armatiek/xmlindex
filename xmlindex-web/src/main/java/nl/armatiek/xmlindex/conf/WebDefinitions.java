@@ -64,7 +64,13 @@ public class WebDefinitions extends Definitions {
   
   public final static String NAMESPACE_RESTXQ                   = "http://exquery.org/ns/restxq";
   public final static String NAMESPACE_INPUT                    = "http://exquery.org/ns/restxq";
+  public final static String NAMESPACE_REQUEST                  = "http://exquery.org/ns/request";
+  public final static String NAMESPACE_RESPONSE                 = "http://exquery.org/ns/response";
   public final static String NAMESPACE_OUTPUT                   = "http://www.w3.org/2010/xslt-xquery-serialization";
+  
+  public final static String NAMESPACEURI_XMLINDEX              = "http://www.armatiek.com/xslweb";
+  public final static String NAMESPACEURI_XMLINDEX_REQUEST      = NAMESPACEURI_XMLINDEX + "/request";
+  public final static String NAMESPACEURI_XMLINDEX_RESPONSE     = NAMESPACEURI_XMLINDEX + "/response";
    
   public final static String MIMETYPE_XML                       = "text/xml";
   public final static String MIMETYPE_HTML                      = "text/html";
@@ -87,7 +93,7 @@ public class WebDefinitions extends Definitions {
   public final static String MIMETYPE_PNG                       = "image/png";
   public final static String MIMETYPE_TEXTPLAIN                 = "text/plain";
   
-  public final static String PROPERTYNAME_VERSION               = "xmlindex.version";
+  public final static String PROPERTYNAME_DEVELOPMENTMODE       = "xmlindex.developmentmode";
   public final static String PROPERTYNAME_TRUST_ALL_CERTS       = "xmlindex.trustallcerts";
   public final static String PROPERTYNAME_PARSER_HARDENING      = "xmlindex.parserhardening";
   public final static String PROPERTYNAME_INDEXPATH             = "xmlindex.indexpath";

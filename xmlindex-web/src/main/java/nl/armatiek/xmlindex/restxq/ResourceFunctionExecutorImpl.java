@@ -3,6 +3,9 @@ package nl.armatiek.xmlindex.restxq;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletResponse;
 
 import org.exquery.http.HttpRequest;
 import org.exquery.restxq.ResourceFunction;
@@ -22,6 +25,7 @@ import net.sf.saxon.s9api.XQueryEvaluator;
 import net.sf.saxon.s9api.XQueryExecutable;
 import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmEmptySequence;
+import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmValue;
 import net.sf.saxon.type.AtomicType;
@@ -30,30 +34,31 @@ import net.sf.saxon.type.ItemType;
 import net.sf.saxon.type.StringConverter;
 import net.sf.saxon.type.ValidationException;
 import net.sf.saxon.value.AtomicValue;
+import nl.armatiek.xmlindex.conf.WebContext;
 import nl.armatiek.xmlindex.conf.WebDefinitions;
 import nl.armatiek.xmlindex.restxq.adapter.FunctionSignatureAdapter;
 import nl.armatiek.xmlindex.restxq.adapter.SequenceAdapter;
+import nl.armatiek.xmlindex.saxon.TransformationErrorListener;
 
 public class ResourceFunctionExecutorImpl implements ResourceFunctionExecuter {
 
-  public final static QName XQ_VAR_BASE_URI  = new QName(WebDefinitions.NAMESPACE_RESTXQ, "base-uri");
-  public final static QName XQ_VAR_URI       = new QName(WebDefinitions.NAMESPACE_RESTXQ, "uri");
-  public final static QName XQ_VAR_INDEXNAME = new QName(WebDefinitions.NAMESPACE_RESTXQ, "index-name");
+  //public final static QName XQ_VAR_BASE_URI  = new QName(WebDefinitions.NAMESPACE_RESTXQ, "base-uri");
+  //public final static QName XQ_VAR_URI       = new QName(WebDefinitions.NAMESPACE_RESTXQ, "uri");
+  //public final static QName XQ_VAR_INDEXNAME = new QName(WebDefinitions.NAMESPACE_RESTXQ, "index-name");
   
   private final XQueryExecutable restXQuery;
+  private final Map<QName, XdmValue> params;
   private final Configuration config;
-  private final String uri;
-  private final String baseUri;
-  private final String indexName;
+  private final XdmItem contextItem;
+  private final HttpServletResponse response;
   
-  public ResourceFunctionExecutorImpl(final Configuration config, final XQueryExecutable restXQuery, 
-      final String baseUri, final String uri, final String indexName) {
-    this.config = config;
+  public ResourceFunctionExecutorImpl(final XQueryExecutable restXQuery, Map<QName, XdmValue> params, 
+      final XdmItem contextItem, final Configuration config, final HttpServletResponse response) {
     this.restXQuery = restXQuery;
-    this.baseUri = baseUri;
-    this.uri = uri;
-    this.indexName = indexName;
-    
+    this.params = params;
+    this.contextItem = contextItem;
+    this.config = config;
+    this.response = response;
   }
   
   @Override
@@ -62,10 +67,11 @@ public class ResourceFunctionExecutorImpl implements ResourceFunctionExecuter {
     try {
       XQueryFunction func = ((FunctionSignatureAdapter) resourceFunction.getFunctionSignature()).getXQueryFunction();
       XQueryEvaluator eval = restXQuery.load();
-      eval.setExternalVariable(XQ_VAR_BASE_URI, new XdmAtomicValue(baseUri));
-      eval.setExternalVariable(XQ_VAR_URI, new XdmAtomicValue(uri));
-      eval.setExternalVariable(XQ_VAR_INDEXNAME, new XdmAtomicValue(indexName));
-      // TODO: errorListener    
+      if (params != null)
+        for (Map.Entry<QName, XdmValue> entry : params.entrySet())
+          eval.setExternalVariable(entry.getKey(), entry.getValue());
+      eval.setErrorListener(new TransformationErrorListener(response, WebContext.getInstance().getDevelopmentMode()));
+      eval.setContextItem(contextItem);
       XdmValue value = eval.callFunction(new QName(func.getFunctionName()), convertToSaxonFunctionArguments(arguments, func));
       return new SequenceAdapter(value, config);
     } catch (SaxonApiException e) {
