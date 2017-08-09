@@ -6,6 +6,7 @@ import java.io.PushbackInputStream;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.exquery.http.HttpRequest;
 import org.exquery.restxq.ResourceFunction;
 import org.exquery.restxq.RestXqErrorCodes;
@@ -46,7 +47,7 @@ public class RestXqServiceImpl extends AbstractRestXqService {
   protected Sequence extractRequestBody(final HttpRequest request) throws RestXqServiceException {
     try {
       String method = request.getMethod().name();
-      if (!(method.equals("POST") || method.equals("PUT"))) {
+      if (!StringUtils.equalsAny(method, "GET", "POST") || StringUtils.startsWith(request.getContentType(), "application/x-www-form-urlencoded")) {
         return Sequence.EMPTY_SEQUENCE;
       }    
       PushbackInputStream pushbackStream = new PushbackInputStream(request.getInputStream());    

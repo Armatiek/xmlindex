@@ -21,16 +21,19 @@ import javax.xml.transform.TransformerException;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.functions.FunctionLibraryList;
+import nl.armatiek.xmlindex.saxon.functionset.JsonFunctionSet;
 import nl.armatiek.xmlindex.saxon.functionset.RequestFunctionSet;
+import nl.armatiek.xmlindex.saxon.functionset.RestXqFunctionSet;
 
 public class XMLIndexWebInitializer extends XMLIndexInitializer {
   
   @Override
   public void initialize(Configuration configuration) throws TransformerException {    
     super.initialize(configuration);
-    FunctionLibraryList fll = new FunctionLibraryList();
+    FunctionLibraryList fll = configuration.getBuiltInExtensionLibraryList();
     fll.addFunctionLibrary(RequestFunctionSet.getInstance());
-    configuration.addExtensionBinders(fll);
+    fll.addFunctionLibrary(RestXqFunctionSet.getInstance());
+    fll.addFunctionLibrary(JsonFunctionSet.getInstance());
   }
   
 }

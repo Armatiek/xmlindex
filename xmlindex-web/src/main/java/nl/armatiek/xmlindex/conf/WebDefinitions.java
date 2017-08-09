@@ -68,9 +68,10 @@ public class WebDefinitions extends Definitions {
   public final static String NAMESPACE_RESPONSE                 = "http://exquery.org/ns/response";
   public final static String NAMESPACE_OUTPUT                   = "http://www.w3.org/2010/xslt-xquery-serialization";
   
-  public final static String NAMESPACEURI_XMLINDEX              = "http://www.armatiek.com/xslweb";
-  public final static String NAMESPACEURI_XMLINDEX_REQUEST      = NAMESPACEURI_XMLINDEX + "/request";
-  public final static String NAMESPACEURI_XMLINDEX_RESPONSE     = NAMESPACEURI_XMLINDEX + "/response";
+  public final static String NAMESPACE_XMLINDEX                 = "http://www.armatiek.nl/xmlindex";
+  public final static String NAMESPACE_XMLINDEX_CONFIG          = "http://www.armatiek.nl/xmlindex/config";
+  public final static String NAMESPACE_XMLINDEX_FUNCTIONS       = "http://www.armatiek.nl/xmlindex/functions";
+  public final static String NAMESPACE_XMLINDEX_FUNCTIONS_JSON  = NAMESPACE_XMLINDEX_FUNCTIONS + "/json";
    
   public final static String MIMETYPE_XML                       = "text/xml";
   public final static String MIMETYPE_HTML                      = "text/html";
@@ -100,5 +101,7 @@ public class WebDefinitions extends Definitions {
   
   public final static String REGEX_PARAM                        = "\\{\\s*\\$(.+?)\\s*\\}";
   public final static Pattern PATTERN_PARAM                     = Pattern.compile(REGEX_PARAM);
+  
+  public final static String ROOT_PATH_ALIAS                    = "/_ROOT_";
   
 }

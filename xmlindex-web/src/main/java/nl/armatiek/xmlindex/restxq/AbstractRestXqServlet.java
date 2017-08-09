@@ -12,6 +12,7 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.exquery.ExQueryException;
 import org.exquery.http.HttpRequest;
 import org.exquery.restxq.ResourceFunction;
@@ -40,7 +42,10 @@ import net.sf.saxon.s9api.XQueryCompiler;
 import net.sf.saxon.s9api.XQueryExecutable;
 import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmValue;
+import net.sf.saxon.value.AtomicValue;
+import net.sf.saxon.value.BooleanValue;
 import net.sf.saxon.value.ObjectValue;
+import net.sf.saxon.value.StringValue;
 import nl.armatiek.xmlindex.conf.WebContext;
 import nl.armatiek.xmlindex.conf.WebDefinitions;
 import nl.armatiek.xmlindex.restxq.adapter.AnnotationAdapter;
@@ -56,6 +61,8 @@ public abstract class AbstractRestXqServlet extends HttpServlet {
   public final static QName XQ_VAR_BASE_URI  = new QName(WebDefinitions.NAMESPACE_RESTXQ, "base-uri");
   public final static QName XQ_VAR_URI       = new QName(WebDefinitions.NAMESPACE_RESTXQ, "uri");
   public final static QName XQ_VAR_INDEXNAME = new QName(WebDefinitions.NAMESPACE_RESTXQ, "index-name");
+  public final static QName XI_DEV_MODE      = new QName(WebDefinitions.NAMESPACE_XMLINDEX_CONFIG, "development-mode");
+  public final static QName XI_HOME_DIR      = new QName(WebDefinitions.NAMESPACE_XMLINDEX_CONFIG, "home-dir");
   public final static QName XI_VAR_REQUEST   = new QName(WebDefinitions.NAMESPACE_REQUEST, "request");
   public final static QName XI_VAR_RESPONSE  = new QName(WebDefinitions.NAMESPACE_RESPONSE, "response");
   
@@ -115,6 +122,13 @@ public abstract class AbstractRestXqServlet extends HttpServlet {
     }
   }
   
+  protected String getAnnotationParam(net.sf.saxon.query.Annotation an) {
+    List<AtomicValue> params = an.getAnnotationParameters();
+    if (params.isEmpty())
+      return null;
+    return ((StringValue) params.get(0)).getStringValue();
+  }
+  
   protected XQueryExecutable compileAndRegisterRestXQuery(File restXqFile, RestXqServiceRegistry registry, 
       Processor processor, HttpServletResponse response) 
       throws SaxonApiException, IOException, ExQueryException {
@@ -134,6 +148,13 @@ public abstract class AbstractRestXqServlet extends HttpServlet {
       Set<Annotation> annotations = new HashSet<Annotation>();
       for (net.sf.saxon.query.Annotation an : func.getAnnotations()) {
         if (RestAnnotationFactory.isRestXqAnnotation(an.getAnnotationQName().toJaxpQName())) {
+          if (an.getAnnotationQName().getLocalPart().equals("path")) {
+            String path = getAnnotationParam(an);
+            if (StringUtils.equalsAny(path, "", "/")) {
+              an = new net.sf.saxon.query.Annotation(an.getAnnotationQName());
+              an.addAnnotationParameter(new StringValue(WebDefinitions.ROOT_PATH_ALIAS));
+            }
+          }
           final org.exquery.xquery3.Annotation restAnnotation = RestAnnotationFactory.getAnnotation(new AnnotationAdapter(an, func));
           annotations.add(restAnnotation);
         }
@@ -153,6 +174,8 @@ public abstract class AbstractRestXqServlet extends HttpServlet {
     vars.put(XQ_VAR_URI, new XdmAtomicValue(req.getRequestURI()));
     vars.put(XI_VAR_REQUEST,  XdmValue.wrap(new ObjectValue<HttpServletRequest>(req)));
     vars.put(XI_VAR_RESPONSE,  XdmValue.wrap(new ObjectValue<HttpServletResponse>(resp)));
+    vars.put(XI_DEV_MODE, XdmValue.wrap(BooleanValue.get(context.getDevelopmentMode())));
+    vars.put(XI_HOME_DIR, XdmValue.wrap(new StringValue(context.getHomeDir().getAbsolutePath())));
     return vars;
   }
   

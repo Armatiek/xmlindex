@@ -62,19 +62,6 @@ public class RestXqServlet extends HttpServlet {
   }
   
   @Override
-  public void destroy() {
-    try {
-      for (IndexInfo indexInfo : context.getIndexInfos()) {
-        logger.info("Closing index \"" + indexInfo.getIndex().getIndexName() + "\" ... ");
-        indexInfo.close();
-      }
-    } catch (Exception e) {
-      logger.error("Error closing IndexInfo", e);
-    } 
-    super.destroy();
-  }
-  
-  @Override
   protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     OutputStream respOs = resp.getOutputStream();
     

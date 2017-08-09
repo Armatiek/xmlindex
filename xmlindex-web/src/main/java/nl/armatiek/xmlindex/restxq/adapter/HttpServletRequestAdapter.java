@@ -1,29 +1,25 @@
 package nl.armatiek.xmlindex.restxq.adapter;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.exquery.http.HttpMethod;
 import org.exquery.http.HttpRequest;
+
+import nl.armatiek.xmlindex.conf.WebDefinitions;
 
 public class HttpServletRequestAdapter implements HttpRequest {
 
   private final HttpServletRequest request;
-  private Map<String, List<String>> formFields = null;
+  /* private Map<String, List<String>> formFields = null; */
   private final String path;
 
   public HttpServletRequestAdapter(final HttpServletRequest request, String path) {
@@ -58,7 +54,7 @@ public class HttpServletRequestAdapter implements HttpRequest {
 
   @Override
   public String getPath() {
-    return path;
+    return (path == null || StringUtils.equalsAny(path, "", "/")) ? WebDefinitions.ROOT_PATH_ALIAS : path;
   }
 
   @Override
@@ -136,10 +132,11 @@ public class HttpServletRequestAdapter implements HttpRequest {
   @SuppressWarnings("unchecked")
   @Override
   public Object getFormParam(final String key) {
-    if (request.getMethod().equals("GET")) {
+    if (StringUtils.equalsAny(request.getMethod(), "GET", "POST"))
       return getGetParameters(key);
-    }
-    if (request.getMethod().equals("POST") && request.getContentType() != null && request.getContentType().equals("application/x-www-form-urlencoded")) {
+    return null;
+    /*
+    if (request.getMethod().equals("POST") && request.getContentType() != null && request.getContentType().startsWith("application/x-www-form-urlencoded")) {
       if (formFields == null) {
         try {
           final InputStream in = getInputStream();
@@ -159,6 +156,7 @@ public class HttpServletRequestAdapter implements HttpRequest {
       }
     }
     return null;
+    */
   }
 
   @SuppressWarnings("unchecked")
@@ -188,6 +186,7 @@ public class HttpServletRequestAdapter implements HttpRequest {
     return names;
   }
 
+  /*
   private Map<String, List<String>> extractFormFields(final InputStream in) throws IOException {
     final Map<String, List<String>> fields = new Hashtable<>();
 
@@ -230,4 +229,6 @@ public class HttpServletRequestAdapter implements HttpRequest {
 
     return fields;
   }
+  */
+  
 }

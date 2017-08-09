@@ -19,7 +19,7 @@ package nl.armatiek.xmlindex.conf;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Collection;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,8 +36,8 @@ import javax.servlet.ServletContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.error.XMLIndexException;
-import nl.armatiek.xmlindex.restxq.IndexInfo;
 import nl.armatiek.xmlindex.utils.XMLIndexWebUtils;
 
 /**
@@ -49,13 +49,11 @@ public class WebContext {
   
   private static final Logger logger = LoggerFactory.getLogger(WebContext.class);
   
-  private Map<String, IndexInfo> indexes = new ConcurrentHashMap<String, IndexInfo>();
+  private Map<String, XMLIndex> indexes = new ConcurrentHashMap<String, XMLIndex>();
   
   private static WebContext _instance;
   
   private ServletContext servletContext;
-  // private FileAlterationMonitor monitor;
-  //private Schema webAppSchema;
   private Properties properties;
   private boolean developmentMode;
   private boolean parserHardening;
@@ -83,13 +81,7 @@ public class WebContext {
     
     initHomeDir();      
     initProperties();
-    // initFileAlterationObservers();
     
-    /*
-    logger.info("Starting webapps file alteration monitor ...");
-    monitor.start();
-    */
-  
     isOpen = true;
     logger.info("XMLIndex Context opened.");
   }
@@ -98,12 +90,12 @@ public class WebContext {
     logger.info("Closing XMLIndex Context ...");
     
     isOpen = false;
-    
-    /*
-    logger.info("Stopping webapps file alteration monitor ...");    
-    monitor.stop();
-    */
-      
+   
+    for (XMLIndex index : indexes.values()) {
+      logger.info("Closing index \"" + index.getIndexName() + "\" ... ");
+      index.close();
+    }
+     
     logger.info("XMLIndex Context closed.");
   }
   
@@ -253,16 +245,16 @@ public class WebContext {
     return isOpen;
   }
   
-  public IndexInfo getIndexInfo(String name) {
-    return indexes.get(name);
-  }
-  
-  public void addIndexInfo(String name, IndexInfo indexInfo) {
-    indexes.put(name, indexInfo);
-  }
-  
-  public Collection<IndexInfo> getIndexInfos() {
-    return indexes.values();
+  public synchronized XMLIndex getIndex(String name) throws IOException {
+    XMLIndex index = indexes.get(name);
+    if (index == null) {
+      File indexDir = new File(getIndexesDir(), name);
+      if (!indexDir.isDirectory())
+        throw new FileNotFoundException("Index directory \"" + indexDir.getAbsolutePath() + "\" not found");
+      index = new XMLIndex(name, indexDir.toPath());
+      indexes.put(name, index);
+    }
+    return index;
   }
   
 }

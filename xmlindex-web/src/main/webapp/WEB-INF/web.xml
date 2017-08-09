@@ -36,7 +36,7 @@
   </servlet>
   <servlet-mapping>
     <servlet-name>IDERestXqServlet</servlet-name>
-    <url-pattern>/ide</url-pattern>
+    <url-pattern>/ide/*</url-pattern>
   </servlet-mapping>
   
   <servlet>
