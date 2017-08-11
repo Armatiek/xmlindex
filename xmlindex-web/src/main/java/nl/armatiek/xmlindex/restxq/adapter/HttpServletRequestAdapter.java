@@ -185,6 +185,10 @@ public class HttpServletRequestAdapter implements HttpRequest {
     }
     return names;
   }
+  
+  public HttpServletRequest getUnderlyingRequest() {
+    return request;
+  }
 
   /*
   private Map<String, List<String>> extractFormFields(final InputStream in) throws IOException {
