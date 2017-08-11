@@ -28,7 +28,7 @@
   </xsl:variable>
   
   <xsl:template match="/">  
-    <xsl:variable name="base-uri" select="xs:anyURI(local:path-to-file-uri(concat($home-dir, '/', $path)))" as="xs:anyURI"/> <!-- TODO: correct path -->
+    <xsl:variable name="base-uri" select="xs:anyURI(local:path-to-file-uri(concat($home-dir, '/', $path)))" as="xs:anyURI"/>
     <xsl:variable name="results" as="item()*">
       <xsl:choose>
         <xsl:when test="contains($code, 'xsl:stylesheet')">

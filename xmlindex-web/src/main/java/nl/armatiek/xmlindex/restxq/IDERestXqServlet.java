@@ -3,9 +3,6 @@ package nl.armatiek.xmlindex.restxq;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +11,6 @@ import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.exquery.http.HttpRequest;
 import org.exquery.restxq.impl.RestXqServiceRegistryImpl;
@@ -62,25 +58,12 @@ public class IDERestXqServlet extends AbstractRestXqServlet {
     XQueryExecutable restXQuery = compileAndRegisterRestXQuery(restXqFile, registry, processor, resp);
     
     Map<QName, XdmValue> vars = new HashMap<QName, XdmValue>();
-    staticContext = new RestXqStaticContext(processor, config, restXQuery, null, vars, registry);
+    staticContext = new RestXqStaticContext(processor, config, restXQuery, vars, registry);
     
     logger.info("Initialized RESTXQ static context");
     
   }
   
-  protected void handleError(String msg, Throwable t, HttpServletResponse resp) {
-    try {
-      logger.error(msg, t);
-      if (developmentMode) {
-        IOUtils.copy(new StringReader("\n" + msg + "\n\n"), resp.getOutputStream(), StandardCharsets.UTF_8);
-        t.printStackTrace(new PrintStream(resp.getOutputStream()));
-      } else   
-        resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
-    } catch (IOException ioe) {
-      logger.error("Error handling error", ioe);
-    }
-  }
- 
   @Override
   protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     if (developmentMode || staticContext == null)

@@ -35,17 +35,12 @@ import net.sf.saxon.type.StringConverter;
 import net.sf.saxon.type.ValidationException;
 import net.sf.saxon.value.AtomicValue;
 import nl.armatiek.xmlindex.conf.WebContext;
-import nl.armatiek.xmlindex.conf.WebDefinitions;
 import nl.armatiek.xmlindex.restxq.adapter.FunctionSignatureAdapter;
 import nl.armatiek.xmlindex.restxq.adapter.SequenceAdapter;
 import nl.armatiek.xmlindex.saxon.TransformationErrorListener;
 
 public class ResourceFunctionExecutorImpl implements ResourceFunctionExecuter {
 
-  //public final static QName XQ_VAR_BASE_URI  = new QName(WebDefinitions.NAMESPACE_RESTXQ, "base-uri");
-  //public final static QName XQ_VAR_URI       = new QName(WebDefinitions.NAMESPACE_RESTXQ, "uri");
-  //public final static QName XQ_VAR_INDEXNAME = new QName(WebDefinitions.NAMESPACE_RESTXQ, "index-name");
-  
   private final XQueryExecutable restXQuery;
   private final Map<QName, XdmValue> params;
   private final Configuration config;
@@ -61,6 +56,7 @@ public class ResourceFunctionExecutorImpl implements ResourceFunctionExecuter {
     this.response = response;
   }
   
+  @SuppressWarnings("rawtypes")
   @Override
   public Sequence<?> execute(final ResourceFunction resourceFunction, final Iterable<TypedArgumentValue> arguments, 
       final HttpRequest request) throws RestXqServiceException {
@@ -79,6 +75,7 @@ public class ResourceFunctionExecutorImpl implements ResourceFunctionExecuter {
     }
   }
   
+  @SuppressWarnings("rawtypes")
   private XdmValue[] convertToSaxonFunctionArguments(final Iterable<TypedArgumentValue> arguments, final XQueryFunction func) throws  RestXqServiceException {
     final List<XdmValue> argList = new ArrayList<XdmValue>();
     for (final UserFunctionParameter paramDef : func.getParameterDefinitions()) {

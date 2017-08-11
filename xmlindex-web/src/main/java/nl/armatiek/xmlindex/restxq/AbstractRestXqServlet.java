@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.io.StringReader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -93,7 +95,7 @@ public abstract class AbstractRestXqServlet extends HttpServlet {
             request,
             new HttpServletResponseAdapter(resp, os),
             new ResourceFunctionExecutorImpl(staticContext.getRestXQuery(), dynamicContext.getAllExternalVariables(), 
-                staticContext.getContextItem(), staticContext.getConfiguration(), resp),
+                dynamicContext.getContextItem(), staticContext.getConfiguration(), resp),
             new RestXqServiceSerializerImpl(staticContext.getProcessor()));
         
         if (developmentMode) {     
@@ -119,6 +121,19 @@ public abstract class AbstractRestXqServlet extends HttpServlet {
         Writer w = new OutputStreamWriter(respOs, "UTF-8");
         w.write("<html><body><h1>Internal Server Error</h1></body></html>");
       }
+    }
+  }
+  
+  protected void handleError(String msg, Throwable t, HttpServletResponse resp) {
+    try {
+      logger.error(msg, t);
+      if (developmentMode) {
+        IOUtils.copy(new StringReader("\n" + msg + "\n\n"), resp.getOutputStream(), StandardCharsets.UTF_8);
+        t.printStackTrace(new PrintStream(resp.getOutputStream()));
+      } else   
+        resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
+    } catch (IOException ioe) {
+      logger.error("Error handling error", ioe);
     }
   }
   

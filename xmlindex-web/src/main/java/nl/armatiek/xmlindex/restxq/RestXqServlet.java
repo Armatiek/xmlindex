@@ -1,140 +1,125 @@
 package nl.armatiek.xmlindex.restxq;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.Writer;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.exquery.ExQueryException;
 import org.exquery.http.HttpRequest;
-import org.exquery.restxq.RestXqService;
-import org.exquery.restxq.RestXqServiceRegistry;
+import org.exquery.restxq.impl.RestXqServiceRegistryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.QName;
-import net.sf.saxon.s9api.XdmAtomicValue;
-import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XQueryExecutable;
 import net.sf.saxon.s9api.XdmValue;
+import net.sf.saxon.value.ObjectValue;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
-import nl.armatiek.xmlindex.conf.WebContext;
+import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.conf.WebDefinitions;
+import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.restxq.adapter.HttpServletRequestAdapter;
-import nl.armatiek.xmlindex.restxq.adapter.HttpServletResponseAdapter;
 
-public class RestXqServlet extends HttpServlet {
+public class RestXqServlet extends AbstractRestXqServlet {
   
   private static final long serialVersionUID = -1676378566658614933L;
 
   private static final Logger logger = LoggerFactory.getLogger(RestXqServlet.class);
   
-  public final static QName XQ_VAR_BASE_URI  = new QName(WebDefinitions.NAMESPACE_RESTXQ, "base-uri");
-  public final static QName XQ_VAR_URI       = new QName(WebDefinitions.NAMESPACE_RESTXQ, "uri");
-  public final static QName XQ_VAR_INDEXNAME = new QName(WebDefinitions.NAMESPACE_RESTXQ, "index-name");
+  private Map<String, RestXqStaticContext> staticContexts = new ConcurrentHashMap<String, RestXqStaticContext>();
   
-  private File indexesDir;
-  private WebContext context;
-  private boolean developmentMode;
-  
-  public void init() throws ServletException {    
-    super.init();   
-    try {                    
-      context = WebContext.getInstance();
-      indexesDir = context.getIndexesDir();
-      developmentMode = context.getDevelopmentMode();
-    } catch (Exception e) {
-      logger.error(e.getMessage());
-      throw new ServletException(e);
+  protected synchronized RestXqStaticContext getStaticContext(String indexName, HttpServletResponse resp) throws IOException, SaxonApiException, ExQueryException {
+    // TODO: developmentMode
+    RestXqStaticContext staticContext = staticContexts.get(indexName);
+    if (staticContext == null) {
+      logger.info("Initializing RESTXQ static context for index \"" + indexName + "\" ...");
+      
+      XMLIndex index = context.getIndex(indexName);
+      
+      Configuration config = index.getSaxonConfiguration();
+      Processor processor = index.getSaxonProcessor();
+      
+      RestXqServiceRegistryImpl registry = new RestXqServiceRegistryImpl();
+      registry.addListener(new RestXqServiceRegistryLogger());
+      
+      File restXqFile = new File(context.getIndexesDir(), indexName + File.separatorChar + WebDefinitions.FILENAME_RESTXQ);
+      if (!restXqFile.isFile()) {
+        logger.info("Creating new RestXQ module: \"" + WebDefinitions.FILENAME_RESTXQ + "\" ...");
+        File restXqDir = restXqFile.getParentFile();
+        if (!restXqDir.exists() && !restXqDir.mkdirs())
+          throw new XMLIndexException("Could not create directory \"" + restXqFile.getParentFile().getAbsolutePath() + "\"");
+        InputStream in = getClass().getClassLoader().getResourceAsStream(WebDefinitions.FILENAME_RESTXQ.replace('\\', '/')); 
+        FileUtils.copyInputStreamToFile(in, restXqFile);
+      }
+    
+      XQueryExecutable restXQuery = compileAndRegisterRestXQuery(restXqFile, registry, processor, resp);
+      
+      Map<QName, XdmValue> vars = new HashMap<QName, XdmValue>();
+      staticContext = new RestXqStaticContext(processor, config, restXQuery, vars, registry);
+      
+      logger.info("Initialized RESTXQ static context for index \"" + indexName + "\"");
+      
+      staticContexts.put(indexName, staticContext);
     }
+    return staticContext;
   }
   
   @Override
   protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-    OutputStream respOs = resp.getOutputStream();
+    /* Get name of index: */
+    String pathInfo = req.getPathInfo();
+    if (StringUtils.equalsAny(pathInfo, "", "/")) {
+      resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Index name not specified in path");
+      return;
+    }
+    String indexName = req.getPathInfo().split("/")[1];
     
-    try {  
-      String pathInfo = req.getPathInfo();
-      if (StringUtils.equalsAny(pathInfo, "", "/")) {
-        resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Index name not specified in path");
-        return;
-      }
-      String indexName = req.getPathInfo().split("/")[1];
-      IndexInfo indexInfo = context.getIndexInfo(indexName.toLowerCase());
-      if (indexInfo == null) {
-        // TODO: concurrency:
-        File indexDir = new File(indexesDir, indexName);
-        if (!indexDir.isDirectory()) {
-          resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Index \"" + indexName + "\" not found");
-          return;
-        }
-        indexInfo = new IndexInfo(indexDir);
-        context.addIndexInfo(indexDir.getName().toLowerCase(), indexInfo);
-      }
-      XMLIndex index = indexInfo.getIndex();
-      Session session = index.aquireSession();
+    /* Get static context: */
+    RestXqStaticContext staticContext;
+    try {
+      staticContext = getStaticContext(indexName, resp);
+    } catch (Exception e) {
+      handleError("Error initializing RESTXQ static context for index \"" + indexName + "\"", e, resp);
+      return;
+    }
+    
+    /* Get session: */
+    XMLIndex index = context.getIndex(indexName);
+    Session session = index.aquireSession();
+   
+    /* Get dynamic context: */
+    try {
+      RestXqDynamicContext dynamicContext;
       try {
+        Map<QName, XdmValue> vars = getDefaultExternalVariables(req, resp);
+        if (session != null)
+          vars.put(Definitions.PARAM_SESSION_QN, XdmValue.wrap(new ObjectValue<Session>(session)));
         String path = pathInfo.substring(indexName.length() + 1);
         path = path.length() == 0 ? "/" : path;
-        final HttpRequest requestAdapter = new HttpServletRequestAdapter(req, path);
-
-        RestXqServiceRegistry registry = indexInfo.getServiceRegistryManager();
-        RestXqService service = registry.findService(requestAdapter);
-        if (service != null) {
-          if (logger.isTraceEnabled())
-            logger.trace("Received " + requestAdapter.getMethod().name() + " request for \"" + requestAdapter.getPath() + "\" and found Resource Function \"" + service.getResourceFunction().getFunctionSignature() + "\" in  module \"" + service.getResourceFunction().getXQueryLocation() + "\"");
-          
-          OutputStream os = (developmentMode) ? new ByteArrayOutputStream() : respOs;
-          
-          Map<QName, XdmValue> params = new HashMap<QName, XdmValue>();
-          params.put(XQ_VAR_BASE_URI, new XdmAtomicValue(req.getContextPath() + req.getServletPath()));
-          params.put(XQ_VAR_URI, new XdmAtomicValue(req.getRequestURI()));
-          params.put(XQ_VAR_INDEXNAME, new XdmAtomicValue(indexName));
-          
-          service.service(
-              requestAdapter,
-              new HttpServletResponseAdapter(resp, os),
-              new ResourceFunctionExecutorImpl(indexInfo.getRestXQuery(), params, new XdmNode(session.getTreeInfo().getRootNode()), 
-                  session.getConfiguration(), resp),
-              new RestXqServiceSerializerImpl(index.getSaxonProcessor()));
-          
-          if (developmentMode) {     
-            byte[] body = ((ByteArrayOutputStream) os).toByteArray();                         
-            IOUtils.copy(new ByteArrayInputStream(body), respOs);
-          }
-          
-        } else {
-          if (logger.isTraceEnabled())
-            logger.trace("Received " + requestAdapter.getMethod().name() + " request for \"" + requestAdapter.getPath() + "\" but no suitable Resource Function found");
-          resp.sendError(HttpServletResponse.SC_NOT_FOUND, "No function found that matches the request");
-        }
-      } finally {
-        index.returnSession(session);
+        HttpRequest request = new HttpServletRequestAdapter(req, path);
+        dynamicContext = new RestXqDynamicContext(staticContext, request, vars);
+      } catch (Exception e) {
+        handleError("Error initializing RESTXQ dynamic context", e, resp);
+        return;
       }
-    } catch (Exception e) {
-      logger.error(e.getMessage(), e);
-      if (developmentMode) {              
-        resp.setContentType("text/plain; charset=UTF-8");        
-        e.printStackTrace(new PrintStream(respOs));        
-      } else if (!resp.isCommitted()) {
-        resp.resetBuffer();
-        resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        resp.setContentType("text/html; charset=UTF-8");
-        Writer w = new OutputStreamWriter(respOs, "UTF-8");
-        w.write("<html><body><h1>Internal Server Error</h1></body></html>");
-      }
+      
+      doService(dynamicContext, req, resp);
+      
+    } finally {
+      index.returnSession(session);
     }
   }
   

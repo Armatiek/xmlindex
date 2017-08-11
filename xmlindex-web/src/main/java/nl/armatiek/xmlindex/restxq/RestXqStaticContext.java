@@ -8,7 +8,6 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.XQueryExecutable;
-import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmValue;
 
 public class RestXqStaticContext {
@@ -16,17 +15,15 @@ public class RestXqStaticContext {
   private final Processor processor;
   private final Configuration configuration;
   private final XQueryExecutable restXQuery;
-  private final XdmItem contextItem;
   private final Map<QName, XdmValue> externalVariables;
   private final RestXqServiceRegistry serviceRegistry;
   
   public RestXqStaticContext(Processor processor, Configuration configuration, 
-      XQueryExecutable restXQuery, XdmItem contextItem, Map<QName, XdmValue> externalVariables, 
+      XQueryExecutable restXQuery, Map<QName, XdmValue> externalVariables, 
       RestXqServiceRegistry serviceRegistry) {
     this.processor = processor;
     this.configuration = configuration;
     this.restXQuery = restXQuery;
-    this.contextItem = contextItem;
     this.externalVariables = externalVariables;
     this.serviceRegistry = serviceRegistry;
   }
@@ -43,10 +40,6 @@ public class RestXqStaticContext {
     return restXQuery;
   }
   
-  public XdmItem getContextItem() {
-    return contextItem;
-  }
-
   public Map<QName, XdmValue> getExternalVariables() {
     return externalVariables;
   }

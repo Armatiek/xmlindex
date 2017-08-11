@@ -21,7 +21,7 @@ declare
   %rest:path("/")
   %rest:GET
   %output:method("html")
-  %output:omit-xml-declaration("no")
+  %output:omit-xml-declaration("yes")
 function ide:home() as element(html) {
   let $source-node as document-node() := document { <root/> }
   let $result := transform(

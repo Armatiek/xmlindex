@@ -6,6 +6,7 @@ import java.util.Map;
 import org.exquery.http.HttpRequest;
 
 import net.sf.saxon.s9api.QName;
+import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmValue;
 
 public class RestXqDynamicContext {
@@ -13,12 +14,19 @@ public class RestXqDynamicContext {
   private final RestXqStaticContext staticContext;
   private final HttpRequest request;
   private final Map<QName, XdmValue> externalVariables;
+  private final XdmItem contextItem;
   
   public RestXqDynamicContext(RestXqStaticContext staticContext, HttpRequest request, 
-      Map<QName, XdmValue> externalVariables) {
+      Map<QName, XdmValue> externalVariables, XdmItem contextItem) {
     this.staticContext = staticContext;
     this.request = request;
     this.externalVariables = externalVariables;
+    this.contextItem = contextItem;
+  }
+  
+  public RestXqDynamicContext(RestXqStaticContext staticContext, HttpRequest request, 
+      Map<QName, XdmValue> externalVariables) {
+    this(staticContext, request, externalVariables, null);
   }
   
   public RestXqStaticContext getStaticContext() {
@@ -31,6 +39,10 @@ public class RestXqDynamicContext {
 
   public Map<QName, XdmValue> getExternalVariables() {
     return externalVariables;
+  }
+  
+  public XdmItem getContextItem() {
+    return this.contextItem;
   }
   
   public Map<QName, XdmValue> getAllExternalVariables() {
