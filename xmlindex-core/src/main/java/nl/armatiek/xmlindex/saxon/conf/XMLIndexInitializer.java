@@ -75,10 +75,14 @@ import nl.armatiek.xmlindex.saxon.functions.xmlindex.GetConfiguration;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.LocalVariableReferencer;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.OwnerDocument;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.PluggableIndexExists;
+import nl.armatiek.xmlindex.saxon.functions.xmlindex.Query;
+import nl.armatiek.xmlindex.saxon.functions.xmlindex.QueryAdHoc;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.RemoveDocument;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.RemovePluggableIndex;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.RemoveTypedValueDef;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.RemoveVirtualAttributeDef;
+import nl.armatiek.xmlindex.saxon.functions.xmlindex.Transform;
+import nl.armatiek.xmlindex.saxon.functions.xmlindex.TransformAdHoc;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.TypedValueDefExists;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.VirtualAttributeDefExists;
 
@@ -105,7 +109,10 @@ public class XMLIndexInitializer implements Initializer {
     registerFunction(new DocumentURI(), configuration);
     registerFunction(new OwnerDocument(), configuration);
     registerFunction(new RemoveDocument(), configuration);
-    
+    registerFunction(new Transform(), configuration);
+    registerFunction(new TransformAdHoc(), configuration);
+    registerFunction(new Query(), configuration);
+    registerFunction(new QueryAdHoc(), configuration);
     registerFunction(new AddPluggableIndex(), configuration);
     registerFunction(new AddTypedValueDef(), configuration);
     registerFunction(new AddVirtualAttributeDef(), configuration);

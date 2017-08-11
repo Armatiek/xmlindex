@@ -88,7 +88,7 @@ public class Slf4JLogger extends Logger {
           response.setContentType("text/plain;charset=UTF-8");
           firstError = false;
         }
-        IOUtils.copy(new StringReader(message), response.getOutputStream(), "UTF-8");
+        IOUtils.copy(new StringReader(message + '\n'), response.getOutputStream(), "UTF-8");
       }
     } catch (Exception e) {
       logger.error("Could not write error to HttpServletResponse", e);

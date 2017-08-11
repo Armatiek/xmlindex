@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -32,6 +33,7 @@ import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.restxq.adapter.HttpServletRequestAdapter;
 import nl.armatiek.xmlindex.saxon.conf.XMLIndexWebInitializer;
 
+@MultipartConfig
 public class IDERestXqServlet extends AbstractRestXqServlet {
 
   private static final long serialVersionUID = 1135079367879721547L;
@@ -97,7 +99,7 @@ public class IDERestXqServlet extends AbstractRestXqServlet {
         index = context.getIndex(indexName);
         session = index.aquireSession();
       } catch (IOException ioe) {
-        handleError("Index \"" + indexName + "\" not found", ioe, resp);
+        handleError("Error acquiring session for index \"" + indexName + "\"", ioe, resp);
         return;
       }
     }
