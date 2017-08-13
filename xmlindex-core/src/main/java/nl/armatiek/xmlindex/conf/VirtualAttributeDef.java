@@ -50,7 +50,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 
 import net.sf.saxon.s9api.QName;
-import net.sf.saxon.s9api.XQueryEvaluator;
 import net.sf.saxon.type.BuiltInAtomicType;
 import net.sf.saxon.type.ItemType;
 import net.sf.saxon.type.Type;
@@ -68,7 +67,7 @@ public class VirtualAttributeDef {
   private ItemType itemType;
   private Analyzer indexAnalyzer;
   private Analyzer queryAnalyzer;
-  private XQueryEvaluator virtualAttrModule;
+  // private XQueryEvaluator virtualAttrModule;
   
   public VirtualAttributeDef(XMLIndex index, QName elemName, String virtualAttrName,  QName functionName, ItemType itemType, 
       Analyzer indexAnalyzer, Analyzer queryAnalyzer) {
@@ -127,9 +126,11 @@ public class VirtualAttributeDef {
     return indexAnalyzer;
   }
 
+  /*
   public XQueryEvaluator getVirtualAttributeModule() {
     return virtualAttrModule;
   }
+  */
   
   public void store() throws IOException {
     Document doc = new Document();

@@ -68,6 +68,7 @@ import nl.armatiek.xmlindex.saxon.functions.xmlindex.AddVirtualAttributeDef;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.Collection;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.Commit;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.CopyToMemory;
+import nl.armatiek.xmlindex.saxon.functions.xmlindex.CreateIndex;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.Document;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.DocumentAvailable;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.DocumentURI;
@@ -101,6 +102,7 @@ public class XMLIndexInitializer implements Initializer {
     registerFunction(new LocalVariableReferencer(), configuration);
     registerFunction(new CopyToMemory(), configuration);
     
+    registerFunction(new CreateIndex(), configuration);
     registerFunction(new AddDocument(), configuration);
     registerFunction(new Collection(), configuration);
     registerFunction(new Commit(), configuration);

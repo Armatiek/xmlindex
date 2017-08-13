@@ -65,6 +65,7 @@ public abstract class AbstractRestXqServlet extends HttpServlet {
   public final static QName XQ_VAR_INDEXNAME = new QName(WebDefinitions.NAMESPACE_RESTXQ, "index-name");
   public final static QName XI_DEV_MODE      = new QName(WebDefinitions.NAMESPACE_XMLINDEX_CONFIG, "development-mode");
   public final static QName XI_HOME_DIR      = new QName(WebDefinitions.NAMESPACE_XMLINDEX_CONFIG, "home-dir");
+  public final static QName XI_INDEX_DIR     = new QName(WebDefinitions.NAMESPACE_XMLINDEX_CONFIG, "index-dir");
   public final static QName XI_VAR_REQUEST   = new QName(WebDefinitions.NAMESPACE_REQUEST, "request");
   public final static QName XI_VAR_RESPONSE  = new QName(WebDefinitions.NAMESPACE_RESPONSE, "response");
   
@@ -191,6 +192,7 @@ public abstract class AbstractRestXqServlet extends HttpServlet {
     vars.put(XI_VAR_RESPONSE,  XdmValue.wrap(new ObjectValue<HttpServletResponse>(resp)));
     vars.put(XI_DEV_MODE, XdmValue.wrap(BooleanValue.get(context.getDevelopmentMode())));
     vars.put(XI_HOME_DIR, XdmValue.wrap(new StringValue(context.getHomeDir().getAbsolutePath())));
+    vars.put(XI_INDEX_DIR, XdmValue.wrap(new StringValue(context.getIndexesDir().getAbsolutePath())));
     return vars;
   }
   

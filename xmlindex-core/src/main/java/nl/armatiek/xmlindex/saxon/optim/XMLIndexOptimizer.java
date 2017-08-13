@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +14,7 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.expr.AndExpression;
 import net.sf.saxon.expr.AtomicSequenceConverter;
 import net.sf.saxon.expr.Atomizer;
+import net.sf.saxon.expr.AttributeGetter;
 import net.sf.saxon.expr.AxisExpression;
 import net.sf.saxon.expr.BooleanExpression;
 import net.sf.saxon.expr.CastExpression;
@@ -34,6 +34,7 @@ import net.sf.saxon.expr.parser.Token;
 import net.sf.saxon.functions.IntegratedFunctionCall;
 import net.sf.saxon.lib.ExtensionFunctionCall;
 import net.sf.saxon.om.AxisInfo;
+import net.sf.saxon.om.FingerprintedQName;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.pattern.NameTest;
 import net.sf.saxon.pattern.NodeTest;
@@ -99,6 +100,8 @@ public class XMLIndexOptimizer extends Optimizer {
   private Expression getFieldExpression(Expression expr) {
     if (expr == null)
       return null;
+    if (expr instanceof AttributeGetter) // E[@attr]
+      return expr;
     if (expr instanceof AxisExpression && ((AxisExpression) expr).getAxis() == AxisInfo.ATTRIBUTE)  // E[@attr]
       return expr;
     if (expr instanceof ContextItemExpression) // E[.]
@@ -112,6 +115,7 @@ public class XMLIndexOptimizer extends Optimizer {
       return getFieldExpression(((CastingExpression) expr).operands().iterator().next().getChildExpression());
     if (expr instanceof AtomicSequenceConverter)
       return getFieldExpression(((AtomicSequenceConverter) expr).getBaseExpression());
+    // if (expr instanceof Contains || expr instanceof StartsWith || expr instanceof EndsWith)
     return null;        
   }
   
@@ -184,19 +188,28 @@ public class XMLIndexOptimizer extends Optimizer {
               valueExpression.toShortString(), name.getDisplayName()));
       }
       fieldName = getFieldName(Node.ELEMENT_NODE, namespaceUri, localPart, itemType);
-    } else if (fieldExpression instanceof AxisExpression) {
-      AxisExpression ae = (AxisExpression) fieldExpression;
-      if (ae.getAxis() != AxisInfo.ATTRIBUTE)
-        throw new OptimizationFailureException("Could not convert ComparisonExpression to Query; "
-            + "axis of field expression is not an attribute axis");
-      NodeTest nodeTest = ae.getNodeTest();
-      if (!(nodeTest instanceof NameTest))
-        throw new OptimizationFailureException("Could not convert ComparisonExpression to Query; "
-            + "only fully qualified attribute names are supported in filter expression");
-     
-      StructuredQName attrName = nodeTest.getMatchingNodeName();
-      String namespaceUri = attrName.getURI();
-      String localPart = attrName.getLocalPart();
+    } else if (fieldExpression instanceof AxisExpression || fieldExpression instanceof AttributeGetter) {
+      StructuredQName attrName;
+      String namespaceUri;
+      String localPart;
+      if (fieldExpression instanceof AxisExpression) {
+        AxisExpression ae = (AxisExpression) fieldExpression;
+        if (ae.getAxis() != AxisInfo.ATTRIBUTE)
+          throw new OptimizationFailureException("Could not convert ComparisonExpression to Query; "
+              + "axis of field expression is not an attribute axis");
+        NodeTest nodeTest = ae.getNodeTest();
+        if (!(nodeTest instanceof NameTest))
+          throw new OptimizationFailureException("Could not convert ComparisonExpression to Query; "
+              + "only fully qualified attribute names are supported in filter expression");
+       
+        attrName = nodeTest.getMatchingNodeName();
+        namespaceUri = attrName.getURI();
+        localPart = attrName.getLocalPart();
+      } else {
+        attrName = ((AttributeGetter) fieldExpression).getAttributeName().getStructuredQName();
+        namespaceUri = attrName.getURI();
+        localPart = attrName.getLocalPart();
+      }
       
       if (namespaceUri.equals(Definitions.NAMESPACE_VIRTUALATTR)) {
         NodeTest baseNodeTest = base.getNodeTest();
@@ -274,6 +287,11 @@ public class XMLIndexOptimizer extends Optimizer {
       nodeType = Type.ELEMENT;
       namespaceUri = name.getURI();
       localPart = name.getLocalPart();
+    } else if (fieldExpression instanceof AttributeGetter) {
+      nodeType = Type.ATTRIBUTE;
+      FingerprintedQName attrName = ((AttributeGetter) fieldExpression).getAttributeName();
+      namespaceUri = attrName.getURI();
+      localPart = attrName.getLocalPart();
     } else if (fieldExpression instanceof AxisExpression) {
       AxisExpression ae = (AxisExpression) fieldExpression;
       if (ae.getAxis() != AxisInfo.ATTRIBUTE)
@@ -315,10 +333,14 @@ public class XMLIndexOptimizer extends Optimizer {
       return comparison2QueryDef(base, (ComparisonExpression) expr, localVars);
     } else if (expr instanceof IntegratedFunctionCall) {
       return integratedExtensionCall2QueryDef((IntegratedFunctionCall) expr, localVars);
-    } else if (StringUtils.equals(expr.getExpressionName(), "exists")) {
+    } else if (expr.isCallOnSystemFunction("exists")) {
       return existsCall2QueryDef(base, expr);
-    } else if (StringUtils.equalsAny(expr.getExpressionName(), "starts-with", "ends-with", "contains")) {
-      return stringFunctionCall2QueryDef(base, expr, expr.getExpressionName(), localVars);
+    } else if (expr.isCallOnSystemFunction("starts-with")) {
+      return stringFunctionCall2QueryDef(base, expr, "starts-with", localVars);
+    } else if (expr.isCallOnSystemFunction("ends-with")) {
+      return stringFunctionCall2QueryDef(base, expr, "ends-with", localVars);
+    } else if (expr.isCallOnSystemFunction("contains")) {
+      return stringFunctionCall2QueryDef(base, expr, "contains", localVars);
     }
     
     throw new OptimizationFailureException("Error converting Expression to Query; expression type \"" + expr.getClass() + "\" is not supported to be optimized");    
@@ -349,7 +371,8 @@ public class XMLIndexOptimizer extends Optimizer {
     } else if (filter instanceof IntegratedFunctionCall && 
         ((IntegratedFunctionCall) filter).getFunction() instanceof CustomIndexExtensionFunctionCall) {
       return 1; 
-    } else if (StringUtils.equalsAny(filter.getExpressionName(), "exists", "starts-with", "ends-with", "contains")) {
+    } else if (filter.isCallOnSystemFunction("exists") || filter.isCallOnSystemFunction("starts-with") || 
+        filter.isCallOnSystemFunction("ends-with") || filter.isCallOnSystemFunction("contains") ) {
       Operand op = filter.operands().iterator().next();
       if (getFieldExpression(op.getChildExpression()) != null)
         return 1;

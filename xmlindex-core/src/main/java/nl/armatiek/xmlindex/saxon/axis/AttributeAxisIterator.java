@@ -41,7 +41,7 @@ public class AttributeAxisIterator implements AxisIterator, LastPositionFinder, 
     ArrayList<XMLIndexNodeInfo> attrs = new ArrayList<XMLIndexNodeInfo>();
     for (Attribute attr : ((Element) node).attributes) {
       XMLIndexNodeInfo attrNodeInfo = new XMLIndexNodeInfo(this.context, attr, contextNode);
-      if (nodeTest.matchesNode(attrNodeInfo))
+       if (nodeTest.matchesNode(attrNodeInfo))
         attrs.add(attrNodeInfo);
     }
     return attrs;

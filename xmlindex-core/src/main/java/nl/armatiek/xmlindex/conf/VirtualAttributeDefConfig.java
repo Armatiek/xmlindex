@@ -114,7 +114,7 @@ public class VirtualAttributeDefConfig {
     try {
       File xqueryFile = index.getIndexPath().resolve(Definitions.FILENAME_VIRTATTRMODULE).toFile();
       if (!xqueryFile.isFile())
-        FileUtils.writeStringToFile(xqueryFile, "xquery version \"3.0\";\n\n()", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(xqueryFile, "xquery version \"3.1\";\n\n()", StandardCharsets.UTF_8);
       Processor proc = new Processor(false);
       XQueryCompiler compiler = proc.newXQueryCompiler();
       XQueryExecutable xqueryExec = compiler.compile(xqueryFile); 

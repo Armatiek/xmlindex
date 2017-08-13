@@ -25,7 +25,6 @@ import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.Term;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Attr;
@@ -68,6 +67,7 @@ import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.conf.PluggableIndex;
 import nl.armatiek.xmlindex.conf.TypedValueDef;
 import nl.armatiek.xmlindex.conf.VirtualAttributeDef;
+import nl.armatiek.xmlindex.conf.VirtualAttributeDefConfig;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.node.HierarchyNode;
 import nl.armatiek.xmlindex.node.IndexRootElement;
@@ -99,6 +99,7 @@ public class DocumentIndexer {
   
   private final String USERDATA_KEY = "u";
   private final XMLIndex index;
+  //private final VirtualAttributeDefConfig vadConfig;
   private final int maxTermLength;
   private DocumentWrapper docWrapper;
   private long nodeCounter;
@@ -107,6 +108,7 @@ public class DocumentIndexer {
     this.index = index;
     this.nodeCounter = nodeCounter;
     this.maxTermLength = index.getMaxTermLength();
+    //this.vadConfig = index.getConfiguration().getVirtualAttributeConfig();
   }
   
   private void numberNode(Node node, byte depth) {
@@ -198,8 +200,9 @@ public class DocumentIndexer {
       this.docWrapper = new DocumentWrapper(elem.getOwnerDocument(), elem.getOwnerDocument().getBaseURI(), index.getSaxonConfiguration());
     NodeInfo nodeInfo = docWrapper.wrap(elem);
     
-    for (VirtualAttributeDef attrDef : attrDefs.values()) { 
-      XdmValue values = attrDef.getVirtualAttributeModule().callFunction(attrDef.getFunctionName(), new XdmValue[] { new XdmNode(nodeInfo) });
+    for (VirtualAttributeDef attrDef : attrDefs.values()) {
+      // TODO: handle error if function does not exist!
+      XdmValue values = index.getConfiguration().getVirtualAttributeConfig().getVirtualAttrsEvaluator().callFunction(attrDef.getFunctionName(), new XdmValue[] { new XdmNode(nodeInfo) });
       if (values instanceof XdmEmptySequence) 
         continue;
       

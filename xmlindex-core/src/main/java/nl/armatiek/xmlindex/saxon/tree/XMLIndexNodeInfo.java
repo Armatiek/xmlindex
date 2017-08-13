@@ -673,7 +673,7 @@ public class XMLIndexNodeInfo implements NodeInfo, VirtualNode /*, SteppingNode<
   private void loadAttributes() {
     if (attributes != null)
       return;
-    AttributeAxisIterator attrs = new AttributeAxisIterator(session, this, null);
+    AttributeAxisIterator attrs = new AttributeAxisIterator(session, this, AnyNodeTest.getInstance());
     XMLIndexNodeInfo nodeInfo;
     while ((nodeInfo = attrs.next()) != null)
       attributes.add(nodeInfo);
