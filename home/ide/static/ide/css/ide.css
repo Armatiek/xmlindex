@@ -37,6 +37,10 @@ html, body {
 #newFolderDlg label { margin-top: 0.5em; }
 #newFolderDlg input { width: 95%; }
 
+#newIndexDlg label, #newIndexDlg input, #newIndexDlg select { display:block; }
+#newIndexDlg label { margin-top: 0.5em; }
+#newIndexDlg input { width: 95%; }
+
 #statusPanel {
   padding: 5px;
   font-size: 90%;

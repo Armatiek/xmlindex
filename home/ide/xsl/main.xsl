@@ -35,6 +35,22 @@
         <link href="{$app-path}/dropzone/css/dropzone.min.css" rel="stylesheet"/>
       </head>
       <body> 
+        <div id="newIndexDlg" title="Create new index">
+          <form>
+            <fieldset class="ui-helper-reset">
+              <label for="indexName">Name of new index:</label>
+              <input type="text" name="indexName" id="indexName" class="ui-widget-content ui-corner-all"/>
+              <label for="maxTermLength">Maximum term length:</label>
+              <input type="number" min="32" name="maxTermLength" id="maxTermLength" class="ui-widget-content ui-corner-all" value="1024"/>
+              <label for="compression">Index compression:</label>
+              <select name="compression" id="compression" class="ui-widget-content ui-corner-all">
+                <option value="NO_COMPRESSION" selected="selected">No compression</option>
+                <option value="BEST_SPEED">Best speed</option>
+                <option value="BEST_COMPRESSION">Best compression</option>
+              </select>
+            </fieldset>
+          </form>
+        </div>
         <div id="newFileDlg" title="Create new file">
           <form>
             <fieldset class="ui-helper-reset">
@@ -72,6 +88,7 @@
                     </option>
                   </xsl:for-each>
                 </select>
+                <button id="newIndexBtn" style="margin-left:10px">New index</button>
                 <button id="saveBtn" style="margin-left:5px">Save</button>
                 <button id="runBtn">Run</button>
                 <button id="uploadBtn">Upload &amp; index</button>

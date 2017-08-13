@@ -11,6 +11,7 @@ declare namespace session="http://www.armatiek.nl/xmlindex/param/session";
 
 declare variable $config:development-mode as xs:boolean external;
 declare variable $config:home-dir as xs:string external;
+declare variable $config:index-dir as xs:string external;
 declare variable $session:session as item()? external := ();
 
 (:~
@@ -131,6 +132,22 @@ declare
   %output:method("text")
 function ide:uploaddocument($parts as item()*) as empty-sequence() {
   xmi:add-document("test", $parts[1])
+};
+
+declare
+  %rest:path("/createindex")
+  %rest:POST
+  %rest:form-param("name", "{$name}")
+  %rest:form-param("maxTermLength", "{$max-term-length}")
+  %rest:form-param("compression", "{$compression}")
+  %output:method("text")
+function ide:createindex($name as xs:string*, $max-term-length as xs:integer*, $compression as xs:string*) as xs:string? {
+  try {
+    let $new-index-dir as xs:string := $config:index-dir || file:dir-separator() || $name
+    return xmi:create-index($new-index-dir, $max-term-length, $compression)
+  } catch * {
+    "Error creating index: " || $err:description
+  }
 };
 
 ()

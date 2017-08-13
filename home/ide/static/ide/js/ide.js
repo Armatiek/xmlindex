@@ -4,6 +4,9 @@ var myLayout;
 
 var fileName = $("#fileName");
 var folderName = $("#folderName");
+var indexName = $("#indexName");
+var maxTermLength = $("#maxTermLength");
+var compression = $("#compression");
 
 function closeTab(tabObj) {
   var panelId = tabObj.closest("li").remove().attr("aria-controls");
@@ -101,6 +104,30 @@ var newFolderDlg = $("#newFolderDlg").dialog({
   }
 });
 
+var newIndexDlg = $("#newIndexDlg").dialog({
+  autoOpen: false,
+  resizable: false,
+  modal: true,
+  buttons: {
+    Create: function() {
+      $.post("ide/createindex", { name: indexName.val(), maxTermLength: maxTermLength.val(), compression: compression.val() }, function( data ) {
+        jqAlert(data, "Error creating index")
+      });
+      //
+      $(this).dialog("close");
+    },
+    Cancel: function() {
+      $(this).dialog("close");
+    }
+  },
+  open: function() {
+    $(this).parents('.ui-dialog-buttonpane button:eq(0)').focus(); 
+  },
+  close: function() {
+    document.forms[0].reset();
+  }
+});
+
 var saveConfirmDlg = $("#saveConfirmDlg").dialog({
   autoOpen: false,
   resizable: false,
@@ -121,7 +148,7 @@ var saveConfirmDlg = $("#saveConfirmDlg").dialog({
   },
   open: function() {
     $(this).parents('.ui-dialog-buttonpane button:eq(0)').focus(); 
-  },
+  }
 });
 
 var uploadDlg = $("#uploadDlg").dialog({
@@ -233,6 +260,24 @@ function setStatusMessage(messageHtml) {
   $("#statusPanel").html(messageHtml);
 }
 
+function jqAlert(outputMsg, titleMsg, onCloseCallback) {
+  if (!titleMsg)
+    titleMsg = 'Alert';
+  if (!outputMsg)
+    outputMsg = 'No Message to Display.';
+  $("<div></div>").html(outputMsg).dialog({
+    title: titleMsg,
+    resizable: false,
+    modal: true,
+    buttons: {
+      "OK": function () {
+        $(this).dialog("close");
+      }
+    },
+    close: onCloseCallback
+  });
+}
+
 $(function() {
 	
   $(window).on("beforeunload", function() {
@@ -316,6 +361,10 @@ $(function() {
     $("#tabs .ui-tabs-active a").data("editor").execCommand("replace");
   });
   
+   $('#newIndexBtn').on('click', function () {
+    newIndexDlg.dialog("open");
+  });
+  
   function customMenu(node) {
     var items = {
       openItem: {
@@ -360,7 +409,7 @@ $(function() {
           $.post("ide/deletefile", { path: node.id });
           $("#filesystem").jstree(true).refresh_node($("#filesystem").jstree(true).get_parent(node.id));
         }
-      },
+      }
     };
   
     if ($(node)[0].type == 'folder') {
