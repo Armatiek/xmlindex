@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2017 Saxonica Limited.
+// This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
+// If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 package nl.armatiek.xmlindex.saxon.axis;
 
 import java.util.HashSet;
@@ -67,6 +74,18 @@ import net.sf.saxon.z.IntIterator;
 import net.sf.saxon.z.IntSet;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
 
+/**
+ * An AxisExpression is always obtained by simplifying a PathExpression. It
+ * represents a PathExpression that starts either at the context node, and uses
+ * a simple node-test with no filters. For example "*", "title", "./item", "@*",
+ * or "ancestor::chapter*".
+ * <p/>
+ * <p>
+ * An AxisExpression delivers nodes in axis order (not in document order). To
+ * get nodes in document order, in the case of a reverse axis, the expression
+ * should be wrapped in a call on reverse().
+ * </p>
+ */
 public class ContextPassingAxisExpression extends Expression {
 
   private byte axis;
@@ -156,7 +175,7 @@ public class ContextPassingAxisExpression extends Expression {
     } else {
       staticInfo = contextInfo;
     }
-    Configuration config = getConfiguration();
+    Configuration config = visitor.getConfiguration();
     TypeHierarchy th = config.getTypeHierarchy();
     int relation = th.relationship(contextInfo.getItemType(), AnyNodeTest.getInstance());
 
@@ -219,7 +238,7 @@ public class ContextPassingAxisExpression extends Expression {
     UType testUType = test == null ? UType.ANY_NODE : test.getUType();
     if (targetUType.equals(UType.VOID)) {
       if (warnings) {
-        visitor.issueWarning("The " + AxisInfo.axisName[axis] + " axis starting at " + originUType.toStringWithIndefiniteArticle() + " node will never select anything", getLocation());
+        visitor.issueWarning("The " + AxisInfo.axisName[axis] + " axis starting at " + originUType.toStringWithIndefiniteArticle() + " will never select anything", getLocation());
       }
       return Literal.makeEmptySequence();
     }
@@ -286,7 +305,7 @@ public class ContextPassingAxisExpression extends Expression {
                 SchemaDeclaration decl = config.getElementDeclaration(outermostElementName);
                 if (decl == null) {
                   if (warnings) {
-                    visitor.issueWarning("Element " + config.getNamePool().getDisplayName(outermostElementName) + " is not declared in the schema", getLocation());
+                    visitor.issueWarning("Element " + config.getNamePool().getEQName(outermostElementName) + " is not declared in the schema", getLocation());
                   }
                   itemType = elementTest;
                 } else {
@@ -325,8 +344,6 @@ public class ContextPassingAxisExpression extends Expression {
       if (!env.getPackageData().isSchemaAware()) {
         SchemaType ct = test.getContentType();
         if (!(ct == AnyType.getInstance() || ct == Untyped.getInstance() || ct == AnySimpleType.getInstance() || ct == BuiltInAtomicType.ANY_ATOMIC || ct == BuiltInAtomicType.UNTYPED_ATOMIC || ct == BuiltInAtomicType.STRING)) {
-          // TODO: this test could be more precise, e.g. string is not possible
-          // for elements and attribute nodes
           if (warnings) {
             visitor.issueWarning("The " + AxisInfo.axisName[axis] + " axis will never select any typed nodes, " + "because the expression is being compiled in an environment that is not schema-aware", getLocation());
           }
@@ -477,7 +494,7 @@ public class ContextPassingAxisExpression extends Expression {
             }
             return Literal.makeEmptySequence();
           } else {
-            itemType = new CombinedNodeTest(test, Token.INTERSECT, new ContentTypeTest(Type.ELEMENT, schemaType, getConfiguration(), true));
+            itemType = new CombinedNodeTest(test, Token.INTERSECT, new ContentTypeTest(Type.ELEMENT, schemaType, config, true));
             computedCardinality = ((ComplexType) contentType).getElementParticleCardinality(childElement, true);
             ExpressionTool.resetStaticProperties(this);
             if (computedCardinality == StaticProperty.ALLOWS_ZERO) {
@@ -542,7 +559,7 @@ public class ContextPassingAxisExpression extends Expression {
               // return this;
             }
             if (usefulChildren.size() < children.size()) {
-              NodeTest childTest = makeUnionNodeTest(usefulChildren, getConfiguration().getNamePool());
+              NodeTest childTest = makeUnionNodeTest(usefulChildren, config.getNamePool());
               AxisExpression first = new AxisExpression(AxisInfo.CHILD, childTest);
               ExpressionTool.copyLocationInfo(this, first);
               byte nextAxis;
@@ -827,6 +844,26 @@ public class ContextPassingAxisExpression extends Expression {
       }
     }
   }
+  
+  /**
+   * Get the static type of the expression as a UType, following precisely the
+   * type inference rules defined in the XSLT 3.0 specification.
+   *
+   * @param contextItemType
+   *          the static type of the context item for the expression evaluation
+   * @return the static item type of the expression according to the XSLT 3.0
+   *         defined rules
+   */
+  @Override
+  public UType getStaticUType(UType contextItemType) {
+    // See W3C bug 30032
+    UType reachable = AxisInfo.getTargetUType(contextItemType, axis);
+    if (test == null) {
+      return reachable;
+    } else {
+      return reachable.intersection(test.getUType());
+    }
+  }
 
   /**
    * Determine the intrinsic dependencies of an expression, that is, those which
@@ -968,6 +1005,9 @@ public class ContextPassingAxisExpression extends Expression {
     return staticInfo.isPossiblyAbsent();
   }
 
+  public ContextItemStaticInfo getContextItemStaticInfo() {
+    return staticInfo;
+  }
   /**
    * Convert this expression to an equivalent XSLT pattern
    *
@@ -1162,6 +1202,10 @@ public class ContextPassingAxisExpression extends Expression {
     return fsb.toString();
   }
 
+  @Override
+  public String getStreamerName() {
+    return "AxisExpression";
+  }
   /**
    * Find any necessary preconditions for the satisfaction of this expression as
    * a set of boolean expressions to be evaluated on the context node
