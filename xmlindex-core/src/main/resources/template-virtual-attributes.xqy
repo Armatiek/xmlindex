@@ -1,4 +1,4 @@
-xquery version "3.0";
+xquery version "3.1";
 
 declare namespace va="http://www.armatiek.nl/xmlindex/virtualattribute";
 
