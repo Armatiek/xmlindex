@@ -20,35 +20,21 @@ package nl.armatiek.xmlindex.query;
 import net.sf.saxon.expr.Expression;
 import net.sf.saxon.type.ItemType;
 
-public class ComparisonQueryDef extends QueryDef {
+public final class ComparisonJoinQueryDef extends ComparisonQueryDef {
   
-  private String fieldName;
-  private ItemType itemType;
-  private int operator;
-  private Expression valueExpression;
+  public static int JOINTYPE_CHILD       = 1;
+  public static int JOINTYPE_DESCENDANT  = 1;
   
-  public ComparisonQueryDef(String fieldName, ItemType itemType, 
-      int operator, Expression valueExpression) {
-    this.fieldName = fieldName;
-    this.itemType = itemType;
-    this.operator = operator;
-    this.valueExpression = valueExpression;
+  private int joinType;
+  
+  public ComparisonJoinQueryDef(String fieldName, ItemType itemType, 
+      int operator, Expression valueExpression, int joinType) {
+    super(fieldName, itemType, operator, valueExpression);
+    this.joinType = joinType; 
   }
     
-  public String getFieldName() {
-    return fieldName;
-  }
-  
-  public ItemType getItemType() {
-    return itemType;
-  }
-
-  public int getOperator() {
-    return operator;
-  }
-  
-  public Expression getValueExpression() {
-    return valueExpression;
+  public int getJoinType() {
+    return joinType;
   }
   
 }

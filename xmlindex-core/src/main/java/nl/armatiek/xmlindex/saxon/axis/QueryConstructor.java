@@ -1,5 +1,6 @@
 package nl.armatiek.xmlindex.saxon.axis;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -19,6 +20,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.WildcardQuery;
+import org.apache.lucene.search.join.JoinUtil;
+import org.apache.lucene.search.join.ScoreMode;
 import org.apache.lucene.util.BytesRef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,6 +66,7 @@ import nl.armatiek.xmlindex.error.OptimizationFailureException;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.query.BooleanClauseDef;
 import nl.armatiek.xmlindex.query.BooleanQueryDef;
+import nl.armatiek.xmlindex.query.ComparisonJoinQueryDef;
 import nl.armatiek.xmlindex.query.ComparisonQueryDef;
 import nl.armatiek.xmlindex.query.CustomIndexQueryDef;
 import nl.armatiek.xmlindex.query.ExistsQueryDef;
@@ -136,6 +140,24 @@ public class QueryConstructor {
       XPathContext xpathContext) throws XPathException {
     Sequence value = expr2Sequence(queryDef.getValueExpression(), xpathContext);
     return constructQuery(session.getIndex(), queryDef, value);
+  }
+  
+  public static Query comparisonJoinQueryDefToQuery(ComparisonJoinQueryDef queryDef, Session session, 
+      XPathContext xpathContext) throws XPathException {
+    Query joinQuery;
+    try {
+      joinQuery = JoinUtil.createJoinQuery(
+          Definitions.FIELDNAME_PARENT, 
+          false, 
+          Definitions.FIELDNAME_LEFT, 
+          Long.class,
+          comparisonQueryDefToQuery(queryDef, session, xpathContext), 
+          session.getIndexSearcher(), 
+          ScoreMode.None);
+    } catch (IOException ioe) {
+      throw new XPathException("Error creating join query", ioe);
+    }
+    return joinQuery;
   }
   
   public static Query fullTextQueryDefToQuery(FullTextQueryDef queryDef, Session session, 
@@ -264,7 +286,9 @@ public class QueryConstructor {
       addNodeTestClauses(queryBuilder, wrappedNodeTest, Occur.FILTER, session, xpathContext); 
       Query query;
       QueryDef queryDef = ((FilterNodeTest) nodeTest).getFilterQueryDef();
-      if (queryDef instanceof ComparisonQueryDef)
+      if (queryDef instanceof ComparisonJoinQueryDef)
+        query = comparisonJoinQueryDefToQuery((ComparisonJoinQueryDef) queryDef, session, xpathContext);
+      else if (queryDef instanceof ComparisonQueryDef)
         query = comparisonQueryDefToQuery((ComparisonQueryDef) queryDef, session, xpathContext);
       else if (queryDef instanceof FullTextQueryDef)
         query = fullTextQueryDefToQuery((FullTextQueryDef) queryDef, session, xpathContext);

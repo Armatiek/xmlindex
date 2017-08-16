@@ -19,7 +19,10 @@ package nl.armatiek.xmlindex.saxon.conf;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.expr.parser.Optimizer;
+import net.sf.saxon.functions.registry.BuiltInFunctionSet;
+import net.sf.saxon.functions.registry.XPath31FunctionSet;
 import nl.armatiek.xmlindex.XMLIndex;
+import nl.armatiek.xmlindex.saxon.functionsets.OverrideFunctionSet;
 import nl.armatiek.xmlindex.saxon.optim.XMLIndexOptimizer;
 
 public class XMLIndexConfiguration extends Configuration {
@@ -33,6 +36,13 @@ public class XMLIndexConfiguration extends Configuration {
   @Override
   public Optimizer obtainOptimizer() {
     return new XMLIndexOptimizer(this.context, this);
+  }
+  
+  @Override
+  public BuiltInFunctionSet getXPath31FunctionSet() {
+    XPath31FunctionSet fs = XPath31FunctionSet.getInstance();
+    fs.importFunctionSet(OverrideFunctionSet.getInstance());
+    return fs;
   }
 
 }

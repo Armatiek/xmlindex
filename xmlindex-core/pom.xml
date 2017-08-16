@@ -29,18 +29,8 @@
       <artifactId>lucene-queryparser</artifactId>
     </dependency>
     <dependency>
-      <groupId>net.sf.saxon</groupId>
-      <artifactId>Saxon-HE</artifactId>
-    </dependency>
-    <!--
-    <dependency>
-      <groupId>net.sf.saxon</groupId>
-      <artifactId>Saxon-HE-xqj</artifactId>
-    </dependency>
-    -->
-    <dependency>
-      <groupId>javax.xml.xquery</groupId>
-      <artifactId>xqj-api</artifactId>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-join</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-io</groupId>

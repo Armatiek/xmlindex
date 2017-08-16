@@ -28,7 +28,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -49,7 +48,6 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.om.AxisInfo;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.pattern.NodeKindTest;
-import net.sf.saxon.query.XQueryFunction;
 import net.sf.saxon.s9api.Destination;
 import net.sf.saxon.s9api.MessageListener;
 import net.sf.saxon.s9api.QName;
@@ -73,6 +71,7 @@ import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.node.DocumentElement;
 import nl.armatiek.xmlindex.node.IndexRootElement;
 import nl.armatiek.xmlindex.saxon.XMLIndexURIResolver;
+import nl.armatiek.xmlindex.saxon.optim.XMLIndexOptimizer;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexTreeInfo;
 import nl.armatiek.xmlindex.storage.ReindexCollector;
@@ -164,6 +163,8 @@ public class Session {
     if (errorListener != null)
       comp.setErrorListener(errorListener);
     XQueryExecutable exec = comp.compile(xquery);
+    XMLIndexOptimizer.optimize(exec.getUnderlyingCompiledQuery().getExpression());
+    // exec.explain(index.getSaxonProcessor().newSerializer(System.out));
     XQueryEvaluator evaluator = exec.load();
     Map<QName, XdmValue> combinedParams;
     if (params == null)

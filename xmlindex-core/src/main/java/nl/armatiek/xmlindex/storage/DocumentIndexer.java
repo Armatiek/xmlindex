@@ -89,6 +89,7 @@ public class DocumentIndexer {
   private final StoredField rightField_sf = new StoredField(Definitions.FIELDNAME_RIGHT, (long) 0);
   private final LongPoint parentField_lp = new LongPoint(Definitions.FIELDNAME_PARENT, (long) 0);
   private final StoredField parentField_sf = new StoredField(Definitions.FIELDNAME_PARENT, (long) 0);
+  private final NumericDocValuesField parentField_dv = new NumericDocValuesField(Definitions.FIELDNAME_PARENT, (long) 0);
   private final Stack<StringField> availableFieldNameFields = new Stack<StringField>();
   private final Stack<StringField> usedFieldNameFields = new Stack<StringField>();
   private final StringField valueField = new StringField(Definitions.FIELDNAME_VALUE, "", Field.Store.NO);
@@ -322,6 +323,8 @@ public class DocumentIndexer {
     doc.add(parentField_lp);
     parentField_sf.setLongValue(parent);
     doc.add(parentField_sf);
+    parentField_dv.setLongValue(parent);
+    doc.add(parentField_dv);
     
     docLeftField_sf.setLongValue(docLeft);
     doc.add(docLeftField_sf);
@@ -459,8 +462,10 @@ public class DocumentIndexer {
             long parent = ((StoredField) field).numericValue().longValue();
             parentField_lp.setLongValue(parent);
             parentField_sf.setLongValue(parent);
+            parentField_dv.setLongValue(parent);
             newDoc.add(parentField_lp);
             newDoc.add(parentField_sf);
+            newDoc.add(parentField_dv);
             break;
           case Definitions.FIELDNAME_DEPTH:
             depthField.setStringValue(field.stringValue());

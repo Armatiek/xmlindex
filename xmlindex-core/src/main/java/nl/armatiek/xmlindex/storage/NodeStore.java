@@ -277,6 +277,7 @@ public class NodeStore {
         doc.add(new StoredField(Definitions.FIELDNAME_RIGHT, Definitions.MAX_LONG));
         doc.add(new LongPoint(Definitions.FIELDNAME_PARENT, -1));
         doc.add(new StoredField(Definitions.FIELDNAME_PARENT, -1));
+        doc.add(new NumericDocValuesField(Definitions.FIELDNAME_PARENT, -1));
         addLuceneDocument(doc);
         
         /* Document element node: */
@@ -290,6 +291,7 @@ public class NodeStore {
         doc.add(new StoredField(Definitions.FIELDNAME_RIGHT, Definitions.MAX_LONG-1));
         doc.add(new LongPoint(Definitions.FIELDNAME_PARENT, 0));
         doc.add(new StoredField(Definitions.FIELDNAME_PARENT, 0));
+        doc.add(new NumericDocValuesField(Definitions.FIELDNAME_PARENT, 0));
         doc.add(new StringField(Definitions.FIELDNAME_FIELDNAMES, "1_0", Field.Store.NO));
         doc.add(new StringField("1_0", "", Field.Store.YES));
         addLuceneDocument(doc);

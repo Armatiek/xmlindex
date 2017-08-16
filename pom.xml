@@ -60,6 +60,9 @@
     </profile>
     <profile>
       <id>web</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
       <modules>
         <module>xmlindex-core</module>
         <module>xmlindex-web</module>
@@ -67,14 +70,89 @@
     </profile>
     <profile>
       <id>all</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
       <modules>
         <module>xmlindex-core</module>
         <module>xmlindex-web</module>
         <module>xmlindex-spatial</module>
       </modules>
+    </profile>
+    <profile>
+      <!-- Saxon Home Edition (HE): -->
+      <id>Saxon-HE</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>net.sf.saxon</groupId>
+          <artifactId>Saxon-HE</artifactId>            
+          <version>${saxon.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <!--
+      Saxon Professional Edition (PE):
+      - Purchase PE license from http://www.saxonica.com/
+      - Download PE package from http://www.saxonica.com/download/SaxonPE9-7-0-7J.zip
+      - Extract and register jars in local Maven repository using the following commands:
+          mvn install:install-file -Dfile=saxon9pe.jar -DgroupId=net.sf.saxon -DartifactId=Saxon-PE -Dversion=9.7.0-7 -Dpackaging=jar
+          mvn install:install-file -Dfile=saxon9-icu.jar -DgroupId=net.sf.saxon -DartifactId=Saxon-PE-icu -Dversion=9.7.0-7 -Dpackaging=jar
+          mvn install:install-file -Dfile=saxon9-sql.jar -DgroupId=net.sf.saxon -DartifactId=Saxon-PE-sql -Dversion=9.7.0-7 -Dpackaging=jar
+      - Place license file saxon-license.lic in <<xslweb.home>>/config
+      - Build XSLWeb with Saxon-PE profile:
+          mvn -PSaxon-PE clean install
+      -->
+      <id>Saxon-PE</id>
+      <dependencies>
+        <dependency>
+          <groupId>net.sf.saxon</groupId>
+          <artifactId>Saxon-PE</artifactId>            
+          <version>${saxon.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.saxon</groupId>
+          <artifactId>Saxon-PE-icu</artifactId>            
+          <version>${saxon.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.saxon</groupId>
+          <artifactId>Saxon-PE-sql</artifactId>            
+          <version>${saxon.version}</version>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <!--
+      Saxon Enterprise Edition (EE):
+      - Purchase EE license from http://www.saxonica.com/
+      - Download EE package from http://www.saxonica.com/download/SaxonEE9-7-0-7J.zip
+      - Extract and register jars in local Maven repository using the following commands:
+          mvn install:install-file -Dfile=saxon9ee.jar -DgroupId=net.sf.saxon -DartifactId=Saxon-EE -Dversion=9.7.0-7 -Dpackaging=jar
+          mvn install:install-file -Dfile=saxon9-icu.jar -DgroupId=net.sf.saxon -DartifactId=Saxon-EE-icu -Dversion=9.7.0-7 -Dpackaging=jar
+          mvn install:install-file -Dfile=saxon9-sql.jar -DgroupId=net.sf.saxon -DartifactId=Saxon-EE-sql -Dversion=9.7.0-7 -Dpackaging=jar
+      - Place license file saxon-license.lic in <<xslweb.home>>/config
+      - Build XSLWeb with Saxon-EE profile:
+          mvn -PSaxon-EE clean install
+      -->
+      <id>Saxon-EE</id>
+      <dependencies>
+        <dependency>
+          <groupId>net.sf.saxon</groupId>
+          <artifactId>Saxon-EE</artifactId>            
+          <version>${saxon.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.saxon</groupId>
+          <artifactId>Saxon-EE-icu</artifactId>            
+          <version>${saxon.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>net.sf.saxon</groupId>
+          <artifactId>Saxon-EE-sql</artifactId>            
+          <version>${saxon.version}</version>
+        </dependency>
+      </dependencies>
     </profile>
   </profiles>
 
@@ -114,26 +192,10 @@
         <artifactId>lucene-queryparser</artifactId>
         <version>${lucene.version}</version>
       </dependency>
-      
-      <!-- Saxon: -->
       <dependency>
-        <groupId>net.sf.saxon</groupId>
-        <artifactId>Saxon-HE</artifactId>
-        <version>${saxon.version}</version>
-      </dependency>
-      <!--
-      <dependency>
-        <groupId>net.sf.saxon</groupId>
-        <artifactId>Saxon-HE-xqj</artifactId>
-        <version>${saxon.version}</version>
-      </dependency>
-      -->
-      
-      <!-- XQJ -->
-      <dependency>
-        <groupId>javax.xml.xquery</groupId>
-        <artifactId>xqj-api</artifactId>
-        <version>1.0</version>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-join</artifactId>
+        <version>${lucene.version}</version>
       </dependency>
       
       <!-- Apache commons: -->

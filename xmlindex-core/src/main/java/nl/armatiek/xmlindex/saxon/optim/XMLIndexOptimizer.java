@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +29,8 @@ import net.sf.saxon.expr.Literal;
 import net.sf.saxon.expr.LocalVariableReference;
 import net.sf.saxon.expr.Operand;
 import net.sf.saxon.expr.OrExpression;
+import net.sf.saxon.expr.SlashExpression;
+import net.sf.saxon.expr.SystemFunctionCall;
 import net.sf.saxon.expr.VariableReference;
 import net.sf.saxon.expr.parser.ExpressionVisitor;
 import net.sf.saxon.expr.parser.Optimizer;
@@ -53,6 +57,7 @@ import nl.armatiek.xmlindex.error.OptimizationFailureException;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.extensions.CustomIndexExtensionFunctionCall;
 import nl.armatiek.xmlindex.query.BooleanQueryDef;
+import nl.armatiek.xmlindex.query.ComparisonJoinQueryDef;
 import nl.armatiek.xmlindex.query.ComparisonQueryDef;
 import nl.armatiek.xmlindex.query.CustomIndexQueryDef;
 import nl.armatiek.xmlindex.query.ExistsQueryDef;
@@ -61,6 +66,7 @@ import nl.armatiek.xmlindex.query.QueryDef;
 import nl.armatiek.xmlindex.query.StringFunctionQueryDef;
 import nl.armatiek.xmlindex.saxon.axis.ContextPassingAxisExpression;
 import nl.armatiek.xmlindex.saxon.axis.FilterNodeTest;
+import nl.armatiek.xmlindex.saxon.functions.xmlindex.Count;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.LocalVariableReferencer;
 
 public class XMLIndexOptimizer extends Optimizer {
@@ -72,6 +78,26 @@ public class XMLIndexOptimizer extends Optimizer {
   public XMLIndexOptimizer(XMLIndex index, Configuration config) {
     super(config);
     this.index = index;
+  }
+    
+  private boolean isChildAxisExpressionWithElementNameTest(Expression expr) {
+    AxisExpression ae;
+    return (expr instanceof AxisExpression) && 
+        ((ae = (AxisExpression) expr)).getAxis() == AxisInfo.CHILD && isElementNameTest(ae.getNodeTest());
+  }
+  
+  private boolean isAttributeAxisExpressionWithAttributeNameTest(Expression expr) {
+    AxisExpression ae;
+    return (expr instanceof AxisExpression) && 
+        ((ae = (AxisExpression) expr)).getAxis() == AxisInfo.ATTRIBUTE && isAttributeNameTest(ae.getNodeTest());
+  }
+  
+  private boolean isElementNameTest(NodeTest nodeTest) {
+    return (nodeTest instanceof NameTest) && ((NameTest) nodeTest).getNodeKind() == Type.ELEMENT;
+  }
+  
+  private boolean isAttributeNameTest(NodeTest nodeTest) {
+    return (nodeTest instanceof NameTest) && ((NameTest) nodeTest).getNodeKind() == Type.ATTRIBUTE;
   }
   
   private QueryDef booleanExpression2QueryDef(AxisExpression base, BooleanExpression expr, 
@@ -105,6 +131,8 @@ public class XMLIndexOptimizer extends Optimizer {
     if (expr instanceof AxisExpression && ((AxisExpression) expr).getAxis() == AxisInfo.ATTRIBUTE)  // E[@attr]
       return expr;
     if (expr instanceof ContextItemExpression) // E[.]
+      return expr;
+    if (isChildAxisExpressionWithElementNameTest(expr))  // E[elem]
       return expr;
     if (expr instanceof Atomizer) {
       Operand op = ((Atomizer) expr).operands().iterator().next();
@@ -168,14 +196,12 @@ public class XMLIndexOptimizer extends Optimizer {
     String fieldName;
     ItemType itemType = null;
     
+    NodeTest baseNodeTest = base.getNodeTest();
+    if (!isElementNameTest(baseNodeTest))
+      throw new OptimizationFailureException("The base axis expression does not select elements on fully qualified names");
+      
     if (fieldExpression instanceof ContextItemExpression) { 
-      NodeTest baseNodeTest = base.getNodeTest();
-      if (!(baseNodeTest instanceof NameTest))
-        throw new OptimizationFailureException("Could not convert ComparisonExpression to Query; "
-            + "only fully qualified element names are supported in base expression (no asterisk allowed)");
-      if (((NameTest) baseNodeTest).getNodeKind() != Type.ELEMENT)
-        throw new OptimizationFailureException("Could not convert ComparisonExpression to Query; "
-            + "context item in filter expression must be an element node");
+      /* E[.] */
       StructuredQName name = baseNodeTest.getMatchingNodeName();
       String namespaceUri = name.getURI();
       String localPart = name.getLocalPart();
@@ -188,20 +214,14 @@ public class XMLIndexOptimizer extends Optimizer {
               valueExpression.toShortString(), name.getDisplayName()));
       }
       fieldName = getFieldName(Node.ELEMENT_NODE, namespaceUri, localPart, itemType);
-    } else if (fieldExpression instanceof AxisExpression || fieldExpression instanceof AttributeGetter) {
+    } else if (isAttributeAxisExpressionWithAttributeNameTest(fieldExpression) || fieldExpression instanceof AttributeGetter) {
+      /* E[@attr] */
       StructuredQName attrName;
       String namespaceUri;
       String localPart;
       if (fieldExpression instanceof AxisExpression) {
         AxisExpression ae = (AxisExpression) fieldExpression;
-        if (ae.getAxis() != AxisInfo.ATTRIBUTE)
-          throw new OptimizationFailureException("Could not convert ComparisonExpression to Query; "
-              + "axis of field expression is not an attribute axis");
-        NodeTest nodeTest = ae.getNodeTest();
-        if (!(nodeTest instanceof NameTest))
-          throw new OptimizationFailureException("Could not convert ComparisonExpression to Query; "
-              + "only fully qualified attribute names are supported in filter expression");
-       
+        NameTest nodeTest = (NameTest) ae.getNodeTest();
         attrName = nodeTest.getMatchingNodeName();
         namespaceUri = attrName.getURI();
         localPart = attrName.getLocalPart();
@@ -212,10 +232,6 @@ public class XMLIndexOptimizer extends Optimizer {
       }
       
       if (namespaceUri.equals(Definitions.NAMESPACE_VIRTUALATTR)) {
-        NodeTest baseNodeTest = base.getNodeTest();
-        if (!(baseNodeTest instanceof NameTest))
-          throw new OptimizationFailureException("Could not convert ComparisonExpression to Query; "
-              + "for virtual attributes only fully qualified element names are supported in base expression (no asterisk allowed)");;
         StructuredQName baseName = baseNodeTest.getMatchingNodeName();
         Map<String, VirtualAttributeDef> attrDefs = index.getConfiguration().getVirtualAttributeConfig().getForElement(new QName(baseName.getURI(), baseName.getLocalPart()));
         VirtualAttributeDef attrDef;
@@ -241,11 +257,16 @@ public class XMLIndexOptimizer extends Optimizer {
         }
         fieldName = getFieldName(Node.ATTRIBUTE_NODE, namespaceUri, localPart, itemType);
       }
-      
-    } else {
-      throw new OptimizationFailureException("Could not convert ComparisonExpression to Query; "
-          + "unable to determine field in comparison, only attribute AxisExpression or ContextItemExpression are supported");
-    }
+    } else if (isChildAxisExpressionWithElementNameTest(fieldExpression)) {
+      AxisExpression ae = (AxisExpression) fieldExpression;
+      NameTest nodeTest = (NameTest) ae.getNodeTest();
+      StructuredQName elemName = nodeTest.getMatchingNodeName();
+      String namespaceUri = elemName.getURI();
+      String localPart = elemName.getLocalPart();
+      fieldName = getFieldName(Node.ELEMENT_NODE, namespaceUri, localPart, itemType);
+      return new ComparisonJoinQueryDef(fieldName, itemType, operator, valueExpression, ComparisonJoinQueryDef.JOINTYPE_CHILD);
+    } else
+      throw new OptimizationFailureException("Could not convert ComparisonExpression \"" + fieldExpression.toString() + "\" to Query; ");
     
     if (itemType != null && !Type.isSubType((AtomicType) itemType, (AtomicType) valueExpression.getItemType())) {
       if (itemType.equals(Type.ITEM))
@@ -277,12 +298,10 @@ public class XMLIndexOptimizer extends Optimizer {
     int nodeType;
     String namespaceUri;
     String localPart;
-    if (fieldExpression instanceof ContextItemExpression) { 
+    if (fieldExpression instanceof ContextItemExpression) {
+      if (!isElementNameTest(base.getNodeTest()))
+        throw new OptimizationFailureException("Optimization of context item expression is only supported if the base axis expression refers to a fully qualified element name");
       NodeTest baseNodeTest = base.getNodeTest();
-      if (!(baseNodeTest instanceof NameTest))
-        throw new OptimizationFailureException("Only fully qualified element names are supported");
-      if (((NameTest) baseNodeTest).getNodeKind() != Type.ELEMENT)
-        throw new OptimizationFailureException("Context item is not an element");
       StructuredQName name = baseNodeTest.getMatchingNodeName();
       nodeType = Type.ELEMENT;
       namespaceUri = name.getURI();
@@ -294,15 +313,22 @@ public class XMLIndexOptimizer extends Optimizer {
       localPart = attrName.getLocalPart();
     } else if (fieldExpression instanceof AxisExpression) {
       AxisExpression ae = (AxisExpression) fieldExpression;
-      if (ae.getAxis() != AxisInfo.ATTRIBUTE)
-        throw new OptimizationFailureException("Predicate expression is not an attribute axis expression");
       NodeTest nodeTest = ae.getNodeTest();
-      if (!(nodeTest instanceof NameTest))
-        throw new OptimizationFailureException("Only fully qualified attribute names are supported");  
-      StructuredQName attrName = nodeTest.getMatchingNodeName();
-      nodeType = Type.ATTRIBUTE;
-      namespaceUri = attrName.getURI();
-      localPart = attrName.getLocalPart();
+      StructuredQName name;
+      if (ae.getAxis() == AxisInfo.ATTRIBUTE) {
+        if (!(nodeTest instanceof NameTest))
+          throw new OptimizationFailureException("Attribute axis expression does contain fully qualified attribute name");  
+        name = nodeTest.getMatchingNodeName();
+        nodeType = Type.ATTRIBUTE;
+      } else if (ae.getAxis() == AxisInfo.CHILD) {
+        if (!(isElementNameTest(nodeTest)))
+          throw new OptimizationFailureException("Child axis expression does not contain fully qualified element name"); 
+        name = nodeTest.getMatchingNodeName();
+        nodeType = Type.ATTRIBUTE;
+      } else 
+        throw new OptimizationFailureException("Predicate expression is not an attribute or child axis expression");
+      namespaceUri = name.getURI();
+      localPart = name.getLocalPart();
     } else
       throw new OptimizationFailureException("Could not determine fieldname");
     return getFieldName(nodeType, namespaceUri, localPart, null);
@@ -417,12 +443,30 @@ public class XMLIndexOptimizer extends Optimizer {
         newExpr = newBase;
       }
       logger.info("Successfully optimized filter expression '" + exprStr + "'");
+      newExpr.setExtraProperty("isOptimized", Boolean.TRUE);
       return newExpr;
     } catch (OptimizationFailureException ofe) {
       logger.info("Unable to optimize filter expression '" + exprStr + "'. " + ofe.getMessage());
       return super.tryIndexedFilter(f, visitor, indexFirstOperand, contextIsDoc);
     } catch (XPathException xpe) {
       throw new XMLIndexException("Error optimizing filter expression '" + exprStr + "'", xpe);
+    }
+  }
+  
+  public static void optimize(Expression exp) {
+    if (exp instanceof SystemFunctionCall && ((SystemFunctionCall) exp).getTargetFunction() instanceof Count) {
+      SystemFunctionCall call = (SystemFunctionCall) exp;
+      if (call.getOperanda().getOperandExpression(0) instanceof SlashExpression) {
+        SlashExpression se = (SlashExpression) call.getOperanda().getOperandExpression(0);
+        if (BooleanUtils.isTrue((Boolean) se.getActionExpression().getExtraProperty("isOptimized"))) {
+          call.getOperanda().setOperand(0, se.getActionExpression());
+          return;
+        }
+      }
+    }
+    for (Operand info : exp.operands()) {
+      Expression childExpression = info.getChildExpression();
+      optimize(childExpression);
     }
   }
   
