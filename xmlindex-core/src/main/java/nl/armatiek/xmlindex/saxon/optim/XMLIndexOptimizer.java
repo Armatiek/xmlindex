@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +18,7 @@ import net.sf.saxon.expr.Atomizer;
 import net.sf.saxon.expr.AttributeGetter;
 import net.sf.saxon.expr.AxisExpression;
 import net.sf.saxon.expr.BooleanExpression;
+import net.sf.saxon.expr.CardinalityChecker;
 import net.sf.saxon.expr.CastExpression;
 import net.sf.saxon.expr.CastingExpression;
 import net.sf.saxon.expr.ComparisonExpression;
@@ -35,6 +35,7 @@ import net.sf.saxon.expr.VariableReference;
 import net.sf.saxon.expr.parser.ExpressionVisitor;
 import net.sf.saxon.expr.parser.Optimizer;
 import net.sf.saxon.expr.parser.Token;
+import net.sf.saxon.functions.Count;
 import net.sf.saxon.functions.IntegratedFunctionCall;
 import net.sf.saxon.lib.ExtensionFunctionCall;
 import net.sf.saxon.om.AxisInfo;
@@ -57,16 +58,15 @@ import nl.armatiek.xmlindex.error.OptimizationFailureException;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.extensions.CustomIndexExtensionFunctionCall;
 import nl.armatiek.xmlindex.query.BooleanQueryDef;
-import nl.armatiek.xmlindex.query.ComparisonJoinQueryDef;
 import nl.armatiek.xmlindex.query.ComparisonQueryDef;
 import nl.armatiek.xmlindex.query.CustomIndexQueryDef;
 import nl.armatiek.xmlindex.query.ExistsQueryDef;
 import nl.armatiek.xmlindex.query.FullTextQueryDef;
 import nl.armatiek.xmlindex.query.QueryDef;
+import nl.armatiek.xmlindex.query.QueryDefWithRelation;
 import nl.armatiek.xmlindex.query.StringFunctionQueryDef;
 import nl.armatiek.xmlindex.saxon.axis.ContextPassingAxisExpression;
 import nl.armatiek.xmlindex.saxon.axis.FilterNodeTest;
-import nl.armatiek.xmlindex.saxon.functions.xmlindex.Count;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.LocalVariableReferencer;
 
 public class XMLIndexOptimizer extends Optimizer {
@@ -98,6 +98,18 @@ public class XMLIndexOptimizer extends Optimizer {
   
   private boolean isAttributeNameTest(NodeTest nodeTest) {
     return (nodeTest instanceof NameTest) && ((NameTest) nodeTest).getNodeKind() == Type.ATTRIBUTE;
+  }
+  
+  private int getRelation(Expression expr) {
+    if (isChildAxisExpressionWithElementNameTest(expr))
+      return QueryDefWithRelation.RELATION_CHILDELEM;
+    return QueryDefWithRelation.RELATION_ATTR;
+  }
+  
+  private int getFieldNamePrefix(Expression expr) {
+    if (isChildAxisExpressionWithElementNameTest(expr))
+      return Type.ELEMENT;
+    return Type.ATTRIBUTE;
   }
   
   private QueryDef booleanExpression2QueryDef(AxisExpression base, BooleanExpression expr, 
@@ -134,16 +146,18 @@ public class XMLIndexOptimizer extends Optimizer {
       return expr;
     if (isChildAxisExpressionWithElementNameTest(expr))  // E[elem]
       return expr;
-    if (expr instanceof Atomizer) {
-      Operand op = ((Atomizer) expr).operands().iterator().next();
+    if (expr instanceof Atomizer || 
+        expr instanceof CastingExpression || 
+        expr instanceof CardinalityChecker || 
+        expr instanceof AtomicSequenceConverter) {
+      Operand op = expr.operands().iterator().next();
       if (op != null)
         return getFieldExpression(op.getChildExpression());
     }
-    if (expr instanceof CastingExpression)
-      return getFieldExpression(((CastingExpression) expr).operands().iterator().next().getChildExpression());
+    /*
     if (expr instanceof AtomicSequenceConverter)
       return getFieldExpression(((AtomicSequenceConverter) expr).getBaseExpression());
-    // if (expr instanceof Contains || expr instanceof StartsWith || expr instanceof EndsWith)
+    */
     return null;        
   }
   
@@ -192,6 +206,8 @@ public class XMLIndexOptimizer extends Optimizer {
     
     if (valueExpression instanceof LocalVariableReference)
       localVars.add((LocalVariableReference) valueExpression);
+    
+    int relation = getRelation(fieldExpression);
     
     String fieldName;
     ItemType itemType = null;
@@ -243,7 +259,7 @@ public class XMLIndexOptimizer extends Optimizer {
           if (operator != Token.FEQ && operator != Token.EQUALS)
             throw new XPathException(String.format("Only the operator \"=\" is supported in the "
                 + "full text search expression \"%s\"", fieldExpression.toShortString()));
-          return new FullTextQueryDef(fieldName, valueExpression, attrDef.getQueryAnalyzer());
+          return new FullTextQueryDef(fieldName, valueExpression, attrDef.getQueryAnalyzer(), relation);
         }
         itemType = attrDef.getItemType();
       } else {
@@ -264,7 +280,7 @@ public class XMLIndexOptimizer extends Optimizer {
       String namespaceUri = elemName.getURI();
       String localPart = elemName.getLocalPart();
       fieldName = getFieldName(Node.ELEMENT_NODE, namespaceUri, localPart, itemType);
-      return new ComparisonJoinQueryDef(fieldName, itemType, operator, valueExpression, ComparisonJoinQueryDef.JOINTYPE_CHILD);
+      return new ComparisonQueryDef(fieldName, itemType, operator, valueExpression, QueryDefWithRelation.RELATION_CHILDELEM);
     } else
       throw new OptimizationFailureException("Could not convert ComparisonExpression \"" + fieldExpression.toString() + "\" to Query; ");
     
@@ -277,7 +293,7 @@ public class XMLIndexOptimizer extends Optimizer {
             + "\"" + fieldExpression.toShortString() + "\" does not match the type of the actual item");
     }
     
-    return new ComparisonQueryDef(fieldName, itemType, operator, valueExpression);
+    return new ComparisonQueryDef(fieldName, itemType, operator, valueExpression, relation);
   }
   
   private QueryDef integratedExtensionCall2QueryDef(IntegratedFunctionCall expr, List<LocalVariableReference> localVars) {
@@ -324,7 +340,7 @@ public class XMLIndexOptimizer extends Optimizer {
         if (!(isElementNameTest(nodeTest)))
           throw new OptimizationFailureException("Child axis expression does not contain fully qualified element name"); 
         name = nodeTest.getMatchingNodeName();
-        nodeType = Type.ATTRIBUTE;
+        nodeType = Type.ELEMENT;
       } else 
         throw new OptimizationFailureException("Predicate expression is not an attribute or child axis expression");
       namespaceUri = name.getURI();
@@ -337,7 +353,7 @@ public class XMLIndexOptimizer extends Optimizer {
   private QueryDef existsCall2QueryDef(AxisExpression base, Expression functionExpr) {
     Expression predicate = functionExpr.operands().iterator().next().getChildExpression();
     String fieldName = getFieldName(base, predicate);
-    return new ExistsQueryDef(fieldName);
+    return new ExistsQueryDef(fieldName, getRelation(predicate));
   }
   
   private QueryDef stringFunctionCall2QueryDef(AxisExpression base, Expression functionExpr, 
@@ -348,7 +364,7 @@ public class XMLIndexOptimizer extends Optimizer {
     if (valueExpression instanceof LocalVariableReference)
       localVars.add((LocalVariableReference) valueExpression);
     String fieldName = getFieldName(base, fieldExpression);
-    return new StringFunctionQueryDef(fieldName, valueExpression, functionName);
+    return new StringFunctionQueryDef(fieldName, valueExpression, functionName, getRelation(fieldExpression));
   }
   
   private QueryDef expression2QueryDef(AxisExpression base, Expression expr, 

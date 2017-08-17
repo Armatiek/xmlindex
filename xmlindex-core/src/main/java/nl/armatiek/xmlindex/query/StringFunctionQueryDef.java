@@ -19,13 +19,15 @@ package nl.armatiek.xmlindex.query;
 
 import net.sf.saxon.expr.Expression;
 
-public final class StringFunctionQueryDef extends QueryDef {
+public final class StringFunctionQueryDef extends QueryDefWithRelation {
   
   private String fieldName;
   private Expression valueExpression;
   private String functionName;
   
-  public StringFunctionQueryDef(String fieldName, Expression valueExpression, String functionName) { 
+  public StringFunctionQueryDef(String fieldName, Expression valueExpression, 
+      String functionName, int relation) { 
+    super(relation);
     this.fieldName = fieldName;
     this.valueExpression = valueExpression;
     this.functionName = functionName;

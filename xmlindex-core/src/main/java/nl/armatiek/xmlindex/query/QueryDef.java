@@ -18,5 +18,5 @@
 package nl.armatiek.xmlindex.query;
 
 public abstract class QueryDef {
-
+  
 }

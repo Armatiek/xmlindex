@@ -34,8 +34,6 @@ import org.apache.lucene.search.ReferenceManager;
 import org.apache.lucene.search.ReferenceManager.RefreshListener;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.search.Sort;
-import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;

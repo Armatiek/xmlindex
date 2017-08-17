@@ -166,13 +166,7 @@ public class XMLIndexNodeInfo implements NodeInfo, VirtualNode /*, SteppingNode<
     
     return AxisInfo.FOLLOWING;
   }
-   
-  /*
-  public void copyTraversing(Receiver out, int copyOptions, Location locationId) throws XPathException {
-    CopyToReceiverTraversing.copyTraversing(this, out, CopyOptions.TYPE_ANNOTATIONS | CopyOptions.LOCAL_NAMESPACES, locationId);
-  }
-  */
-  
+     
   private void copyElementToReceiver(Receiver out, int copyOptions, Element elem) throws XPathException {
     StructuredQName name = elem.name;
     NodeName nodeName = new FingerprintedQName(name.getPrefix(), name.getURI(), name.getLocalPart());
@@ -240,7 +234,7 @@ public class XMLIndexNodeInfo implements NodeInfo, VirtualNode /*, SteppingNode<
         }
       }
       
-      if (node.type == Type.DOCUMENT)
+      if (this.node.type == Type.DOCUMENT)
         out.startDocument(CopyOptions.getStartDocumentProperties(copyOptions));
       
       IndexSearcher searcher = session.getIndexSearcher();
@@ -281,11 +275,20 @@ public class XMLIndexNodeInfo implements NodeInfo, VirtualNode /*, SteppingNode<
         }  
       }
       
+      while (((HierarchyNode) this.node).depth < currentDepth--)
+        if (currentDepth > 0)
+          out.endElement();
+      
+      if (this.node.type == Type.DOCUMENT)
+        out.endDocument();
+      
+      /*
       if (node.type == Type.ELEMENT) {
         for (int i=0; i<(currentDepth - node.depth); i++)
           out.endElement();
       } else if (node.type == Type.DOCUMENT)
         out.endDocument();
+      */
       
     } catch (IOException ioe) {
       throw new XPathException("Error copying node to receiver", ioe);

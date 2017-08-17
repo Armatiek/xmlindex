@@ -17,24 +17,19 @@
 
 package nl.armatiek.xmlindex.query;
 
-import net.sf.saxon.expr.Expression;
-import net.sf.saxon.type.ItemType;
+public abstract class QueryDefWithRelation extends QueryDef {
+  
+  public final static int RELATION_ATTR      = 1;
+  public final static int RELATION_CHILDELEM = 2;
+  
+  private int relation;
+  
+  public QueryDefWithRelation(int relation) {
+    this.relation = relation;
+  }
+  
+  public int getRelation() {
+    return this.relation;
+  }
 
-public final class ComparisonJoinQueryDef extends ComparisonQueryDef {
-  
-  public static int JOINTYPE_CHILD       = 1;
-  public static int JOINTYPE_DESCENDANT  = 1;
-  
-  private int joinType;
-  
-  public ComparisonJoinQueryDef(String fieldName, ItemType itemType, 
-      int operator, Expression valueExpression, int joinType) {
-    super(fieldName, itemType, operator, valueExpression);
-    this.joinType = joinType; 
-  }
-    
-  public int getJoinType() {
-    return joinType;
-  }
-  
 }

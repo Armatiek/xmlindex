@@ -17,11 +17,12 @@
 
 package nl.armatiek.xmlindex.query;
 
-public final class ExistsQueryDef extends QueryDef {
+public final class ExistsQueryDef extends QueryDefWithRelation {
   
   private String fieldName;
   
-  public ExistsQueryDef(String fieldName) { 
+  public ExistsQueryDef(String fieldName, int relation) { 
+    super(relation);
     this.fieldName = fieldName;
   }
   

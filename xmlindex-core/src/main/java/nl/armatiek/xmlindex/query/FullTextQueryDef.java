@@ -21,13 +21,15 @@ import org.apache.lucene.analysis.Analyzer;
 
 import net.sf.saxon.expr.Expression;
 
-public final class FullTextQueryDef extends QueryDef {
+public final class FullTextQueryDef extends QueryDefWithRelation {
   
   private String fieldName;
   private Expression valueExpression;
   private Analyzer analyzer;
   
-  public FullTextQueryDef(String fieldName, Expression valueExpression, Analyzer analyzer) {
+  public FullTextQueryDef(String fieldName, Expression valueExpression, 
+      Analyzer analyzer, int relation) {
+    super(relation);
     this.fieldName = fieldName;
     this.valueExpression = valueExpression;
     this.analyzer = analyzer;

@@ -3,7 +3,6 @@ package nl.armatiek.xmlindex.storage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
@@ -67,7 +66,6 @@ import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.conf.PluggableIndex;
 import nl.armatiek.xmlindex.conf.TypedValueDef;
 import nl.armatiek.xmlindex.conf.VirtualAttributeDef;
-import nl.armatiek.xmlindex.conf.VirtualAttributeDefConfig;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.node.HierarchyNode;
 import nl.armatiek.xmlindex.node.IndexRootElement;
@@ -508,6 +506,7 @@ public class DocumentIndexer {
     pushBackUsedFieldNameFields();
   }
   
+  /*
   private String[] getPaths(String uri) {
     try {
       URI u = new URI(uri);
@@ -525,7 +524,6 @@ public class DocumentIndexer {
     return null;
   }
   
-  /*
   private void indexDirectory(String uri) {
     try {
       URI u = new URI(uri);

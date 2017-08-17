@@ -66,12 +66,12 @@ import nl.armatiek.xmlindex.error.OptimizationFailureException;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.query.BooleanClauseDef;
 import nl.armatiek.xmlindex.query.BooleanQueryDef;
-import nl.armatiek.xmlindex.query.ComparisonJoinQueryDef;
 import nl.armatiek.xmlindex.query.ComparisonQueryDef;
 import nl.armatiek.xmlindex.query.CustomIndexQueryDef;
 import nl.armatiek.xmlindex.query.ExistsQueryDef;
 import nl.armatiek.xmlindex.query.FullTextQueryDef;
 import nl.armatiek.xmlindex.query.QueryDef;
+import nl.armatiek.xmlindex.query.QueryDefWithRelation;
 import nl.armatiek.xmlindex.query.StringFunctionQueryDef;
 
 public class QueryConstructor {
@@ -107,6 +107,9 @@ public class QueryConstructor {
         Builder nestedQueryBuilder = new BooleanQuery.Builder();
         addBooleanClauseDefs(nestedQueryBuilder, (BooleanQueryDef) queryDef, session, xpathContext);
         queryBuilder.add(new BooleanClause(nestedQueryBuilder.build(), occur));
+      } else if (queryDef instanceof QueryDefWithRelation && ((QueryDefWithRelation) queryDef).getRelation() == QueryDefWithRelation.RELATION_CHILDELEM) {
+        Query query = childElementQueryDefToQuery((QueryDefWithRelation) queryDef, session, xpathContext);
+        queryBuilder.add(new BooleanClause(query, occur));
       } else if (queryDef instanceof ComparisonQueryDef) {
         Query query = comparisonQueryDefToQuery((ComparisonQueryDef) queryDef, session, xpathContext);
         queryBuilder.add(new BooleanClause(query, occur));
@@ -142,7 +145,37 @@ public class QueryConstructor {
     return constructQuery(session.getIndex(), queryDef, value);
   }
   
-  public static Query comparisonJoinQueryDefToQuery(ComparisonJoinQueryDef queryDef, Session session, 
+  public static Query childElementQueryDefToQuery(QueryDefWithRelation queryDef, Session session, 
+      XPathContext xpathContext) throws XPathException {
+    Query fromQuery = null;
+    if (queryDef instanceof ComparisonQueryDef) 
+      fromQuery = comparisonQueryDefToQuery((ComparisonQueryDef) queryDef, session, xpathContext);
+    else if (queryDef instanceof ExistsQueryDef)
+      fromQuery = existsQueryDefToQuery((ExistsQueryDef) queryDef);
+    else if (queryDef instanceof FullTextQueryDef)
+      fromQuery = fullTextQueryDefToQuery((FullTextQueryDef) queryDef, session, xpathContext);
+    else if (queryDef instanceof StringFunctionQueryDef)
+      fromQuery = stringFunctionQueryDefToQuery((StringFunctionQueryDef) queryDef, xpathContext);
+    else 
+      throw new XPathException("Unsupported query \"" + queryDef.getClass().toString() + "\"");
+    Query joinQuery;
+    try {
+      joinQuery = JoinUtil.createJoinQuery(
+          Definitions.FIELDNAME_PARENT, 
+          false, 
+          Definitions.FIELDNAME_LEFT, 
+          Long.class,
+          fromQuery, 
+          session.getIndexSearcher(), 
+          ScoreMode.None);
+    } catch (IOException ioe) {
+      throw new XPathException("Error creating join query", ioe);
+    }
+    return joinQuery;
+  }
+  
+  /*
+  public static Query elementComparisonQueryDefToQuery(ComparisonQueryDef queryDef, Session session, 
       XPathContext xpathContext) throws XPathException {
     Query joinQuery;
     try {
@@ -159,6 +192,7 @@ public class QueryConstructor {
     }
     return joinQuery;
   }
+  */
   
   public static Query fullTextQueryDefToQuery(FullTextQueryDef queryDef, Session session, 
       XPathContext xpathContext) throws XPathException {
@@ -286,8 +320,8 @@ public class QueryConstructor {
       addNodeTestClauses(queryBuilder, wrappedNodeTest, Occur.FILTER, session, xpathContext); 
       Query query;
       QueryDef queryDef = ((FilterNodeTest) nodeTest).getFilterQueryDef();
-      if (queryDef instanceof ComparisonJoinQueryDef)
-        query = comparisonJoinQueryDefToQuery((ComparisonJoinQueryDef) queryDef, session, xpathContext);
+      if (queryDef instanceof QueryDefWithRelation && ((QueryDefWithRelation) queryDef).getRelation() == QueryDefWithRelation.RELATION_CHILDELEM)
+        query = childElementQueryDefToQuery((QueryDefWithRelation) queryDef, session, xpathContext);
       else if (queryDef instanceof ComparisonQueryDef)
         query = comparisonQueryDefToQuery((ComparisonQueryDef) queryDef, session, xpathContext);
       else if (queryDef instanceof FullTextQueryDef)
@@ -304,7 +338,7 @@ public class QueryConstructor {
         query = filterQueryBuilder.build();
       }
       queryBuilder.add(query, occur);
-      logger.info("Filter query : " + query.toString());
+      // logger.info("Filter query : " + query.toString());
     } else {
       logger.error("Unsupported nodetest : " + nodeTest.toString());
     }

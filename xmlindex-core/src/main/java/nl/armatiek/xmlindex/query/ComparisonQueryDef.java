@@ -20,7 +20,7 @@ package nl.armatiek.xmlindex.query;
 import net.sf.saxon.expr.Expression;
 import net.sf.saxon.type.ItemType;
 
-public class ComparisonQueryDef extends QueryDef {
+public class ComparisonQueryDef extends QueryDefWithRelation {
   
   private String fieldName;
   private ItemType itemType;
@@ -28,7 +28,8 @@ public class ComparisonQueryDef extends QueryDef {
   private Expression valueExpression;
   
   public ComparisonQueryDef(String fieldName, ItemType itemType, 
-      int operator, Expression valueExpression) {
+      int operator, Expression valueExpression, int relation) {
+    super(relation);
     this.fieldName = fieldName;
     this.itemType = itemType;
     this.operator = operator;
