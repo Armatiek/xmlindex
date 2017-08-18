@@ -2,7 +2,6 @@ package nl.armatiek.xmlindex.saxon.axis;
 
 import java.io.IOException;
 
-import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery.Builder;
 
@@ -32,7 +31,7 @@ public class ChildAxisIterator extends SearchResultsForwardAxisIterator  {
   
   @Override
   protected void addAxisClauses(Builder queryBuilder) {
-    queryBuilder.add(new BooleanClause(LongPoint.newExactQuery(Definitions.FIELDNAME_PARENT, 
+    queryBuilder.add(new BooleanClause(getExactQuery(Definitions.FIELDNAME_PARENT, 
         ((HierarchyNode) node).left), BooleanClause.Occur.FILTER));
   }
   

@@ -498,10 +498,12 @@ public class XMLIndexNodeInfo implements NodeInfo, VirtualNode /*, SteppingNode<
       if (nodeKind == Type.DOCUMENT)
         return EmptyIterator.OfNodes.THE_INSTANCE;
       return new AncestorAxisIterator(session, this, nodeTest, false, xpathContext);
+      // return new Navigator.AncestorEnumeration(this, false);
     case AxisInfo.ANCESTOR_OR_SELF:
       if (nodeKind == Type.DOCUMENT)
         return Navigator.filteredSingleton(this, nodeTest);
       return new AncestorAxisIterator(session, this, nodeTest, true, xpathContext);
+      // return new Navigator.AncestorEnumeration(this, true);
     case AxisInfo.ATTRIBUTE:      
       if (nodeKind != Type.ELEMENT)
         return EmptyIterator.OfNodes.THE_INSTANCE;

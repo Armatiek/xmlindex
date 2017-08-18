@@ -1,6 +1,5 @@
 package nl.armatiek.xmlindex.saxon.axis;
 
-import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery.Builder;
 
@@ -23,8 +22,10 @@ public class AncestorAxisIterator extends SearchResultsReversedAxisIterator  {
   protected void addAxisClauses(Builder queryBuilder) {
     long left = includeSelf ? ((HierarchyNode) node).left : Math.addExact(((HierarchyNode) node).left, -1);
     long right = includeSelf ? ((HierarchyNode) node).right : Math.addExact(((HierarchyNode) node).right, 1);
-    queryBuilder.add(new BooleanClause(LongPoint.newRangeQuery(Definitions.FIELDNAME_LEFT, 0, left), BooleanClause.Occur.FILTER));
-    queryBuilder.add(new BooleanClause(LongPoint.newRangeQuery(Definitions.FIELDNAME_RIGHT, right, Definitions.MAX_LONG), BooleanClause.Occur.FILTER));
+    //long docLeft = ((HierarchyNode) node).docLeft;
+    //long docRight = ((HierarchyNode) node).docRight;
+    queryBuilder.add(new BooleanClause(getRangeQuery(Definitions.FIELDNAME_LEFT, 0, left), BooleanClause.Occur.FILTER));
+    queryBuilder.add(new BooleanClause(getRangeQuery(Definitions.FIELDNAME_RIGHT, right, Definitions.MAX_LONG), BooleanClause.Occur.FILTER));
   }
     
   @Override

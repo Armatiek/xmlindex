@@ -27,6 +27,7 @@ public abstract class HierarchyNode extends Node {
   public long left;
   public long right;
   public long docLeft = -1;
+  public long docRight = -1;
   public byte depth;
   public String value;
   
@@ -41,6 +42,9 @@ public abstract class HierarchyNode extends Node {
     StoredField docLeftField = (StoredField) doc.getField(Definitions.FIELDNAME_DOCLEFT);
     if (docLeftField != null)
       this.docLeft = docLeftField.numericValue().longValue();
+    StoredField docRightField = (StoredField) doc.getField(Definitions.FIELDNAME_DOCRIGHT);
+    if (docRightField != null)
+      this.docRight = docRightField.numericValue().longValue();
     this.depth = Byte.parseByte(doc.get(Definitions.FIELDNAME_DEPTH));
     this.value = doc.get(Definitions.FIELDNAME_VALUE);
   }

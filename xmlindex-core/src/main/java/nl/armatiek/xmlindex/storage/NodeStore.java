@@ -272,6 +272,7 @@ public class NodeStore {
         doc.add(new NumericDocValuesField(Definitions.FIELDNAME_LEFT, 0));
         doc.add(new StoredField(Definitions.FIELDNAME_LEFT, 0));
         doc.add(new LongPoint(Definitions.FIELDNAME_RIGHT, Definitions.MAX_LONG));
+        doc.add(new NumericDocValuesField(Definitions.FIELDNAME_RIGHT, Definitions.MAX_LONG));
         doc.add(new StoredField(Definitions.FIELDNAME_RIGHT, Definitions.MAX_LONG));
         doc.add(new LongPoint(Definitions.FIELDNAME_PARENT, -1));
         doc.add(new StoredField(Definitions.FIELDNAME_PARENT, -1));
@@ -286,6 +287,7 @@ public class NodeStore {
         doc.add(new NumericDocValuesField(Definitions.FIELDNAME_LEFT, 1));
         doc.add(new StoredField(Definitions.FIELDNAME_LEFT, 1));
         doc.add(new LongPoint(Definitions.FIELDNAME_RIGHT, Definitions.MAX_LONG-1));
+        doc.add(new NumericDocValuesField(Definitions.FIELDNAME_RIGHT, Definitions.MAX_LONG-1));
         doc.add(new StoredField(Definitions.FIELDNAME_RIGHT, Definitions.MAX_LONG-1));
         doc.add(new LongPoint(Definitions.FIELDNAME_PARENT, 0));
         doc.add(new StoredField(Definitions.FIELDNAME_PARENT, 0));

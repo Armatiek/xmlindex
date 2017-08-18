@@ -19,10 +19,13 @@ package nl.armatiek.xmlindex.saxon.axis;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.LongPoint;
+import org.apache.lucene.document.NumericDocValuesField;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
+import org.apache.lucene.search.IndexOrDocValuesQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
@@ -85,6 +88,18 @@ public abstract class SearchResultsAxisIterator implements AxisIterator, LastPos
     Query query = queryBuilder.build();
     HitQuery hitQuery = new HitQuery(searcher, query, reversed);
     return hitQuery.execute();
+  }
+  
+  protected IndexOrDocValuesQuery getRangeQuery(String field, long minValue, long maxValue) {
+    Query pointQuery = LongPoint.newRangeQuery(field, minValue, maxValue);
+    Query dvQuery = NumericDocValuesField.newRangeQuery(field, minValue, maxValue);
+    return new IndexOrDocValuesQuery(pointQuery, dvQuery);
+  }
+  
+  protected IndexOrDocValuesQuery getExactQuery(String field, long value) {
+    Query pointQuery = LongPoint.newExactQuery(field, value);
+    Query dvQuery = NumericDocValuesField.newExactQuery(field, value);
+    return new IndexOrDocValuesQuery(pointQuery, dvQuery);
   }
   
   /* AxisIterator */

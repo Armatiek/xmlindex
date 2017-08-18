@@ -106,11 +106,13 @@ public class XMLIndexOptimizer extends Optimizer {
     return QueryDefWithRelation.RELATION_ATTR;
   }
   
+  /*
   private int getFieldNamePrefix(Expression expr) {
     if (isChildAxisExpressionWithElementNameTest(expr))
       return Type.ELEMENT;
     return Type.ATTRIBUTE;
   }
+  */
   
   private QueryDef booleanExpression2QueryDef(AxisExpression base, BooleanExpression expr, 
       List<LocalVariableReference> localVars) throws XPathException {

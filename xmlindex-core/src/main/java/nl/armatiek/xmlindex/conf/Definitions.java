@@ -52,6 +52,7 @@ public class Definitions {
   
   public static final String FIELDNAME_BASEURI          = "baseuri";
   public static final String FIELDNAME_DOCLEFT          = "docleft";
+  public static final String FIELDNAME_DOCRIGHT         = "docright";
   
   /* TypedValueDef, VirtualAttributeDef and CustomIndex fields: */
   public static final String FIELDNAME_DEFNAME          = "defname";

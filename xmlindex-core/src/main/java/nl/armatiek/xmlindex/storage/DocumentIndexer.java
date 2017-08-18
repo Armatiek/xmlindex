@@ -80,20 +80,26 @@ public class DocumentIndexer {
   
   private final StringField typeField = new StringField(Definitions.FIELDNAME_TYPE, "", Field.Store.YES);
   private final StoredField depthField = new StoredField(Definitions.FIELDNAME_DEPTH, "");
+  
   private final LongPoint leftField_lp = new LongPoint(Definitions.FIELDNAME_LEFT, (long) 0);
   private final NumericDocValuesField leftField_dv = new NumericDocValuesField(Definitions.FIELDNAME_LEFT, (long) 0);
   private final StoredField leftField_sf = new StoredField(Definitions.FIELDNAME_LEFT, (long) 0);
+  
   private final LongPoint rightField_lp = new LongPoint(Definitions.FIELDNAME_RIGHT, (long) 0);
+  private final NumericDocValuesField rightField_dv = new NumericDocValuesField(Definitions.FIELDNAME_RIGHT, (long) 0);
   private final StoredField rightField_sf = new StoredField(Definitions.FIELDNAME_RIGHT, (long) 0);
+  
   private final LongPoint parentField_lp = new LongPoint(Definitions.FIELDNAME_PARENT, (long) 0);
   private final StoredField parentField_sf = new StoredField(Definitions.FIELDNAME_PARENT, (long) 0);
   private final NumericDocValuesField parentField_dv = new NumericDocValuesField(Definitions.FIELDNAME_PARENT, (long) 0);
+  
   private final Stack<StringField> availableFieldNameFields = new Stack<StringField>();
   private final Stack<StringField> usedFieldNameFields = new Stack<StringField>();
   private final StringField valueField = new StringField(Definitions.FIELDNAME_VALUE, "", Field.Store.NO);
   private final StoredField valueField_sf = new StoredField(Definitions.FIELDNAME_VALUE, "");
   private final StringField uriField = new StringField(Definitions.FIELDNAME_URI, "", Field.Store.YES);
   private final StoredField docLeftField_sf = new StoredField(Definitions.FIELDNAME_DOCLEFT, (long) 0);
+  private final StoredField docRightField_sf = new StoredField(Definitions.FIELDNAME_DOCRIGHT, (long) 0);
   private final StringField baseUriField = new StringField(Definitions.FIELDNAME_BASEURI, "", Field.Store.NO);
   
   private final String USERDATA_KEY = "u";
@@ -284,7 +290,7 @@ public class DocumentIndexer {
     doc.add(field);
   }
   
-  private void indexNode(Node node, long docLeft, String uri) throws SaxonApiException, IOException  { 
+  private void indexNode(Node node, long docLeft, long docRight, String uri) throws SaxonApiException, IOException  { 
     if (isWhitespaceTextNode(node))
       return;
     
@@ -304,8 +310,10 @@ public class DocumentIndexer {
     doc.add(leftField_dv);
     doc.add(leftField_sf);
     rightField_lp.setLongValue(userData.right);
+    rightField_dv.setLongValue(userData.right);
     rightField_sf.setLongValue(userData.right);
     doc.add(rightField_lp);
+    doc.add(rightField_dv);
     doc.add(rightField_sf);
     
     Node parentNode = node.getParentNode();
@@ -313,6 +321,7 @@ public class DocumentIndexer {
     if (parentNode.getNodeType() == Node.DOCUMENT_NODE) {
       parent = IndexRootElement.LEFT;
       docLeft = userData.left;
+      docRight = userData.right;
       uriField.setStringValue(uri);
       doc.add(uriField);
     } else
@@ -326,6 +335,9 @@ public class DocumentIndexer {
     
     docLeftField_sf.setLongValue(docLeft);
     doc.add(docLeftField_sf);
+    
+    docRightField_sf.setLongValue(docRight);
+    doc.add(docRightField_sf);
     
     baseUriField.setStringValue(uri);
     doc.add(baseUriField);
@@ -397,7 +409,7 @@ public class DocumentIndexer {
       /* Childs: */
       Node child = node.getFirstChild();
       while (child != null) {
-        indexNode(child, docLeft, uri);
+        indexNode(child, docLeft, docRight, uri);
         child = child.getNextSibling();
       }
     }
@@ -412,6 +424,7 @@ public class DocumentIndexer {
     org.apache.lucene.document.Document newDoc = new org.apache.lucene.document.Document();
     
     long docLeft = ((StoredField) doc.getField(Definitions.FIELDNAME_DOCLEFT)).numericValue().longValue();
+    long docRight = ((StoredField) doc.getField(Definitions.FIELDNAME_DOCRIGHT)).numericValue().longValue();
     
     String baseUri = baseUriMap.get(docLeft);
     if (baseUri == null)
@@ -452,8 +465,10 @@ public class DocumentIndexer {
           case Definitions.FIELDNAME_RIGHT:
             long right = ((StoredField) field).numericValue().longValue();
             rightField_lp.setLongValue(right);
+            rightField_dv.setLongValue(right);
             rightField_sf.setLongValue(right);
             newDoc.add(rightField_lp);
+            newDoc.add(rightField_dv);
             newDoc.add(rightField_sf);
             break;
           case Definitions.FIELDNAME_PARENT:
@@ -488,6 +503,10 @@ public class DocumentIndexer {
           case Definitions.FIELDNAME_DOCLEFT:
             docLeftField_sf.setLongValue(docLeft);
             newDoc.add(docLeftField_sf);
+            break;
+          case Definitions.FIELDNAME_DOCRIGHT:
+            docRightField_sf.setLongValue(docRight);
+            newDoc.add(docRightField_sf);
             break;
         }
       }
@@ -548,9 +567,7 @@ public class DocumentIndexer {
     doc.setStrictErrorChecking(false);
     this.docWrapper = null;
     numberNode(doc.getDocumentElement(), (byte) 2);
-    indexNode(doc.getDocumentElement(), -1, uri);
-    
-    
+    indexNode(doc.getDocumentElement(), -1, -1, uri);
   }
   
   public void index(String uri, Document doc) throws SaxonApiException, IOException {
