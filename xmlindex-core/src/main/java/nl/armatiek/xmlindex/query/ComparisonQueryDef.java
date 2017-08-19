@@ -18,18 +18,23 @@
 package nl.armatiek.xmlindex.query;
 
 import net.sf.saxon.expr.Expression;
+import net.sf.saxon.trace.ExpressionPresenter;
 import net.sf.saxon.type.ItemType;
+import nl.armatiek.xmlindex.XMLIndex;
+import nl.armatiek.xmlindex.saxon.util.SaxonUtils;
 
 public class ComparisonQueryDef extends QueryDefWithRelation {
   
+  private XMLIndex index;
   private String fieldName;
   private ItemType itemType;
   private int operator;
   private Expression valueExpression;
   
-  public ComparisonQueryDef(String fieldName, ItemType itemType, 
+  public ComparisonQueryDef(XMLIndex index, String fieldName, ItemType itemType, 
       int operator, Expression valueExpression, int relation) {
     super(relation);
+    this.index = index;
     this.fieldName = fieldName;
     this.itemType = itemType;
     this.operator = operator;
@@ -50,6 +55,20 @@ public class ComparisonQueryDef extends QueryDefWithRelation {
   
   public Expression getValueExpression() {
     return valueExpression;
+  }
+  
+  @Override
+  public void export(ExpressionPresenter destination) {
+    destination.startElement("comparison-query");
+    destination.emitAttribute("name-code", fieldName);
+    destination.emitAttribute("field-name", getEQName(index, fieldName));
+    destination.emitAttribute("node-type", getNodeDisplayName(fieldName));
+    if (itemType != null)
+      destination.emitAttribute("item-type", itemType.toString());
+    destination.emitAttribute("operator",SaxonUtils.token2String(operator));
+    destination.emitAttribute("value", valueExpression.toString());
+    destination.emitAttribute("relation", (getRelation() == RELATION_ATTR) ? "attribute" : "child-element");
+    destination.endElement();
   }
   
 }

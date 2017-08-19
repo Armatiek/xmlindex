@@ -18,16 +18,20 @@
 package nl.armatiek.xmlindex.query;
 
 import net.sf.saxon.expr.Expression;
+import net.sf.saxon.trace.ExpressionPresenter;
+import nl.armatiek.xmlindex.XMLIndex;
 
 public final class StringFunctionQueryDef extends QueryDefWithRelation {
   
+  private XMLIndex index;
   private String fieldName;
   private Expression valueExpression;
   private String functionName;
   
-  public StringFunctionQueryDef(String fieldName, Expression valueExpression, 
+  public StringFunctionQueryDef(XMLIndex index, String fieldName, Expression valueExpression, 
       String functionName, int relation) { 
     super(relation);
+    this.index = index;
     this.fieldName = fieldName;
     this.valueExpression = valueExpression;
     this.functionName = functionName;
@@ -43,6 +47,17 @@ public final class StringFunctionQueryDef extends QueryDefWithRelation {
   
   public String getFunctionName() {
     return functionName;
+  }
+  
+  @Override
+  public void export(ExpressionPresenter destination) {
+    destination.startElement("stringfunction-query");
+    destination.emitAttribute("function-name", functionName);
+    destination.emitAttribute("name-code", fieldName);
+    destination.emitAttribute("field-name", getEQName(index, fieldName));
+    destination.emitAttribute("node-type", getNodeDisplayName(fieldName));
+    destination.emitAttribute("value", valueExpression.toString());
+    destination.endElement();
   }
   
 }

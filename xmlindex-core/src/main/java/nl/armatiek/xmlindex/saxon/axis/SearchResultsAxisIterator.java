@@ -59,6 +59,7 @@ public abstract class SearchResultsAxisIterator implements AxisIterator, LastPos
   protected boolean reversed;
   protected XPathContext xpathContext;
   protected HitIterator hitIterator;
+  protected int length = -1;
   
   public SearchResultsAxisIterator(Session session, XMLIndexNodeInfo contextNode, 
       NodeTest nodeTest, boolean includeSelf, boolean reversed, XPathContext xpathContext) {
@@ -71,9 +72,8 @@ public abstract class SearchResultsAxisIterator implements AxisIterator, LastPos
       this.includeSelf = includeSelf;
       this.reversed = reversed;
       this.xpathContext = xpathContext;
-      this.hitIterator = getHits();
-    } catch (IOException | XPathException e) {
-      throw new XMLIndexException(e.getMessage(), e);
+    } catch (IOException ioe) {
+      throw new XMLIndexException(ioe.getMessage(), ioe);
     }
   }
     
@@ -81,11 +81,15 @@ public abstract class SearchResultsAxisIterator implements AxisIterator, LastPos
   
   protected abstract XMLIndexNodeInfo getXMLIndexNodeInfo(Node node);
   
-  protected HitIterator getHits() throws IOException, XPathException {
+  protected Query getQuery() throws XPathException {
     Builder queryBuilder = new BooleanQuery.Builder();
     addAxisClauses(queryBuilder);
     QueryConstructor.addNodeTestClauses(queryBuilder, nodeTest, Occur.FILTER, session, xpathContext);
-    Query query = queryBuilder.build();
+    return queryBuilder.build();
+  }
+  
+  protected HitIterator getHits() throws IOException, XPathException {
+    Query query = getQuery();
     HitQuery hitQuery = new HitQuery(searcher, query, reversed);
     return hitQuery.execute();
   }
@@ -105,14 +109,18 @@ public abstract class SearchResultsAxisIterator implements AxisIterator, LastPos
   /* AxisIterator */
   @Override
   public XMLIndexNodeInfo next() {
-    if (hitIterator == null || !hitIterator.hasNext())
-      return null;
     try {
+      if (hitIterator == null)
+        hitIterator = getHits();
+      if (!hitIterator.hasNext()) {
+        length = 0;
+        return null;
+      }
       Document doc = searcher.doc(hitIterator.next().docId);
       Node node = Node.createNode(doc, session);
       return getXMLIndexNodeInfo(node);
-    } catch (IOException ioe) {
-      throw new XMLIndexException(ioe);
+    } catch (XPathException | IOException e) {
+      throw new XMLIndexException(e);
     }
   }
 
@@ -127,7 +135,16 @@ public abstract class SearchResultsAxisIterator implements AxisIterator, LastPos
   /* LastPositionFinder */
   @Override
   public int getLength() throws XPathException {
-    return hitIterator != null ? hitIterator.size() : 0;
+    try {
+      if (length > -1)
+        return length;
+      if (hitIterator != null)
+        return hitIterator.size();
+      length = searcher.count(getQuery());
+      return length;
+    } catch (IOException ioe) {
+      throw new XPathException(ioe);
+    }
   }
   
   /* LookaheadIterator */

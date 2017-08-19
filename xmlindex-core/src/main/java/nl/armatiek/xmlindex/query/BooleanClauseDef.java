@@ -19,6 +19,9 @@ package nl.armatiek.xmlindex.query;
 
 import org.apache.lucene.search.BooleanClause;
 
+import net.sf.saxon.trace.ExpressionPresenter;
+import net.sf.saxon.trans.XPathException;
+
 public class BooleanClauseDef {
   
   private QueryDef queryDef;
@@ -35,6 +38,13 @@ public class BooleanClauseDef {
 
   public BooleanClause.Occur getOccur() {
     return occur;
+  }
+  
+  public void export(ExpressionPresenter destination) throws XPathException {
+    destination.startElement("boolean-clause");
+    destination.emitAttribute("occur", occur.toString());
+    queryDef.export(destination);
+    destination.endElement();
   }
   
 }

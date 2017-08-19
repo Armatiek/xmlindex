@@ -22,6 +22,9 @@ import java.util.Iterator;
 
 import org.apache.lucene.search.BooleanClause;
 
+import net.sf.saxon.trace.ExpressionPresenter;
+import net.sf.saxon.trans.XPathException;
+
 public class BooleanQueryDef extends QueryDef {
   
   private ArrayList<BooleanClauseDef> clauses = new ArrayList<BooleanClauseDef>();
@@ -36,6 +39,14 @@ public class BooleanQueryDef extends QueryDef {
 
   public Iterator<BooleanClauseDef> getClauses() {
     return clauses.iterator();
+  }
+  
+  @Override
+  public void export(ExpressionPresenter destination) throws XPathException {
+    destination.startElement("boolean-query");
+    for (BooleanClauseDef clause : clauses)
+      clause.export(destination);
+    destination.endElement();
   }
   
 }

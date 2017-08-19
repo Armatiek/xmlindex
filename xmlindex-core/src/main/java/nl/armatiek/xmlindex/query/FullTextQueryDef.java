@@ -20,16 +20,20 @@ package nl.armatiek.xmlindex.query;
 import org.apache.lucene.analysis.Analyzer;
 
 import net.sf.saxon.expr.Expression;
+import net.sf.saxon.trace.ExpressionPresenter;
+import nl.armatiek.xmlindex.XMLIndex;
 
 public final class FullTextQueryDef extends QueryDefWithRelation {
   
+  private XMLIndex index;
   private String fieldName;
   private Expression valueExpression;
   private Analyzer analyzer;
   
-  public FullTextQueryDef(String fieldName, Expression valueExpression, 
+  public FullTextQueryDef(XMLIndex index, String fieldName, Expression valueExpression, 
       Analyzer analyzer, int relation) {
     super(relation);
+    this.index = index;
     this.fieldName = fieldName;
     this.valueExpression = valueExpression;
     this.analyzer = analyzer;
@@ -45,6 +49,18 @@ public final class FullTextQueryDef extends QueryDefWithRelation {
 
   public Analyzer getAnalyzer() {
     return analyzer;
+  }
+  
+  @Override
+  public void export(ExpressionPresenter destination) {
+    destination.startElement("fulltext-query");
+    destination.emitAttribute("name-code", fieldName);
+    destination.emitAttribute("field-name", getEQName(index, fieldName));
+    destination.emitAttribute("node-type", getNodeDisplayName(fieldName));
+    destination.emitAttribute("value", valueExpression.toString());
+    if (analyzer != null)
+      destination.emitAttribute("analyzer", analyzer.toString());
+    destination.endElement();
   }
   
 }

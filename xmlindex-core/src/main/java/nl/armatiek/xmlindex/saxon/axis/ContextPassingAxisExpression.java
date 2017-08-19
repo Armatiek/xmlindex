@@ -72,6 +72,7 @@ import net.sf.saxon.type.Untyped;
 import net.sf.saxon.value.Cardinality;
 import net.sf.saxon.z.IntIterator;
 import net.sf.saxon.z.IntSet;
+import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
 
 /**
@@ -88,6 +89,7 @@ import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
  */
 public class ContextPassingAxisExpression extends Expression {
 
+  private XMLIndex index;
   private byte axis;
   /* @Nullable */
   private NodeTest test;
@@ -110,7 +112,8 @@ public class ContextPassingAxisExpression extends Expression {
    * @see net.sf.saxon.om.AxisInfo
    */
 
-  public ContextPassingAxisExpression(byte axis, /* @Nullable */ NodeTest nodeTest) {
+  public ContextPassingAxisExpression(XMLIndex index, byte axis, /* @Nullable */ NodeTest nodeTest) {
+    this.index = index;
     this.axis = axis;
     this.test = nodeTest;
   }
@@ -770,7 +773,7 @@ public class ContextPassingAxisExpression extends Expression {
 
   /* @NotNull */
   public Expression copy(RebindingMap rebindings) {
-    ContextPassingAxisExpression a2 = new ContextPassingAxisExpression(axis, test);
+    ContextPassingAxisExpression a2 = new ContextPassingAxisExpression(index, axis, test);
     a2.itemType = itemType;
     a2.staticInfo = staticInfo;
     a2.computedCardinality = computedCardinality;
@@ -1141,9 +1144,14 @@ public class ContextPassingAxisExpression extends Expression {
    */
 
   public void export(ExpressionPresenter destination) throws XPathException {
-    destination.startElement("axis", this);
+    destination.startElement("axis-optimized", this);
     destination.emitAttribute("name", AxisInfo.axisName[axis]);
-    destination.emitAttribute("nodeTest", test == null ? "node()" : test.toString());
+    if (getLocation() != null)
+      destination.emitAttribute("line", Integer.toString(getLocation().getLineNumber()));
+    if (getNodeTest() instanceof FilterNodeTest)
+      ((FilterNodeTest) getNodeTest()).export(destination);
+    else
+      destination.emitAttribute("nodeTest", test == null ? "node()" : test.toString());
     if ("JS".equals(destination.getOption("target"))) {
       NodeTest known = AnyNodeTest.getInstance();
       if (axis == AxisInfo.ATTRIBUTE) {

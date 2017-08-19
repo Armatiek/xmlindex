@@ -91,7 +91,8 @@
                 <button id="newIndexBtn" style="margin-left:10px">New index</button>
                 <button id="saveBtn" style="margin-left:5px">Save</button>
                 <button id="runBtn">Run</button>
-                <button id="uploadBtn">Upload &amp; index</button>
+                <button id="explainBtn">Explain</button>
+                <button id="uploadBtn">Upload</button>
                 <button id="searchBtn" style="margin-left:5px">Search</button>
                 <button id="replaceBtn">Replace</button>
               </fieldset>

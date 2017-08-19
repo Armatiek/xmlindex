@@ -131,12 +131,16 @@ public class Session {
   }
   
   public void transform(Source stylesheet, Destination dest, Map<QName, XdmValue> params, 
-      ErrorListener errorListener, MessageListener messageListener) throws SaxonApiException {
+      ErrorListener errorListener, MessageListener messageListener, boolean explain) throws SaxonApiException {
     checkOpen();
     XsltCompiler comp = index.getSaxonProcessor().newXsltCompiler();
     if (errorListener != null)
       comp.setErrorListener(errorListener);
     XsltExecutable exec = comp.compile(stylesheet);
+    if (explain) {
+      exec.explain(dest);
+      return;
+    }
     /* TODO: cache compiled stylesheet */
     Xslt30Transformer transformer = exec.load30();
     Map<QName, XdmValue> combinedParams;
@@ -154,17 +158,26 @@ public class Session {
       transformer.setMessageListener(messageListener);
     transformer.applyTemplates(treeInfo.getRootNode(), dest);
   }
+  
+  public void transform(Source stylesheet, Destination dest, Map<QName, XdmValue> params, 
+      ErrorListener errorListener, MessageListener messageListener) throws SaxonApiException {
+    transform(stylesheet, dest, params, errorListener, messageListener, false);
+  }
     
   public void query(Reader xquery, URI baseURI, Destination dest, Map<QName, XdmValue> params, 
-      ErrorListener errorListener, MessageListener messageListener) throws IOException, SaxonApiException {
+      ErrorListener errorListener, MessageListener messageListener, boolean explain) throws IOException, SaxonApiException {
     checkOpen();
     XQueryCompiler comp = index.getSaxonProcessor().newXQueryCompiler();
-    comp.setBaseURI(baseURI);
+    if (baseURI != null)
+      comp.setBaseURI(baseURI);
     if (errorListener != null)
       comp.setErrorListener(errorListener);
     XQueryExecutable exec = comp.compile(xquery);
     XMLIndexOptimizer.optimize(exec.getUnderlyingCompiledQuery().getExpression());
-    // exec.explain(index.getSaxonProcessor().newSerializer(System.out));
+    if (explain) {
+      exec.explain(dest);
+      return;
+    }
     XQueryEvaluator evaluator = exec.load();
     Map<QName, XdmValue> combinedParams;
     if (params == null)
@@ -182,14 +195,24 @@ public class Session {
     evaluator.run(dest);
   }
   
-  public void query(File queryFile, Destination dest, Map<QName, XdmValue> params, 
+  public void query(Reader xquery, URI baseURI, Destination dest, Map<QName, XdmValue> params, 
       ErrorListener errorListener, MessageListener messageListener) throws IOException, SaxonApiException {
+    query(xquery, baseURI, dest, params, errorListener, messageListener, false);
+  }
+  
+  public void query(File queryFile, Destination dest, Map<QName, XdmValue> params, 
+      ErrorListener errorListener, MessageListener messageListener, boolean explain) throws IOException, SaxonApiException {
     Reader reader = new InputStreamReader(new FileInputStream(queryFile), StandardCharsets.UTF_8);
     try {
-      query(reader, queryFile.toURI(), dest, params, errorListener, messageListener);
+      query(reader, queryFile.toURI(), dest, params, errorListener, messageListener, explain);
     } finally {
       reader.close();
     }
+  }
+  
+  public void query(File queryFile, Destination dest, Map<QName, XdmValue> params, 
+      ErrorListener errorListener, MessageListener messageListener) throws IOException, SaxonApiException {
+    query(queryFile, dest, params, errorListener, messageListener, false);
   }
   
   /* NodeStore operations: */

@@ -17,6 +17,31 @@
 
 package nl.armatiek.xmlindex.query;
 
+import net.sf.saxon.om.StructuredQName;
+import net.sf.saxon.trace.ExpressionPresenter;
+import net.sf.saxon.trans.XPathException;
+import nl.armatiek.xmlindex.XMLIndex;
+
 public abstract class QueryDef {
+  
+  public abstract void export(ExpressionPresenter destination) throws XPathException;
+  
+  protected String getEQName(XMLIndex index, String fieldName) {
+    int nameCode = Integer.parseInt(fieldName.split("_")[1]);
+    StructuredQName name = index.getNameStore().getStructuredQName(nameCode);
+    return name.getEQName();
+  }
+  
+  protected String getNodeDisplayName(String fieldName) {
+    int nodeType = Integer.parseInt(fieldName.split("_")[0]);
+    switch (nodeType) {
+      case 1: 
+        return "element()";
+      case 2:
+        return "attribute()";
+      default:
+        return "unknown";
+    }  
+  }
   
 }

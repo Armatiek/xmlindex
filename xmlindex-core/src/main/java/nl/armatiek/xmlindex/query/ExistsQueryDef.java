@@ -17,17 +17,31 @@
 
 package nl.armatiek.xmlindex.query;
 
+import net.sf.saxon.trace.ExpressionPresenter;
+import nl.armatiek.xmlindex.XMLIndex;
+
 public final class ExistsQueryDef extends QueryDefWithRelation {
   
+  private XMLIndex index;
   private String fieldName;
   
-  public ExistsQueryDef(String fieldName, int relation) { 
+  public ExistsQueryDef(XMLIndex index, String fieldName, int relation) { 
     super(relation);
+    this.index = index;
     this.fieldName = fieldName;
   }
   
   public String getFieldName() {
     return fieldName;
+  }
+  
+  @Override
+  public void export(ExpressionPresenter destination) {
+    destination.startElement("exists-query");
+    destination.emitAttribute("name-code", fieldName);
+    destination.emitAttribute("field-name", getEQName(index, fieldName));
+    destination.emitAttribute("node-type", getNodeDisplayName(fieldName));
+    destination.endElement();
   }
   
 }

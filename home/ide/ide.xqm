@@ -80,6 +80,26 @@ function ide:run($code as xs:string*, $path as xs:string*) as xs:string {
 };
 
 declare
+  %rest:path("/explain")
+  %rest:POST
+  %rest:form-param("code", "{$code}")
+  %output:method("text")
+function ide:explain($code as xs:string*) as xs:string {
+  let $source-node as document-node() := document { <root/> }
+  let $result := transform(
+    map {
+      "stylesheet-location": "xsl/explain.xsl",
+      "source-node": $source-node,
+      "stylesheet-params": map {
+        QName("", "code") : $code,
+        QName("http://www.armatiek.nl/xmlindex/param/session", "session") : $session:session
+      },
+      "cache" : not($config:development-mode)
+    })
+  return $result?output
+};
+
+declare
   %rest:path("/filesystem")
   %rest:GET
   %rest:query-param("id", "{$id}")

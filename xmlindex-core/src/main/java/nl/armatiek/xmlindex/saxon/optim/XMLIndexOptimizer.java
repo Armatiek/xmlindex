@@ -261,7 +261,7 @@ public class XMLIndexOptimizer extends Optimizer {
           if (operator != Token.FEQ && operator != Token.EQUALS)
             throw new XPathException(String.format("Only the operator \"=\" is supported in the "
                 + "full text search expression \"%s\"", fieldExpression.toShortString()));
-          return new FullTextQueryDef(fieldName, valueExpression, attrDef.getQueryAnalyzer(), relation);
+          return new FullTextQueryDef(index, fieldName, valueExpression, attrDef.getQueryAnalyzer(), relation);
         }
         itemType = attrDef.getItemType();
       } else {
@@ -282,7 +282,7 @@ public class XMLIndexOptimizer extends Optimizer {
       String namespaceUri = elemName.getURI();
       String localPart = elemName.getLocalPart();
       fieldName = getFieldName(Node.ELEMENT_NODE, namespaceUri, localPart, itemType);
-      return new ComparisonQueryDef(fieldName, itemType, operator, valueExpression, QueryDefWithRelation.RELATION_CHILDELEM);
+      return new ComparisonQueryDef(index, fieldName, itemType, operator, valueExpression, QueryDefWithRelation.RELATION_CHILDELEM);
     } else
       throw new OptimizationFailureException("Could not convert ComparisonExpression \"" + fieldExpression.toString() + "\" to Query; ");
     
@@ -295,7 +295,7 @@ public class XMLIndexOptimizer extends Optimizer {
             + "\"" + fieldExpression.toShortString() + "\" does not match the type of the actual item");
     }
     
-    return new ComparisonQueryDef(fieldName, itemType, operator, valueExpression, relation);
+    return new ComparisonQueryDef(index, fieldName, itemType, operator, valueExpression, relation);
   }
   
   private QueryDef integratedExtensionCall2QueryDef(IntegratedFunctionCall expr, List<LocalVariableReference> localVars) {
@@ -355,7 +355,7 @@ public class XMLIndexOptimizer extends Optimizer {
   private QueryDef existsCall2QueryDef(AxisExpression base, Expression functionExpr) {
     Expression predicate = functionExpr.operands().iterator().next().getChildExpression();
     String fieldName = getFieldName(base, predicate);
-    return new ExistsQueryDef(fieldName, getRelation(predicate));
+    return new ExistsQueryDef(index, fieldName, getRelation(predicate));
   }
   
   private QueryDef stringFunctionCall2QueryDef(AxisExpression base, Expression functionExpr, 
@@ -366,7 +366,7 @@ public class XMLIndexOptimizer extends Optimizer {
     if (valueExpression instanceof LocalVariableReference)
       localVars.add((LocalVariableReference) valueExpression);
     String fieldName = getFieldName(base, fieldExpression);
-    return new StringFunctionQueryDef(fieldName, valueExpression, functionName, getRelation(fieldExpression));
+    return new StringFunctionQueryDef(index, fieldName, valueExpression, functionName, getRelation(fieldExpression));
   }
   
   private QueryDef expression2QueryDef(AxisExpression base, Expression expr, 
@@ -441,7 +441,7 @@ public class XMLIndexOptimizer extends Optimizer {
       AxisExpression base = (AxisExpression) f.getBase();
       ArrayList<LocalVariableReference> localVars = new ArrayList<LocalVariableReference>(); 
       QueryDef filterQueryDef = expression2QueryDef(base, f.getFilter(), localVars);
-      ContextPassingAxisExpression newBase = new ContextPassingAxisExpression(base.getAxis(), 
+      ContextPassingAxisExpression newBase = new ContextPassingAxisExpression(index, base.getAxis(), 
           new FilterNodeTest(base.getNodeTest(), filterQueryDef));
       newBase.setRetainedStaticContext(base.getRetainedStaticContext());
       newBase.setEvaluationMethod(base.getEvaluationMethod());

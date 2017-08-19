@@ -18,6 +18,7 @@
 package nl.armatiek.xmlindex.query;
 
 import net.sf.saxon.expr.oper.OperandArray;
+import net.sf.saxon.trace.ExpressionPresenter;
 import nl.armatiek.xmlindex.conf.PluggableIndex;
 
 public final class CustomIndexQueryDef extends QueryDef {
@@ -36,6 +37,18 @@ public final class CustomIndexQueryDef extends QueryDef {
   
   public OperandArray getParams() {
     return params;
+  }
+  
+  @Override
+  public void export(ExpressionPresenter dest) {
+    dest.startElement("pluggable-index-query");
+    dest.emitAttribute("index", index.toString());
+    if (params != null) {
+      for (int i=0; i<params.getNumberOfOperands(); i++) {
+        // TODO
+      }
+    }
+    dest.endElement();
   }
   
 }

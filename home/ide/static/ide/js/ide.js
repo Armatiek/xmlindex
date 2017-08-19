@@ -36,12 +36,20 @@ tabs.on( "keyup", function( event ) {
 
 var toolbar = $("#toolbar").controlgroup();
 $("#index").selectmenu();
+$("#newIndexBtn").button({
+  "icon": "ui-icon-plus",
+  "showLabel": true
+});
 $("#saveBtn").button({
   "icon": "ui-icon-arrowstop-1-s",
   "showLabel": true
 });
 $("#runBtn").button({
   "icon": "ui-icon-play",
+  "showLabel": true
+});
+$("#explainBtn").button({
+  "icon": "ui-icon-help",
   "showLabel": true
 });
 $("#uploadBtn").button({
@@ -346,6 +354,22 @@ $(function() {
 		    editor.setCursor(json.errLine - 1, col - 1);
 		    editor.focus();
 	    }
+    }, "json");
+  });
+  
+  $('#explainBtn').on('click', function () {
+    setStatusMessage('Status : running ...');
+    var tab = $("#tabs .ui-tabs-active a");
+    var editor = tab.data("editor");
+    $.post("ide/explain", { index: $("#index").val(), code: editor.getValue() }).done(function(data) {
+      var json = JSON.parse(data);
+      setStatusMessage('Status : Finished in ' + Math.round(json.time / 1000) + ' ms');
+      resultsCodeMirror.setValue(json.result);
+      if (json.errLine && json.errLine > -1) {
+        var col = (json.errColumn && json.errColumn > -1) ? json.errColumn : 0;
+        editor.setCursor(json.errLine - 1, col - 1);
+        editor.focus();
+      }
     }, "json");
   });
   
