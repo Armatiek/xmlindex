@@ -75,6 +75,7 @@ import nl.armatiek.xmlindex.saxon.functions.xmlindex.DocumentURI;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.ExplainQuery;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.ExplainTransformation;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.GetConfiguration;
+import nl.armatiek.xmlindex.saxon.functions.xmlindex.IndexRoot;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.LocalVariableReferencer;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.OwnerDocument;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.PluggableIndexExists;
@@ -112,6 +113,7 @@ public class XMLIndexInitializer implements Initializer {
     registerFunction(new DocumentAvailable(), configuration);
     registerFunction(new DocumentURI(), configuration);
     registerFunction(new OwnerDocument(), configuration);
+    registerFunction(new IndexRoot(), configuration);
     registerFunction(new RemoveDocument(), configuration);
     registerFunction(new Transform(), configuration);
     registerFunction(new TransformAdHoc(), configuration);

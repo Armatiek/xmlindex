@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.exquery.ExQueryException;
 import org.exquery.http.HttpRequest;
 import org.exquery.restxq.impl.RestXqServiceRegistryImpl;
 import org.slf4j.Logger;
@@ -22,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.QName;
-import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.XQueryExecutable;
 import net.sf.saxon.s9api.XdmValue;
 import net.sf.saxon.value.ObjectValue;
@@ -32,6 +30,7 @@ import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.conf.WebDefinitions;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.restxq.adapter.HttpServletRequestAdapter;
+import nl.armatiek.xmlindex.saxon.conf.XMLIndexWebInitializer;
 
 public class RestXqServlet extends AbstractRestXqServlet {
   
@@ -41,15 +40,15 @@ public class RestXqServlet extends AbstractRestXqServlet {
   
   private Map<String, RestXqStaticContext> staticContexts = new ConcurrentHashMap<String, RestXqStaticContext>();
   
-  protected synchronized RestXqStaticContext getStaticContext(String indexName, HttpServletResponse resp) throws IOException, SaxonApiException, ExQueryException {
-    // TODO: developmentMode
+  protected synchronized RestXqStaticContext getStaticContext(String indexName, HttpServletResponse resp) throws Exception {
     RestXqStaticContext staticContext = staticContexts.get(indexName);
-    if (staticContext == null) {
+    if (staticContext == null || developmentMode) {
       logger.info("Initializing RESTXQ static context for index \"" + indexName + "\" ...");
       
       XMLIndex index = context.getIndex(indexName);
       
       Configuration config = index.getSaxonConfiguration();
+      new XMLIndexWebInitializer().initialize(config);
       Processor processor = index.getSaxonProcessor();
       
       RestXqServiceRegistryImpl registry = new RestXqServiceRegistryImpl();

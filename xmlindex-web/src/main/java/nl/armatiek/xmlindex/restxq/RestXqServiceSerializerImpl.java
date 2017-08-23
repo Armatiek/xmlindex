@@ -13,7 +13,6 @@ import org.exquery.http.HttpResponse;
 import org.exquery.restxq.RestXqServiceException;
 import org.exquery.restxq.impl.serialization.AbstractRestXqServiceSerializer;
 import org.exquery.restxq.impl.serialization.SerializationProperty;
-import org.exquery.serialization.annotation.MethodAnnotation.SupportedMethod;
 import org.exquery.xquery.Sequence;
 import org.exquery.xquery.Type;
 import org.exquery.xquery.TypedValue;
@@ -80,11 +79,7 @@ public class RestXqServiceSerializerImpl extends AbstractRestXqServiceSerializer
   private Properties serializationPropertiesToProperties(final Map<SerializationProperty, String> serializationProperties) {
     final Properties props = new Properties();
     for (final Entry<SerializationProperty, String> serializationProperty : serializationProperties.entrySet()) {
-      if (serializationProperty.getKey() == SerializationProperty.METHOD && serializationProperty.getValue().equals(SupportedMethod.html.name())) {
-        // Map HTML -> HTML5 as eXist doesn't have a html serializer that isn't
-        // html5
-        props.setProperty(serializationProperty.getKey().name().toLowerCase(), SupportedMethod.html5.name());
-      } else if (serializationProperty.getKey() == SerializationProperty.OMIT_XML_DECLARATION) {
+      if (serializationProperty.getKey() == SerializationProperty.OMIT_XML_DECLARATION) {
         // TODO why are not all keys transformed from '_' to '-'? I have a
         // feeling we did something special for MEDIA_TYPE???
         props.setProperty(serializationProperty.getKey().name().toLowerCase().replace('_', '-'), serializationProperty.getValue());
