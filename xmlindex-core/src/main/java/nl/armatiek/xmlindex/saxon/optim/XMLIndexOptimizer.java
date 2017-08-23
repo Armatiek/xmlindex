@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +64,6 @@ import nl.armatiek.xmlindex.query.FullTextQueryDef;
 import nl.armatiek.xmlindex.query.QueryDef;
 import nl.armatiek.xmlindex.query.QueryDefWithRelation;
 import nl.armatiek.xmlindex.query.StringFunctionQueryDef;
-import nl.armatiek.xmlindex.saxon.axis.ContextPassingAxisExpression;
 import nl.armatiek.xmlindex.saxon.axis.FilterNodeTest;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.LocalVariableReferencer;
 
@@ -400,10 +398,20 @@ public class XMLIndexOptimizer extends Optimizer {
     }
     return false;
   }
+  
+  private boolean partOfOptimizableExpression(Expression filter) {
+    while ((filter = filter.getParentExpression()) != null) {
+      if (filter instanceof OptimizableExpression)
+        return true;
+    }
+    return false;
+  }
 
   @Override
   public int isIndexableFilter(Expression filter) {  
-    if (filter instanceof ComparisonExpression) {
+    if (partOfOptimizableExpression(filter))
+      return 0;
+    else if (filter instanceof ComparisonExpression) {
       ComparisonExpression comp = (ComparisonExpression) filter;
       Expression lhs = comp.getLhsExpression();
       Expression rhs = comp.getRhsExpression();
@@ -454,15 +462,20 @@ public class XMLIndexOptimizer extends Optimizer {
         call.setDefinition(function);
         IntegratedFunctionCall newFilter = new IntegratedFunctionCall(LocalVariableReferencer.qName, call);
         newFilter.setArguments(localVars.toArray(new Expression[localVars.size()]));
-        f.setBase(newBase);
-        f.setFilter(newFilter);
-        newExpr = f;
+        
+        FilterExpression newFilterExpr = new FilterExpression(newBase, newFilter);
+        newFilterExpr.setBase(newBase);
+        newFilterExpr.setFilter(newFilter);
+        // f.setBase(newBase);
+        // f.setFilter(newFilter);
+        newExpr = newFilterExpr;
       } else {
         newExpr = newBase;
       }
       logger.info("Successfully optimized filter expression '" + exprStr + "'");
       newExpr.setExtraProperty("isOptimized", Boolean.TRUE);
-      return newExpr;
+      return new OptimizableExpression(f, newExpr);
+      // return newExpr;
     } catch (OptimizationFailureException ofe) {
       logger.info("Unable to optimize filter expression '" + exprStr + "'. " + ofe.getMessage());
       return super.tryIndexedFilter(f, visitor, indexFirstOperand, contextIsDoc);
@@ -476,7 +489,8 @@ public class XMLIndexOptimizer extends Optimizer {
       SystemFunctionCall call = (SystemFunctionCall) exp;
       if (call.getOperanda().getOperandExpression(0) instanceof SlashExpression) {
         SlashExpression se = (SlashExpression) call.getOperanda().getOperandExpression(0);
-        if (BooleanUtils.isTrue((Boolean) se.getActionExpression().getExtraProperty("isOptimized"))) {
+        if (se.getActionExpression() instanceof OptimizableExpression) {
+          // if (BooleanUtils.isTrue((Boolean) se.getActionExpression().getExtraProperty("isOptimized"))) {
           call.getOperanda().setOperand(0, se.getActionExpression());
           return;
         }

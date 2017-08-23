@@ -174,26 +174,6 @@ public class QueryConstructor {
     return joinQuery;
   }
   
-  /*
-  public static Query elementComparisonQueryDefToQuery(ComparisonQueryDef queryDef, Session session, 
-      XPathContext xpathContext) throws XPathException {
-    Query joinQuery;
-    try {
-      joinQuery = JoinUtil.createJoinQuery(
-          Definitions.FIELDNAME_PARENT, 
-          false, 
-          Definitions.FIELDNAME_LEFT, 
-          Long.class,
-          comparisonQueryDefToQuery(queryDef, session, xpathContext), 
-          session.getIndexSearcher(), 
-          ScoreMode.None);
-    } catch (IOException ioe) {
-      throw new XPathException("Error creating join query", ioe);
-    }
-    return joinQuery;
-  }
-  */
-  
   public static Query fullTextQueryDefToQuery(FullTextQueryDef queryDef, Session session, 
       XPathContext xpathContext) throws XPathException {
     Sequence value = expr2Sequence(queryDef.getValueExpression(), xpathContext);

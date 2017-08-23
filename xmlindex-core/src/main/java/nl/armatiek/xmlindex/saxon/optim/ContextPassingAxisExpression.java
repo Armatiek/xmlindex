@@ -5,7 +5,7 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package nl.armatiek.xmlindex.saxon.axis;
+package nl.armatiek.xmlindex.saxon.optim;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -73,6 +73,7 @@ import net.sf.saxon.value.Cardinality;
 import net.sf.saxon.z.IntIterator;
 import net.sf.saxon.z.IntSet;
 import nl.armatiek.xmlindex.XMLIndex;
+import nl.armatiek.xmlindex.saxon.axis.FilterNodeTest;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
 
 /**
@@ -1096,11 +1097,10 @@ public class ContextPassingAxisExpression extends Expression {
       throw err;
     }
     try {
-      if (test == null) {
+      if (test == null)
         return ((XMLIndexNodeInfo) item).iterateAxis(axis, context);
-      } else {
+      else
         return ((XMLIndexNodeInfo) item).iterateAxis(axis, test, context);
-      }
     } catch (ClassCastException cce) {
       XPathException err = new XPathException("The context item for axis step " + toString() + " is not a node");
       err.setErrorCode("XPTY0020");
