@@ -33,6 +33,7 @@ import net.sf.saxon.expr.SystemFunctionCall;
 import net.sf.saxon.expr.VariableReference;
 import net.sf.saxon.expr.parser.ExpressionVisitor;
 import net.sf.saxon.expr.parser.Optimizer;
+import net.sf.saxon.expr.parser.RebindingMap;
 import net.sf.saxon.expr.parser.Token;
 import net.sf.saxon.functions.Count;
 import net.sf.saxon.functions.IntegratedFunctionCall;
@@ -457,11 +458,15 @@ public class XMLIndexOptimizer extends Optimizer {
       newBase.setLocation(base.getLocation());
       Expression newExpr;
       if (!localVars.isEmpty()) {
+        ArrayList<LocalVariableReference> localVarsCopies = new ArrayList<LocalVariableReference>();
+        for (LocalVariableReference localVar : localVars)
+          localVarsCopies.add((LocalVariableReference) localVar.copy(new RebindingMap()));
+        
         LocalVariableReferencer function = new LocalVariableReferencer();
         ExtensionFunctionCall call = function.makeCallExpression();
         call.setDefinition(function);
         IntegratedFunctionCall newFilter = new IntegratedFunctionCall(LocalVariableReferencer.qName, call);
-        newFilter.setArguments(localVars.toArray(new Expression[localVars.size()]));
+        newFilter.setArguments(localVarsCopies.toArray(new Expression[localVarsCopies.size()]));
         
         FilterExpression newFilterExpr = new FilterExpression(newBase, newFilter);
         newFilterExpr.setBase(newBase);

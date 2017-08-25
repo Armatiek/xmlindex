@@ -46,7 +46,6 @@
     <project.build.sourceEncoding>${file.encoding}</project.build.sourceEncoding> 
     <file.encoding>UTF-8</file.encoding>
     <lucene.version>6.5.1</lucene.version>
-    <!-- <saxon.version>9.7.0-18</saxon.version> -->
     <saxon.version>9.8.0-3</saxon.version>
     <milton.version>2.7.2.4</milton.version>
   </properties>

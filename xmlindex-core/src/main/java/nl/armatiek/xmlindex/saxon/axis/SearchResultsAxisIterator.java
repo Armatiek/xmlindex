@@ -28,8 +28,6 @@ import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.IndexOrDocValuesQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import net.sf.saxon.expr.LastPositionFinder;
 import net.sf.saxon.expr.XPathContext;
@@ -46,9 +44,6 @@ import nl.armatiek.xmlindex.node.Node;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
 
 public abstract class SearchResultsAxisIterator implements AxisIterator, LastPositionFinder, LookaheadIterator {
-  
-  @SuppressWarnings("unused")
-  private static final Logger logger = LoggerFactory.getLogger(SearchResultsAxisIterator.class);
   
   protected Session session;
   protected IndexSearcher searcher;
@@ -112,7 +107,7 @@ public abstract class SearchResultsAxisIterator implements AxisIterator, LastPos
     try {
       if (hitIterator == null)
         hitIterator = getHits();
-      if (!hitIterator.hasNext()) {
+      if (hitIterator == null || !hitIterator.hasNext()) {
         length = 0;
         return null;
       }
