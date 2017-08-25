@@ -23,11 +23,15 @@ declare
   %output:method("xml")
 function svc:juriconnect($jci as xs:string*) as element()? {
   let $toestand as element(toestand)? := bwb:get-toestand(xix:index-root(), $jci)
-  let $result as element()* := bwb:get-onderdelen($toestand, $jci, false())
-  return
-    <result jci="{$jci}" aantal-onderdelen="{count($result)}"> {
-      bwb:get-onderdelen($toestand, $jci, false())
-    } </result>  
+  return 
+    if (not(jci:has-location-string($jci))) then
+      $toestand
+    else
+      let $result as element()* := bwb:get-onderdelen($toestand, $jci, false())
+      return
+        <result jci="{$jci}" aantal-onderdelen="{count($result)}"> {
+          bwb:get-onderdelen($toestand, $jci, false())
+        } </result>  
 };
 
 (:~

@@ -471,8 +471,6 @@ public class XMLIndexOptimizer extends Optimizer {
         FilterExpression newFilterExpr = new FilterExpression(newBase, newFilter);
         newFilterExpr.setBase(newBase);
         newFilterExpr.setFilter(newFilter);
-        // f.setBase(newBase);
-        // f.setFilter(newFilter);
         newExpr = newFilterExpr;
       } else {
         newExpr = newBase;
@@ -480,7 +478,6 @@ public class XMLIndexOptimizer extends Optimizer {
       logger.info("Successfully optimized filter expression '" + exprStr + "'");
       newExpr.setExtraProperty("isOptimized", Boolean.TRUE);
       return new OptimizableExpression(f, newExpr);
-      // return newExpr;
     } catch (OptimizationFailureException ofe) {
       logger.info("Unable to optimize filter expression '" + exprStr + "'. " + ofe.getMessage());
       return super.tryIndexedFilter(f, visitor, indexFirstOperand, contextIsDoc);
