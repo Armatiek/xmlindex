@@ -11,8 +11,6 @@ declare namespace config="http://www.armatiek.nl/xmlindex/config";
 declare namespace xix="http://www.armatiek.nl/xmlindex/functions";
 
 declare variable $config:development-mode as xs:boolean external;
-declare variable $config:home-dir as xs:string external;
-declare variable $config:index-dir as xs:string external;
 
 (:~
  : Deze functie retourneert alle regelinonderdelen waar de juriconnect $jci naar verwijst
@@ -27,7 +25,7 @@ function svc:juriconnect($jci as xs:string*) as element()? {
   let $toestand as element(toestand)? := bwb:get-toestand(xix:index-root(), $jci)
   let $result as element()* := bwb:get-onderdelen($toestand, $jci, false())
   return
-    <result aantal-onderdelen="{count($result)}"> {
+    <result jci="{$jci}" aantal-onderdelen="{count($result)}"> {
       bwb:get-onderdelen($toestand, $jci, false())
     } </result>  
 };

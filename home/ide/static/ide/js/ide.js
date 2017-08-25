@@ -193,6 +193,7 @@ $("#dropzone").dropzone({
   },
   sending: function(file, xhr, formData) {
     formData.append("index", $("#index").val());
+    formData.append("filename", file.name);
   }
 });
 
@@ -328,7 +329,9 @@ $(function() {
         if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
       },
       "Alt-F": "findPersistent"
-    }
+    },
+    foldGutter: true,
+    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
   });
   
   resultsCodeMirror.setSize("100%", $('.ui-layout-south').height() - $('#statusPanel').height() - 12);

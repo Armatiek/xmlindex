@@ -28,6 +28,7 @@
         <link href="{$app-path}/codemirror/addon/display/fullscreen.css" rel="stylesheet"/>
         <link href="{$app-path}/codemirror/addon/dialog/dialog.css" rel="stylesheet"/>
         <link href="{$app-path}/codemirror/addon/search/matchesonscrollbar.css" rel="stylesheet"/>
+        <link href="{$app-path}/codemirror/addon/fold/foldgutter.css" rel="stylesheet"/>
         <link href="{$app-path}/codemirror/theme/xq-dark.css" rel="stylesheet"/>
         <link href="{$app-path}/codemirror/theme/xq-light.css" rel="stylesheet"/>
         <link href="{$app-path}/jstree/themes/default/style.min.css" rel="stylesheet"/>
@@ -134,6 +135,12 @@
         <script src="{$app-path}/codemirror/addon/scroll/annotatescrollbar.js"></script>
         <script src="{$app-path}/codemirror/addon/search/matchesonscrollbar.js"></script>
         <script src="{$app-path}/codemirror/addon/search/jump-to-line.js"></script>
+        <script src="{$app-path}/codemirror/addon/fold/foldcode.js"></script>
+        <script src="{$app-path}/codemirror/addon/fold/foldgutter.js"></script>
+        <script src="{$app-path}/codemirror/addon/fold/brace-fold.js"></script>
+        <script src="{$app-path}/codemirror/addon/fold/xml-fold.js"></script>
+        <script src="{$app-path}/codemirror/addon/fold/indent-fold.js"></script>
+        <script src="{$app-path}/codemirror/addon/fold/comment-fold.js"></script>
         <script src="{$app-path}/jstree/jstree.min.js"></script>
         <script src="{$app-path}/dropzone/js/dropzone.min.js"></script>
         <script src="{$app-path}/ide/js/ide.js"></script>

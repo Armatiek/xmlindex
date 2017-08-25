@@ -149,9 +149,10 @@ function ide:deletefile($path as xs:string*) as empty-sequence() {
 declare
   %rest:path("/uploaddocument")
   %rest:POST("{$parts}")
+  %rest:form-param("filename", "{$file-name}")
   %output:method("text")
-function ide:uploaddocument($parts as item()*) as empty-sequence() {
-  xmi:add-document("test", $parts[1])
+function ide:uploaddocument($parts as item()*, $file-name as xs:string*) as empty-sequence() {
+  xmi:add-document($file-name[1], $parts[1])
 };
 
 declare
