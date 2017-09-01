@@ -16,7 +16,7 @@ public class TestBed extends TestBase {
   
   private void executeTest(Session session) throws Exception {
     // session.addDocument("geo-test", new File("C:\\projects\\validprojects\\XMLIndex2\\home\\gml.xml"));
-    session.addDocument("geo-test", new File("D:\\countrywide\\nl\\Wijk2015.gml"));
+    session.addDocument("geo-test", new File("D:\\countrywide\\nl\\Wijk2015.gml"), null);
     session.commit();
   }
   

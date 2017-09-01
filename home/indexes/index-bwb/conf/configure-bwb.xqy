@@ -26,6 +26,12 @@ declare function local:configure-virtual-attribute-defs() as xs:boolean* {
     </analyzer>    
   return
     (
+      local:configure-virtual-attribute-def(QName('', 'toestand'), 'file-name', 
+        QName($ns-va, 'file-name'), QName($ns-xs, 'xs:string'), (), ()),
+    
+    
+    
+    
       local:configure-virtual-attribute-def(QName('', 'toestand'), 'expression-id', 
         QName($ns-va, 'toestand-expression-id'), QName($ns-xs, 'xs:string'), (), ()),
       local:configure-virtual-attribute-def(QName('', 'expression'), 'bwb-id', 

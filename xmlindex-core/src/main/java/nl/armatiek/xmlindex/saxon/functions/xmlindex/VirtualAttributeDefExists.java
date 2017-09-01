@@ -74,7 +74,7 @@ public class VirtualAttributeDefExists extends ExtensionFunctionDefinition {
       try {
         String virtualAttributeName = ((StringValue) arguments[0].head()).getStringValue();
         XMLIndex index = getSession(context).getIndex();
-        return BooleanValue.get(index.getConfiguration().getVirtualAttributeConfig().exists(virtualAttributeName));
+        return BooleanValue.get(index.getConfiguration().getVirtualAttributeConfig().attributeExists(virtualAttributeName));
       } catch (XPathException e) {
         throw e;
       } catch (Exception e) {

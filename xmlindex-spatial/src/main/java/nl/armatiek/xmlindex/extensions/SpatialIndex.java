@@ -46,7 +46,6 @@ import net.sf.saxon.pattern.NodeKindTest;
 import net.sf.saxon.type.Type;
 import net.sf.saxon.value.StringValue;
 import nl.armatiek.xmlindex.XMLIndex;
-import nl.armatiek.xmlindex.conf.PluggableIndex;
 import nl.pdok.gml3.impl.gml3_1_1_2.GML3112ParserImpl;
 import nl.pdok.gml3.impl.gml3_2_1.GML321ParserImpl;
 
@@ -145,7 +144,7 @@ public class SpatialIndex extends PluggableIndex {
   }
   
   @Override
-  public void indexNode(Document doc, Element node) throws CustomIndexException {
+  public void indexNode(Document doc, Element node) throws PluggableIndexException {
     if (!isGMLGeometry(node))
       return;
     
@@ -161,16 +160,16 @@ public class SpatialIndex extends PluggableIndex {
         doc.add(field);
       }
       
-    } catch (CustomIndexException e) {
+    } catch (PluggableIndexException e) {
       throw e;
     } catch (Exception e) {
-      throw new CustomIndexException("Error indexing GML", e);
+      throw new PluggableIndexException("Error indexing GML", e);
     }
   }
 
   @Override
-  public CustomIndexExtensionFunctionCall getFunctionCall() {
-    CustomIndexExtensionFunctionCall call = new SpatialIndexExtensionFunctionCall();
+  public PluggableIndexExtensionFunctionCall getFunctionCall() {
+    PluggableIndexExtensionFunctionCall call = new SpatialIndexExtensionFunctionCall();
     call.setDefinition(new SpatialIndexExtensionFunctionDefinition());
     return call;
   }
@@ -198,7 +197,7 @@ public class SpatialIndex extends PluggableIndex {
       return spatialStrategy.makeQuery(args);
       
     } catch (Exception e) {
-      throw new CustomIndexException("Error querying GML", e);
+      throw new PluggableIndexException("Error querying GML", e);
     }
   }
   
@@ -206,7 +205,7 @@ public class SpatialIndex extends PluggableIndex {
     String srsName = getSrsName(gmlNode);
    
     if (StringUtils.isBlank(srsName))
-      throw new CustomIndexException("GML geometry element has no attribute \"" + ATTRNAME_SRSNAME + "\"");
+      throw new PluggableIndexException("GML geometry element has no attribute \"" + ATTRNAME_SRSNAME + "\"");
     
     /* Transform coordinate reference system to WGS84 if necessary: */
     CoordinateReferenceSystem crs = tryCrsCache(srsName);

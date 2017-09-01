@@ -32,6 +32,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.servlet.ServletContext;
+import javax.xml.XMLConstants;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +65,7 @@ public class WebContext {
   private String contextPath;
   private File webInfDir; 
   private File homeDir;
+  private Schema configSchema;
   private volatile boolean isOpen = false;
   
   private WebContext() { }
@@ -81,6 +85,7 @@ public class WebContext {
     
     initHomeDir();      
     initProperties();
+    initXMLSchemas();
     
     isOpen = true;
     logger.info("XMLIndex Context opened.");
@@ -198,6 +203,15 @@ public class WebContext {
     monitor.addObserver(webAppObserver);    
   }
   */
+    
+  public void initXMLSchemas() throws Exception {
+    SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+    File schemaFile = new File(homeDir, Definitions.FOLDERNAME_CONF + File.separatorChar + 
+        Definitions.FOLDERNAME_XSD + File.separatorChar + Definitions.FILENAME_INDEXCONFIG_XSD);
+    if (!schemaFile.isFile())
+      throw new FileNotFoundException(String.format("XML Schema \"%s\" not found", schemaFile.getAbsolutePath()));
+    configSchema = factory.newSchema(schemaFile);
+  }
   
   public ServletContext getServletContext() {
     return this.servletContext;
@@ -251,7 +265,7 @@ public class WebContext {
       File indexDir = new File(getIndexesDir(), name);
       if (!indexDir.isDirectory())
         throw new FileNotFoundException("Index directory \"" + indexDir.getAbsolutePath() + "\" not found");
-      index = new XMLIndex(name, indexDir.toPath());
+      index = new XMLIndex(name, indexDir.toPath(), configSchema);
       indexes.put(name, index);
     }
     return index;

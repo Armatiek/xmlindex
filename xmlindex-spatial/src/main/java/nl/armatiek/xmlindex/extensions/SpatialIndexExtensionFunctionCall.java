@@ -5,7 +5,7 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.BooleanValue;
 
-public class SpatialIndexExtensionFunctionCall extends CustomIndexExtensionFunctionCall {
+public class SpatialIndexExtensionFunctionCall extends PluggableIndexExtensionFunctionCall {
   
   @Override
   public BooleanValue call(XPathContext context, Sequence[] arguments) throws XPathException {            

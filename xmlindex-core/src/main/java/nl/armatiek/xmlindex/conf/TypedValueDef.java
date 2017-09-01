@@ -21,19 +21,16 @@ import java.io.IOException;
 
 import javax.xml.XMLConstants;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.NumericDocValuesField;
-import org.apache.lucene.document.StoredField;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.index.Term;
+import org.apache.commons.lang3.StringUtils;
+import org.w3c.dom.Element;
 
 import net.sf.saxon.s9api.QName;
-import net.sf.saxon.type.BuiltInAtomicType;
 import net.sf.saxon.type.ItemType;
 import net.sf.saxon.type.Type;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
+import nl.armatiek.xmlindex.saxon.util.SaxonUtils;
+import nl.armatiek.xmlindex.util.XMLUtils;
 
 public class TypedValueDef {
  
@@ -49,11 +46,12 @@ public class TypedValueDef {
     this.itemType = itemType;
   }
   
-  public TypedValueDef(XMLIndex index, Document doc) {
-    this.index = index;
-    nodeType = ((StoredField) doc.getField(Definitions.FIELDNAME_NODETYPE)).numericValue().intValue();
-    name = new QName(doc.get(Definitions.FIELDNAME_NODENAMESPACEURI), doc.get(Definitions.FIELDNAME_NODELOCALNAME));
-    itemType = Type.getBuiltInItemType(XMLConstants.W3C_XML_SCHEMA_NS_URI, doc.get(Definitions.FIELDNAME_ITEMTYPE));
+  public TypedValueDef(Element typedValueDefElem) {
+    this.index = null;
+    nodeType = XMLUtils.toNodeType(XMLUtils.getValueOfChildElementByLocalName(typedValueDefElem, "node-type"));
+    name = SaxonUtils.getQName(XMLUtils.getChildElementByLocalName(typedValueDefElem, "node-name"));
+    String type = XMLUtils.getValueOfChildElementByLocalName(typedValueDefElem, "item-type");
+    itemType = Type.getBuiltInItemType(XMLConstants.W3C_XML_SCHEMA_NS_URI, StringUtils.substringAfter(type, ":"));
   }
   
   public String getKey() {
@@ -96,18 +94,6 @@ public class TypedValueDef {
   
   public ItemType getItemType() {
     return itemType;
-  }
-  
-  public void store() throws IOException {
-    Document doc = new Document();
-    doc.add(new NumericDocValuesField(Definitions.FIELDNAME_LEFT, Definitions.FIELVALUE_CONFIG_LEFT));
-    doc.add(new StringField(Definitions.FIELDNAME_INDEXINFO, Definitions.FIELDVALUE_TYPEDVALDEF, Store.NO));
-    doc.add(new StoredField(Definitions.FIELDNAME_NODETYPE, nodeType));
-    doc.add(new StoredField(Definitions.FIELDNAME_NODENAMESPACEURI, getNamespaceUri()));
-    doc.add(new StoredField(Definitions.FIELDNAME_NODELOCALNAME, getLocalPart()));
-    doc.add(new StoredField(Definitions.FIELDNAME_ITEMTYPE, ((BuiltInAtomicType) itemType).getName()));
-    index.getNodeStore().updateLuceneDocument(new Term(Definitions.FIELDNAME_DEFNAME, getKey()), doc);
-    index.getNodeStore().commit(true);
   }
     
   public void reindex() throws IOException {

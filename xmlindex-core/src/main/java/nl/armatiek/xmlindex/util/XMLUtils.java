@@ -20,7 +20,10 @@ package nl.armatiek.xmlindex.util;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.Calendar;
+import java.util.Date;
 
+import javax.xml.bind.DatatypeConverter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -37,6 +40,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import net.sf.saxon.type.Type;
 
 /**
  * Helper class containing several XML/DOM/JAXP related methods.  
@@ -226,6 +231,39 @@ public class XMLUtils {
       return defaultValue;
     }
     return Integer.parseInt(value);
+  }
+  
+  public static String getDateTimeString(Date dateTime) { 
+    Calendar cal = Calendar.getInstance();
+    if (dateTime != null) {
+      cal.setTime(dateTime);
+    } 
+    return DatatypeConverter.printDateTime(cal);   
+  }
+  
+  public static String getDateTimeString() {
+    return getDateTimeString(new Date());           
+  }
+  
+  public static int toNodeType(String type) {
+    switch (type) {
+    case "document-node()":
+      return Type.DOCUMENT;
+    case "element()":
+      return Type.ELEMENT;
+    case "attribute()":
+      return Type.ATTRIBUTE;
+    case "comment()":
+      return Type.COMMENT;
+    case "text()":
+      return Type.TEXT;
+    case "processing-instruction()":
+      return Type.PROCESSING_INSTRUCTION;
+    case "namespace-node()":
+      return Type.NAMESPACE;
+    default:
+      return 0;
+    }
   }
   
 }

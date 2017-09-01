@@ -58,7 +58,7 @@ public class SpatialIndexExtensionFunctionDefinition extends ExtensionFunctionDe
   }
 
   @Override
-  public CustomIndexExtensionFunctionCall makeCallExpression() {
+  public PluggableIndexExtensionFunctionCall makeCallExpression() {
     return new SpatialIndexExtensionFunctionCall();
   }
   

@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package nl.armatiek.xmlindex.saxon.optim;
 
 import java.util.ArrayList;
@@ -51,12 +68,12 @@ import net.sf.saxon.type.ItemType;
 import net.sf.saxon.type.Type;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.conf.Definitions;
-import nl.armatiek.xmlindex.conf.PluggableIndex;
 import nl.armatiek.xmlindex.conf.TypedValueDef;
 import nl.armatiek.xmlindex.conf.VirtualAttributeDef;
 import nl.armatiek.xmlindex.error.OptimizationFailureException;
 import nl.armatiek.xmlindex.error.XMLIndexException;
-import nl.armatiek.xmlindex.extensions.CustomIndexExtensionFunctionCall;
+import nl.armatiek.xmlindex.extensions.PluggableIndex;
+import nl.armatiek.xmlindex.extensions.PluggableIndexExtensionFunctionCall;
 import nl.armatiek.xmlindex.query.BooleanQueryDef;
 import nl.armatiek.xmlindex.query.ComparisonQueryDef;
 import nl.armatiek.xmlindex.query.CustomIndexQueryDef;
@@ -298,7 +315,7 @@ public class XMLIndexOptimizer extends Optimizer {
   }
   
   private QueryDef integratedExtensionCall2QueryDef(IntegratedFunctionCall expr, List<LocalVariableReference> localVars) {
-    CustomIndexExtensionFunctionCall call = (CustomIndexExtensionFunctionCall) expr.getFunction();
+    PluggableIndexExtensionFunctionCall call = (PluggableIndexExtensionFunctionCall) expr.getFunction();
     PluggableIndex pluggableIndex = index.getConfiguration().getPluggableIndexConfig().get(call);
     if (pluggableIndex == null)
       throw new OptimizationFailureException("No pluggable index configured for extension function call \"" + call.getClass() + "\"");
@@ -422,7 +439,7 @@ public class XMLIndexOptimizer extends Optimizer {
         return -1;
       return 0;
     } else if (filter instanceof IntegratedFunctionCall && 
-        ((IntegratedFunctionCall) filter).getFunction() instanceof CustomIndexExtensionFunctionCall) {
+        ((IntegratedFunctionCall) filter).getFunction() instanceof PluggableIndexExtensionFunctionCall) {
       return 1; 
     } else if (filter.isCallOnSystemFunction("exists") || filter.isCallOnSystemFunction("starts-with") || 
         filter.isCallOnSystemFunction("ends-with") || filter.isCallOnSystemFunction("contains") ) {

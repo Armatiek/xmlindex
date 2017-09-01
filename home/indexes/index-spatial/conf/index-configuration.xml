@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<index-configuration>
+  
+  <pluggable-index-config>
+    <pluggable-index-def>
+      <class-name>nl.armatiek.xmlindex.extensions.SpatialIndex</class-name>
+      <param name="prefixTreeMaxLevels" value="11"/>
+      <param name="fieldName" value="shape"/>  
+    </pluggable-index-def>
+  </pluggable-index-config>
+  
+</index-configuration>

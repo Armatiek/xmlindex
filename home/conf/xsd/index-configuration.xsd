@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <xs:element name="index-configuration">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="typed-value-config" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="typed-value-def" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:all>
+                    <xs:element name="node-type" type="node-type"/>
+                    <xs:element name="node-name" type="xs:QName"/>
+                    <xs:element name="item-type" type="item-type"/>
+                  </xs:all>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="virtual-attribute-config" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="virtual-attribute-def" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="element-name" type="xs:QName" minOccurs="1" maxOccurs="unbounded"/>
+                    <xs:element name="virtual-attribute-name" type="xs:string"/>
+                    <xs:element name="function-name" type="xs:QName"/>
+                    <xs:element name="item-type" type="item-type"/>
+                    <xs:element name="index-analyzer" type="analyzer-type" minOccurs="0"/>
+                    <xs:element name="query-analyzer" type="analyzer-type" minOccurs="0"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="pluggable-index-config" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="pluggable-index-def" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="class-name" type="xs:string"/>
+                    <xs:element name="param" minOccurs="0" maxOccurs="unbounded">
+                      <xs:complexType>
+                        <xs:attribute name="name" type="xs:string" use="required"/>
+                        <xs:attribute name="value" type="xs:string" use="required"/>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:simpleType name="node-type">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="element()"/>
+      <xs:enumeration value="attribute()"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="item-type">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="xs:string"/>
+      <xs:enumeration value="xs:boolean"/>
+      <xs:enumeration value="xs:float"/>
+      <xs:enumeration value="xs:double"/>
+      <xs:enumeration value="xs:long"/>
+      <xs:enumeration value="xs:int"/>
+      <xs:enumeration value="xs:short"/>
+      <xs:enumeration value="xs:byte"/>
+      <xs:enumeration value="xs:dateTime"/>
+      <xs:enumeration value="xs:date"/>
+      <xs:enumeration value="xs:time"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="analyzer-type">
+    <xs:choice>
+      <xs:element name="class-analyzer" type="xs:string"/>
+      <xs:element name="analyzer">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="char-filter" type="filter-type" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="tokenizer" type="filter-type"/>
+            <xs:element name="filter" type="filter-type" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="filter-type">
+    <xs:attribute name="class" type="xs:string" use="required"/>
+    <xs:anyAttribute namespace="##local" processContents="lax"/>
+  </xs:complexType>
+
+</xs:schema>

@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<index-configuration xmlns:va="http://www.armatiek.nl/xmlindex/virtualattribute">
+  
+  <typed-value-config>
+    <typed-value-def>
+      <node-type>attribute()</node-type>
+      <node-name>inwerking</node-name>
+      <item-type>xs:date</item-type>
+    </typed-value-def>
+  </typed-value-config>
+  
+  <virtual-attribute-config>
+    <virtual-attribute-def>
+      <element-name>toestand</element-name>
+      <element-name>work</element-name>
+      <element-name>wetstechnische-informatie</element-name>
+      <virtual-attribute-name>file-name</virtual-attribute-name>
+      <function-name>va:file-name</function-name>
+      <item-type>xs:string</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>toestand</element-name>
+      <element-name>work</element-name>
+      <element-name>wetstechnische-informatie</element-name>
+      <virtual-attribute-name>file-path</virtual-attribute-name>
+      <function-name>va:file-path</function-name>
+      <item-type>xs:string</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>toestand</element-name>
+      <element-name>work</element-name>
+      <element-name>wetstechnische-informatie</element-name>
+      <virtual-attribute-name>file-creation-time</virtual-attribute-name>
+      <function-name>va:file-creation-time</function-name>
+      <item-type>xs:date</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>toestand</element-name>
+      <element-name>work</element-name>
+      <element-name>wetstechnische-informatie</element-name>
+      <virtual-attribute-name>file-last-modified-time</virtual-attribute-name>
+      <function-name>va:file-last-modified-time</function-name>
+      <item-type>xs:date</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>toestand</element-name>
+      <element-name>work</element-name>
+      <element-name>wetstechnische-informatie</element-name>
+      <virtual-attribute-name>file-size</virtual-attribute-name>
+      <function-name>va:file-size</function-name>
+      <item-type>xs:int</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>expression</element-name>
+      <virtual-attribute-name>inwerkingtredingsdatum</virtual-attribute-name>
+      <function-name>va:expression-inwerkingtredingsdatum</function-name>
+      <item-type>xs:date</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>expression</element-name>
+      <virtual-attribute-name>zichtdatum-eind</virtual-attribute-name>
+      <function-name>va:expression-zichtdatum-eind</function-name>
+      <item-type>xs:date</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>expression</element-name>
+      <virtual-attribute-name>zichtdatum-start</virtual-attribute-name>
+      <function-name>va:expression-zichtdatum-start</function-name>
+      <item-type>xs:date</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>toestand</element-name>
+      <virtual-attribute-name>expression-id</virtual-attribute-name>
+      <function-name>va:toestand-expression-id</function-name>
+      <item-type>xs:string</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>toestand</element-name>
+      <virtual-attribute-name>citeertitel</virtual-attribute-name>
+      <function-name>va:citeertitel</function-name>
+      <item-type>xs:string</item-type>
+      <index-analyzer>
+        <analyzer>
+          <tokenizer class="standard"/>
+          <filter class="standard"/>
+          <filter class="lowercase"/>
+          <filter class="stop" ignoreCase="true"/>
+        </analyzer>
+      </index-analyzer>
+      <query-analyzer>
+        <analyzer>
+          <tokenizer class="standard"/>
+          <filter class="standard"/>
+          <filter class="lowercase"/>
+          <filter class="stop" ignoreCase="true"/>
+        </analyzer>
+      </query-analyzer>
+      <!--
+      <index-analyzer>
+        <analyzer class="org.apache.lucene.analysis.standard.StandardAnalyzer"/>
+      </index-analyzer>
+      <query-analyzer>
+        <analyzer class="org.apache.lucene.analysis.standard.StandardAnalyzer"/>
+      </query-analyzer>
+      -->
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>expression</element-name>
+      <virtual-attribute-name>einddatum</virtual-attribute-name>
+      <function-name>va:expression-einddatum</function-name>
+      <item-type>xs:date</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>expression</element-name>
+      <virtual-attribute-name>bwb-id</virtual-attribute-name>
+      <function-name>va:expression-bwb-id</function-name>
+      <item-type>xs:string</item-type>
+    </virtual-attribute-def>
+  </virtual-attribute-config>
+  
+  <pluggable-index-config/>
+    
+</index-configuration>

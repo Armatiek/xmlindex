@@ -17,66 +17,43 @@
 
 package nl.armatiek.xmlindex.conf;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.apache.lucene.index.Term;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
 
 import net.sf.saxon.lib.ExtensionFunctionDefinition;
 import net.sf.saxon.om.StructuredQName;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.error.XMLIndexException;
-import nl.armatiek.xmlindex.extensions.CustomIndexExtensionFunctionCall;
+import nl.armatiek.xmlindex.extensions.PluggableIndex;
+import nl.armatiek.xmlindex.extensions.PluggableIndexExtensionFunctionCall;
+import nl.armatiek.xmlindex.util.XMLUtils;
 
 public class PluggableIndexConfig {
   
-  private static final Logger logger = LoggerFactory.getLogger(PluggableIndexConfig.class);
-  
   private final Map<String, PluggableIndex> pluggableIndexes = new HashMap<String, PluggableIndex>(); 
   private final HashMap<StructuredQName, PluggableIndex> pluggableIndexesCallMap = new HashMap<StructuredQName, PluggableIndex>();
-  private final XMLIndex index;
   
-  public PluggableIndexConfig(XMLIndex index) {
+  
+  public PluggableIndexConfig(XMLIndex index, Element configElem) {
     try {
-      this.index = index;
-      List<PluggableIndex> pluggableIndexes = index.getNodeStore().getPluggableIndexes();
-      for (PluggableIndex pluggableIndex : pluggableIndexes) {
-        this.pluggableIndexes.put(pluggableIndex.getClass().getName(), pluggableIndex);
+      Element pluggableIndexConfigElem = XMLUtils.getFirstChildElementByLocalName(configElem, "pluggable-index-config");
+      if (pluggableIndexConfigElem == null)
+        return;
+      
+      Element pluggableIndexDefElem = XMLUtils.getFirstChildElement(pluggableIndexConfigElem);
+      while (pluggableIndexDefElem != null) {
+        PluggableIndex pluggableIndex = PluggableIndex.fromConfigElem(index, pluggableIndexDefElem);
         pluggableIndexesCallMap.put(pluggableIndex.getFunctionCall().getDefinition().getFunctionQName(), pluggableIndex);
         ExtensionFunctionDefinition extensionFunction = pluggableIndex.getFunctionCall().getDefinition();
         index.getSaxonConfiguration().registerExtensionFunction(extensionFunction);
+        pluggableIndexDefElem = XMLUtils.getNextSiblingElement(pluggableIndexDefElem);
       }
     } catch (Exception e) {
       throw new XMLIndexException("Error initializing pluggable indexes for index \"" + index.getIndexName() + "\"", e);
     } 
-  }
-  
-  public void add(PluggableIndex pluggableIndex) throws IOException {
-    if (pluggableIndexes.containsKey(pluggableIndex.getClass().getName())) 
-      throw new IllegalArgumentException("Pluggable index of class \"" + pluggableIndex.getClass().getName() + "\" already exists");
-    logger.info("Adding pluggable index \"" + pluggableIndex.getClass().getName() + "\" ...");
-    pluggableIndex.store();
-    pluggableIndexes.put(pluggableIndex.getClass().getName(), pluggableIndex);
-    pluggableIndexesCallMap.put(pluggableIndex.getFunctionCall().getDefinition().getFunctionQName(), pluggableIndex);
-    ExtensionFunctionDefinition extensionFunction = pluggableIndex.getFunctionCall().getDefinition();
-    index.getSaxonConfiguration().registerExtensionFunction(extensionFunction);
-    logger.info("Added pluggable index \"" + pluggableIndex.getClass().getName() + "\"");
-  }
-  
-  public void remove(PluggableIndex pluggableIndex) throws IOException {
-    String className = pluggableIndex.getClass().getName();
-    if (!pluggableIndexes.containsKey(className)) 
-      throw new IllegalArgumentException("Pluggable index \"" + className + "\" does not exists");
-    index.getNodeStore().deleteLuceneDocument(new Term(Definitions.FIELDNAME_DEFNAME, className));
-    index.getNodeStore().commit(true);
-    pluggableIndexes.remove(className);
-    pluggableIndexesCallMap.remove(pluggableIndex.getFunctionCall().getDefinition().getFunctionQName());
-    logger.info("Pluggable index \"" + className + "\" removed");
   }
    
   public PluggableIndex get(String className) {
@@ -87,7 +64,7 @@ public class PluggableIndexConfig {
     return pluggableIndexes.values();
   }
   
-  public PluggableIndex get(CustomIndexExtensionFunctionCall call) {
+  public PluggableIndex get(PluggableIndexExtensionFunctionCall call) {
     return pluggableIndexesCallMap.get(call.getDefinition().getFunctionQName());
   }
   

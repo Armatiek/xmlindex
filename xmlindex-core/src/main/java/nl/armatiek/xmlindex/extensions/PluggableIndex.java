@@ -15,28 +15,21 @@
  * limitations under the License.
  */
 
-package nl.armatiek.xmlindex.conf;
+package nl.armatiek.xmlindex.extensions;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.NumericDocValuesField;
-import org.apache.lucene.document.StoredField;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.w3c.dom.Element;
 
 import net.sf.saxon.om.Sequence;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
-import nl.armatiek.xmlindex.extensions.CustomIndexExtensionFunctionCall;
+import nl.armatiek.xmlindex.util.XMLUtils;
 
 public abstract class PluggableIndex {
   
@@ -57,7 +50,7 @@ public abstract class PluggableIndex {
   
   public void close() { }
   
-  public abstract CustomIndexExtensionFunctionCall getFunctionCall();
+  public abstract PluggableIndexExtensionFunctionCall getFunctionCall();
   
   public abstract void indexNode(Document doc, Element node);
   
@@ -71,26 +64,15 @@ public abstract class PluggableIndex {
     return pluggableIndex;
   }
   
-  public static PluggableIndex fromDocument(XMLIndex index, Document doc) throws Exception {
-    String className = doc.get(Definitions.FIELDNAME_CLASSNAME);
+  public static PluggableIndex fromConfigElem(XMLIndex index, Element pluggableIndexDefElem) throws Exception {
+    String className = XMLUtils.getValueOfChildElementByLocalName(pluggableIndexDefElem, "class-name");
     HashMap<String, String> params = new HashMap<String, String>();
-    for (IndexableField field : doc.getFields(Definitions.FIELDNAME_PARAMS)) {
-      String value = field.stringValue();
-      params.put(StringUtils.substringBefore(value, "||"), StringUtils.substringAfter(value, "||"));
+    Element paramElem = XMLUtils.getChildElementByLocalName(pluggableIndexDefElem, "param");
+    while (paramElem != null) {
+      params.put(paramElem.getAttribute("name"), paramElem.getAttribute("value"));
+      paramElem = XMLUtils.getNextSiblingElement(paramElem);
     }
     return fromClassName(index, className, params);
-  }
-  
-  public void store() throws IOException {
-    Document doc = new Document();
-    doc.add(new NumericDocValuesField(Definitions.FIELDNAME_LEFT, Definitions.FIELVALUE_CONFIG_LEFT));
-    doc.add(new StringField(Definitions.FIELDNAME_INDEXINFO, Definitions.FIELDVALUE_PLUGGABLEINDEX, Store.NO));
-    doc.add(new StoredField(Definitions.FIELDNAME_CLASSNAME, getClass().getName())); 
-    if (params != null)
-      for (Map.Entry<String, String> entry : params.entrySet())
-        doc.add(new StoredField(Definitions.FIELDNAME_PARAMS, entry.getKey() + "||" + entry.getValue()));
-    index.getNodeStore().updateLuceneDocument(new Term(Definitions.FIELDNAME_DEFNAME, getClass().getName()), doc);
-    index.getNodeStore().commit(true);
   }
   
   public void reindex() throws IOException {

@@ -106,7 +106,7 @@ public class AddDocument extends ExtensionFunctionDefinition {
         Receiver receiver = new NamespaceReducer((Receiver) writer);
         node.copy(receiver, CopyOptions.TYPE_ANNOTATIONS | CopyOptions.LOCAL_NAMESPACES, 
             ExplicitLocation.UNKNOWN_LOCATION);
-        getSession(context).addDocument(uri, doc);
+        getSession(context).addDocument(uri, doc, null);
         return ZeroOrOne.empty();
       } catch (Exception e) {
         throw new XPathException("Error adding document \"" + uri + "\"", e);

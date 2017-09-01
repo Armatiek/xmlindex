@@ -89,7 +89,7 @@ public class ImportDocuments extends ExtensionFunctionDefinition {
       if (length > 2)
         pattern = ((StringValue) arguments[2].head()).getStringValue();
       try {
-        getSession(context).addDocuments(Paths.get(path), maxDepth, pattern);
+        getSession(context).addDocuments(Paths.get(path), maxDepth, pattern, null);
         return ZeroOrOne.empty();
       } catch (Exception e) {
         throw new XPathException("Error importing documents from \"" + path + "\"", e);

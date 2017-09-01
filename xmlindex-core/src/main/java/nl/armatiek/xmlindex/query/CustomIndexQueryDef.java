@@ -19,7 +19,7 @@ package nl.armatiek.xmlindex.query;
 
 import net.sf.saxon.expr.oper.OperandArray;
 import net.sf.saxon.trace.ExpressionPresenter;
-import nl.armatiek.xmlindex.conf.PluggableIndex;
+import nl.armatiek.xmlindex.extensions.PluggableIndex;
 
 public final class CustomIndexQueryDef extends QueryDef {
   

@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Stack;
 
-import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.validation.Schema;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
@@ -22,13 +22,11 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.s9api.ItemTypeFactory;
 import net.sf.saxon.s9api.Processor;
-import net.sf.saxon.s9api.SaxonApiException;
 import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.conf.IndexConfig;
 import nl.armatiek.xmlindex.error.XMLIndexException;
@@ -53,6 +51,7 @@ public class XMLIndex {
   private final IndexConfig config;
   private final String indexName;
   private final Path indexPath;
+  private final Path configPath;
   private final Processor saxonProcessor;
   private final XMLIndexInitializer initializer;
   private final Configuration saxonConfig;
@@ -63,16 +62,18 @@ public class XMLIndex {
   private Mode indexCompression = Mode.NO_COMPRESSION;
   private boolean isOpen;
   
-  public XMLIndex(String indexName, Path indexPath, int maxTermLength, Mode indexCompression) throws IOException {
+  public XMLIndex(String indexName, Path indexPath, int maxTermLength, 
+      Mode indexCompression, Schema configSchema) throws IOException {
     this.indexName = indexName;
     this.indexPath = indexPath;
     File indexDir = indexPath.toFile();
-    if (!indexDir.isDirectory()) {
-      if (indexDir.isFile())
-        throw new XMLIndexException("Unable to create index, the index directory \"" + indexDir.getAbsolutePath() + "\" already exists as file");
-      if (!indexDir.mkdirs()) 
-        throw new XMLIndexException("Unable to create index directory \"" + indexDir.getAbsolutePath() + "\"");
-    }
+    if (!indexDir.isDirectory() && !indexDir.mkdirs())
+      throw new XMLIndexException("Unable to create index directory \"" + indexDir.getAbsolutePath() + "\"");
+    this.configPath = indexPath.resolve(Definitions.FOLDERNAME_CONF);  
+    File configDir = configPath.toFile();
+    if (!configDir.isDirectory() && !configDir.mkdirs())
+      throw new XMLIndexException("Unable to create configuration directory \"" + configDir.getAbsolutePath() + "\"");
+    
     this.maxTermLength = maxTermLength;
     this.indexCompression = indexCompression;
     this.processConfigProperties();
@@ -84,13 +85,22 @@ public class XMLIndex {
     nameStore = new NameStore(this);
     nodeStore = new NodeStore(this);
     open();
-    config = new IndexConfig(this, analyzerPerField);
+    config = new IndexConfig(this, analyzerPerField, configSchema);
+  }
+  
+  public XMLIndex(String indexName, Path indexPath, int maxTermLength, 
+      Mode indexCompression) throws IOException {
+    this(indexName, indexPath, maxTermLength, indexCompression, null); 
+  }
+  
+  public XMLIndex(String indexName, Path indexPath, Schema configSchema) throws IOException {
+    this(indexName, indexPath, DEFAULT_MAX_TERM_LENGTH, DEFAULT_INDEX_COMPRESSION, configSchema); 
   }
   
   public XMLIndex(String indexName, Path indexPath) throws IOException {
     this(indexName, indexPath, DEFAULT_MAX_TERM_LENGTH, DEFAULT_INDEX_COMPRESSION); 
   }
-      
+  
   public boolean isOpen() {
     return isOpen;
   }
@@ -133,6 +143,10 @@ public class XMLIndex {
   
   public Path getIndexPath() {
     return indexPath;
+  }
+  
+  public Path getConfigPath() {
+    return configPath;
   }
   
   public ItemTypeFactory getItemTypeFactory() {
@@ -178,20 +192,19 @@ public class XMLIndex {
   }
   
   /* NodeStore operations */
-  public void addDocument(String uri, InputStream is, String systemId) throws ParserConfigurationException, 
-    SAXException, SaxonApiException, IOException {
+  public void addDocument(String uri, InputStream is, String systemId, Map<String, Object> params) throws Exception {
     checkOpen();
-    nodeStore.addDocument(uri, is, systemId);
+    nodeStore.addDocument(uri, is, systemId, params);
   }
   
-  public void addDocument(String uri, Document doc) throws SaxonApiException, IOException {
+  public void addDocument(String uri, Document doc, Map<String, Object> params) throws Exception {
     checkOpen();
-    nodeStore.addDocument(uri, doc);
+    nodeStore.addDocument(uri, doc, params);
   }
   
-  public void addDocuments(Path path, int maxDepth, String pattern) throws IOException {
+  public void addDocuments(Path path, int maxDepth, String pattern, Map<String, Object> params) throws Exception {
     checkOpen();
-    nodeStore.addDocuments(path, maxDepth, pattern);
+    nodeStore.addDocuments(path, maxDepth, pattern, params);
   }
   
   public void removeDocument(String uri) throws IOException {

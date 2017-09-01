@@ -23,7 +23,7 @@ public class IndexTest extends TestBase {
         logger.info("Starting indexing GML file ...");
         StopWatch sw = new StopWatch();
         sw.start();
-        session.addDocuments(Paths.get(gmlFolder), Integer.MAX_VALUE, "^(.*)\\.(gml)");
+        session.addDocuments(Paths.get(gmlFolder), Integer.MAX_VALUE, "^(.*)\\.(gml)", null);
         session.commit();
         logger.info("Indexing execution time: " + sw.toString());
         sw.stop();

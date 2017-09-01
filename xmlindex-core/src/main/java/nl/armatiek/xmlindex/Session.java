@@ -30,19 +30,21 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.Source;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.AxisInfo;
@@ -64,10 +66,10 @@ import net.sf.saxon.tree.iter.AxisIterator;
 import net.sf.saxon.type.Type;
 import net.sf.saxon.value.ObjectValue;
 import nl.armatiek.xmlindex.conf.Definitions;
-import nl.armatiek.xmlindex.conf.PluggableIndex;
 import nl.armatiek.xmlindex.conf.TypedValueDef;
 import nl.armatiek.xmlindex.conf.VirtualAttributeDef;
 import nl.armatiek.xmlindex.error.XMLIndexException;
+import nl.armatiek.xmlindex.extensions.PluggableIndex;
 import nl.armatiek.xmlindex.node.DocumentElement;
 import nl.armatiek.xmlindex.node.IndexRootElement;
 import nl.armatiek.xmlindex.saxon.XMLIndexURIResolver;
@@ -216,31 +218,29 @@ public class Session {
   }
   
   /* NodeStore operations: */
-  public void addDocument(String uri, InputStream is, String systemId) 
-      throws SaxonApiException, ParserConfigurationException, SAXException, IOException {
+  public void addDocument(String uri, InputStream is, String systemId, Map<String, Object> params) throws Exception {
     checkOpen();
-    index.addDocument(uri, is, systemId);
+    index.addDocument(uri, is, systemId, params);
   }
   
-  public void addDocument(String uri, File xmlFile) throws SaxonApiException, 
-    ParserConfigurationException, SAXException, IOException {
+  public void addDocument(String uri, File xmlFile, Map<String, Object> params) throws Exception {
     checkOpen();
     InputStream is = new BufferedInputStream(new FileInputStream(xmlFile));
     try {
-      addDocument(uri, is, xmlFile.getAbsolutePath());
+      addDocument(uri, is, xmlFile.getAbsolutePath(), params);
     } finally {
       is.close();
     }
   }
   
-  public void addDocument(String uri, org.w3c.dom.Document doc) throws SaxonApiException, IOException {
+  public void addDocument(String uri, org.w3c.dom.Document doc, Map<String, Object> params) throws Exception {
     checkOpen();
-    index.addDocument(uri, doc);
+    index.addDocument(uri, doc, params);
   }
   
-  public void addDocuments(Path path, int maxDepth, String pattern) throws IOException {
+  public void addDocuments(Path path, int maxDepth, String pattern, Map<String, Object> params) throws Exception {
     checkOpen();
-    index.addDocuments(path, maxDepth, pattern);
+    index.addDocuments(path, maxDepth, pattern, params);
   }
   
   public void removeDocument(String uri) throws IOException {
@@ -350,9 +350,12 @@ public class Session {
   
   public void reindexVirtualAttributeDefTypedValueDef(VirtualAttributeDef def) throws IOException {
     logger.info("Reindexing virtual attribute definition \"" + def.getVirtualAttributeName() + "\" ...");
-    String fieldName = Type.ELEMENT + "_" + index.getNameCode(def.getElemNamespaceUri(), def.getElemLocalPart());
-    TermQuery query = new TermQuery(new Term(Definitions.FIELDNAME_FIELDNAMES, fieldName));
-    indexSearcher.search(query, new ReindexCollector(this, index, def));
+    Builder queryBuilder = new BooleanQuery.Builder();
+    for (QName elemName : def.getElemNames()) {
+      String fieldName = Type.ELEMENT + "_" + index.getNameCode(elemName.getNamespaceURI(), elemName.getLocalName());
+      queryBuilder.add(new BooleanClause(new TermQuery(new Term(Definitions.FIELDNAME_FIELDNAMES, fieldName)), Occur.SHOULD));
+    }
+    indexSearcher.search(queryBuilder.build(), new ReindexCollector(this, index, def));
     commit(true);
     logger.info("Finished reindexing virtual attribute definition \"" + def.getVirtualAttributeName() + "\"");
   }

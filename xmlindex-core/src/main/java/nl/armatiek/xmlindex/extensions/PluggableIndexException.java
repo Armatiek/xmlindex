@@ -22,19 +22,19 @@ package nl.armatiek.xmlindex.extensions;
  * 
  * @author Maarten Kroon
  */
-public class CustomIndexException extends RuntimeException {
+public class PluggableIndexException extends RuntimeException {
 
   private static final long serialVersionUID = 1L;
 
-  public CustomIndexException(String message) {
+  public PluggableIndexException(String message) {
     super(message);
   }
   
-  public CustomIndexException(Throwable cause) {
+  public PluggableIndexException(Throwable cause) {
     super(cause);
   }
 
-  public CustomIndexException(String message, Throwable cause) {
+  public PluggableIndexException(String message, Throwable cause) {
     super(message, cause);
   }
 }

@@ -8,12 +8,10 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.document.Document;
@@ -32,7 +30,6 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ReferenceManager;
 import org.apache.lucene.search.ReferenceManager.RefreshListener;
-import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
@@ -41,15 +38,11 @@ import org.apache.lucene.store.FSDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
 
 import net.sf.saxon.s9api.SaxonApiException;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.conf.Definitions;
-import nl.armatiek.xmlindex.conf.PluggableIndex;
-import nl.armatiek.xmlindex.conf.TypedValueDef;
-import nl.armatiek.xmlindex.conf.VirtualAttributeDef;
 import nl.armatiek.xmlindex.lucene.codec.XMLIndexCodec;
 
 public class NodeStore {
@@ -106,7 +99,7 @@ public class NodeStore {
     this.indexReopenThread.start();
     createRootNode();
     // indexWriter.forceMergeDeletes(true);
-    logger.info("Index #entries: " + getNumberOfIndexDocs());
+    logger.info("Number of documents in index: " + getNumberOfIndexDocs());
     logger.info("Index has deletions: " + indexWriter.hasDeletions());
     long nodeCounter = getNodeCounter();   
     this.documentIndexer = new DocumentIndexer(index, (long) nodeCounter);
@@ -145,50 +138,12 @@ public class NodeStore {
     indexWriter.deleteDocuments(query);
   }
   
-  /*
-  public String createDirectory(String path) throws IOException {
-    IndexSearcher searcher = indexSearcherManager.acquire();
-    try {
-      String[] levels = StringUtils.split(path, '/');     
-      
-      Document parentDir = null;
-      int l;
-      for (l=levels.length-1; l>=0; l--) {
-        String p = StringUtils.join(ArrayUtils.subarray(levels, 0, l), '/');
-        Query query = SortedDocValuesField.newExactQuery(Definitions.FIELDNAME_PATH, new BytesRef(p));
-        TopDocs docs = searcher.search(new TermQuery(new Term(Definitions.FIELDNAME_PATH, p)), 1);
-        if (docs.totalHits > 0) {
-          parentDir = searcher.doc(docs.scoreDocs[0].doc);
-          break;
-        }
-      }
-      
-      
-      
-      
-      new SortedDocValuesField(Definitions.FIELDNAME_PATH, new BytesRef(p)).newExactQuery(field, value)
-      
-      TopDocs docs = searcher.search(new TermQuery(new Term(Definitions.FIELDNAME_PATH, path)), 1);
-      if (docs.totalHits > 0)
-        return searcher.doc(docs.scoreDocs[0].doc).get(Definitions.FIELDNAME_DIRID);
-      String dirId = UUID.randomUUID().toString();
-      Document doc = new Document();
-      doc.add(new StringField(Definitions.FIELDNAME_DIRID, dirId, Store.YES));
-      doc.add(new StringField(Definitions.FIELDNAME_PARENTDIRID, dirId, Store.YES));
-      return dirId;
-    } finally {
-      indexSearcherManager.release(searcher);
-    }
-  }
-  */
-  
-  public void addDocument(String uri, InputStream is, String systemId) 
-      throws ParserConfigurationException, SAXException, SaxonApiException, IOException {
-    synchronized (index) {
+  public void addDocument(String uri, InputStream is, String systemId, Map<String, Object> params) throws Exception {
+    synchronized (documentIndexer) {
       long nodeCounter = documentIndexer.getNodeCounter();
       try {     
         removeDocument(uri);
-        documentIndexer.index(uri, is, systemId);
+        documentIndexer.index(uri, is, systemId, params);
         storeNodeCounter(documentIndexer.getNodeCounter());
       } catch (Exception e) {
         removeDocument(uri);
@@ -198,12 +153,12 @@ public class NodeStore {
     }
   }
   
-  public void addDocument(String uri, org.w3c.dom.Document doc) throws SaxonApiException, IOException {
-    synchronized (index) {
+  public void addDocument(String uri, org.w3c.dom.Document doc, Map<String, Object> params) throws Exception {
+    synchronized (documentIndexer) {
       long nodeCounter = documentIndexer.getNodeCounter();
       try {     
         removeDocument(uri);
-        documentIndexer.index(uri, doc);
+        documentIndexer.index(uri, doc, params);
         storeNodeCounter(documentIndexer.getNodeCounter());
       } catch (Exception e) {
         removeDocument(uri);
@@ -213,15 +168,26 @@ public class NodeStore {
     }
   }
   
-  public void addDocuments(Path path, int maxDepth, String pattern) throws IOException {
+  public void addDocuments(Path path, int maxDepth, String pattern, Map<String, Object> params) throws IOException {
     pattern = (pattern == null) ? "(.*?)" : pattern;
     PathMatcher matcher = FileSystems.getDefault().getPathMatcher("regex:" + pattern);
     Files.walk(path, maxDepth).filter(Files::isRegularFile).filter(matcher::matches).forEach(new Consumer<Path>() {
       public void accept(Path t) {
         try {
+          Map<String, Object> pathParams = new HashMap<String, Object>();
+          pathParams.put("path", t.normalize().toString());
+          pathParams.put("name", t.getFileName().toString());
+          BasicFileAttributes attrs = Files.readAttributes(t, BasicFileAttributes.class);
+          pathParams.put("creation-time", attrs.creationTime());
+          pathParams.put("last-modified-time", attrs.lastModifiedTime());
+          pathParams.put("last-access-time", attrs.lastAccessTime());
+          pathParams.put("size", attrs.size());
+          pathParams.put("is-symbolic-link", attrs.isSymbolicLink());
+          if (params != null)
+            pathParams.putAll(params);
           InputStream is = new BufferedInputStream(new FileInputStream(t.toFile()));
           try {
-            addDocument(path.relativize(t).toString(), is, t.toAbsolutePath().toString());
+            addDocument(path.relativize(t).toString(), is, t.toAbsolutePath().toString(), pathParams);
           } finally {
             is.close();
           }
@@ -253,7 +219,9 @@ public class NodeStore {
   }
   
   public void reindexNode(Session session, Document doc, Map<Long, String> baseUriMap) throws IOException, SaxonApiException {
-    documentIndexer.reindexNode(session, doc, baseUriMap);
+    synchronized (documentIndexer) {
+      documentIndexer.reindexNode(session, doc, baseUriMap);
+    }
   }
   
   private void createRootNode() throws IOException {
@@ -330,66 +298,6 @@ public class NodeStore {
     } finally {
       releaseIndexSearcher(searcher);
     }
-  }
-  
-  public List<TypedValueDef> getTypedValueDefs() throws IOException {
-    ArrayList<TypedValueDef> defs = new ArrayList<TypedValueDef>();
-    IndexSearcher searcher = aquireIndexSearcher();
-    try {
-      TermQuery query = new TermQuery(new Term(Definitions.FIELDNAME_INDEXINFO, Definitions.FIELDVALUE_TYPEDVALDEF));
-      TopDocs docs = searcher.search(query, 1024);
-      for (ScoreDoc scoreDoc : docs.scoreDocs) {
-        try {
-          Document doc = searcher.doc(scoreDoc.doc);
-          defs.add(new TypedValueDef(index, doc));
-        } catch (Exception e) {
-          logger.error("Error reading typed value definition", e);
-        }
-      }
-    } finally {
-      releaseIndexSearcher(searcher);
-    }
-    return defs;
-  }
-  
-  public List<VirtualAttributeDef> getVirtualAttributeDefs(Path analyzerConfigPath) throws IOException {
-    ArrayList<VirtualAttributeDef> defs = new ArrayList<VirtualAttributeDef>();
-    IndexSearcher searcher = aquireIndexSearcher();
-    try {
-      TermQuery query = new TermQuery(new Term(Definitions.FIELDNAME_INDEXINFO, Definitions.FIELDVALUE_VIRTATTRDEF));
-      TopDocs docs = searcher.search(query, 1024);
-      for (ScoreDoc scoreDoc : docs.scoreDocs) {
-        try {
-          Document doc = searcher.doc(scoreDoc.doc);
-          defs.add(new VirtualAttributeDef(index, doc, analyzerConfigPath));
-        } catch (Exception e) {
-          logger.error("Error reading virtual attribute definition", e);
-        }
-      }
-    } finally {
-      releaseIndexSearcher(searcher);
-    }
-    return defs;
-  }
-  
-  public List<PluggableIndex> getPluggableIndexes() throws Exception {
-    ArrayList<PluggableIndex> indexes = new ArrayList<PluggableIndex>();
-    IndexSearcher searcher = aquireIndexSearcher();
-    try {
-      TermQuery query = new TermQuery(new Term(Definitions.FIELDNAME_INDEXINFO, Definitions.FIELDVALUE_PLUGGABLEINDEX));
-      TopDocs docs = searcher.search(query, 1024);
-      for (ScoreDoc scoreDoc : docs.scoreDocs) {
-        try {
-          Document doc = searcher.doc(scoreDoc.doc);
-          indexes.add(PluggableIndex.fromDocument(index, doc));
-        } catch (Exception e) {
-          logger.error("Error reading pluggable index definition", e);
-        }
-      }
-    } finally {
-      releaseIndexSearcher(searcher);
-    }
-    return indexes;
   }
   
 }

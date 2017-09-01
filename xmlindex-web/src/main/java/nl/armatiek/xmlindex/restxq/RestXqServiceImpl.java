@@ -1,16 +1,18 @@
 package nl.armatiek.xmlindex.restxq;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Part;
+import javax.xml.transform.Source;
+import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.ccil.cowan.tagsoup.Parser;
 import org.exquery.http.HttpRequest;
 import org.exquery.restxq.ResourceFunction;
 import org.exquery.restxq.RestXqErrorCodes;
@@ -19,10 +21,10 @@ import org.exquery.restxq.impl.AbstractRestXqService;
 import org.exquery.xdm.type.SequenceImpl;
 import org.exquery.xquery.Sequence;
 import org.exquery.xquery.TypedValue;
+import org.xml.sax.InputSource;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.TreeInfo;
-import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.Base64BinaryValue;
 import net.sf.saxon.value.StringValue;
 import nl.armatiek.xmlindex.restxq.adapter.HttpServletRequestAdapter;
@@ -39,15 +41,23 @@ public class RestXqServiceImpl extends AbstractRestXqService {
     this.config = config;
   }
 
-  protected TypedValue<?> getSequence(InputStream is, String contentType) throws XPathException, IOException {
+  protected TypedValue<?> getSequence(InputStream is, String contentType) throws Exception {
     if (StringUtils.contains(contentType, ";"))
       contentType = contentType.split(";")[0].trim();
     if (StringUtils.startsWithAny(contentType, "application/xml", "text/xml") || StringUtils.endsWith(contentType, "+xml")) {
       TreeInfo treeInfo = config.buildDocumentTree(new StreamSource(is));
       return new DocumentTypedValue(treeInfo.getRootNode());
-    } else if (StringUtils.startsWith(contentType, "text/plain"))      
+    } else if (StringUtils.startsWith(contentType,  "text/html")) {
+      Parser parser = new Parser();
+      parser.setFeature(Parser.namespacesFeature, true);
+      parser.setFeature(Parser.namespacePrefixesFeature, true);
+      InputSource input = new InputSource(is);
+      Source src = new SAXSource(parser, input);
+      TreeInfo treeInfo = config.buildDocumentTree(src);
+      return new DocumentTypedValue(treeInfo.getRootNode());
+    } else if (StringUtils.startsWithAny(contentType, "text/", "application/json")) {     
       return new StringTypedValue(new StringValue(IOUtils.toString(is, "UTF-8")));
-    else
+    } else
       return new BinaryTypedValue(new Base64BinaryValue(IOUtils.toByteArray(is)));
   }
   
@@ -87,32 +97,8 @@ public class RestXqServiceImpl extends AbstractRestXqService {
         }
       }
       return new SequenceImpl<>(getSequence(request.getInputStream(), request.getContentType()));
-      
-      /*
-      PushbackInputStream pushbackStream = new PushbackInputStream(request.getInputStream());    
-      int b = pushbackStream.read();
-      if (b == -1) {
-        return Sequence.EMPTY_SEQUENCE;
-      }
-      pushbackStream.unread(b);
-      String contentType = request.getContentType();
-      if (contentType != null && contentType.contains(";")) {
-        contentType = contentType.split(";")[0].trim();
-      }
-      if ((contentType != null) && 
-          (contentType.startsWith("text/xml") || contentType.startsWith("application/xml") ||
-          contentType.endsWith("+xml"))) {
-        TreeInfo treeInfo = config.buildDocumentTree(new StreamSource(pushbackStream));
-        return new SequenceImpl<>(new DocumentTypedValue(treeInfo.getRootNode()));
-      } else if ((contentType != null) && contentType.startsWith("text/plain")) {      
-        return new SequenceImpl<>(new StringTypedValue(new StringValue(IOUtils.toString(pushbackStream, "UTF-8"))));
-      } else {
-        return new SequenceImpl<>(new BinaryTypedValue(new Base64BinaryValue(IOUtils.toByteArray(pushbackStream))));
-      }
-      */
-      
-    } catch (XPathException | IOException ioe) {
-      throw new RestXqServiceException(RestXqErrorCodes.RQDY0014, ioe);
+    } catch (Exception e) {
+      throw new RestXqServiceException(RestXqErrorCodes.RQDY0014, e);
     }
     
   }

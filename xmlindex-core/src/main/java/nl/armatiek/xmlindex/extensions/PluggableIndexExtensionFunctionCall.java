@@ -17,26 +17,12 @@
 
 package nl.armatiek.xmlindex.extensions;
 
-import java.util.Map;
+import net.sf.saxon.lib.ExtensionFunctionCall;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.search.Query;
-import org.w3c.dom.Element;
+public abstract class PluggableIndexExtensionFunctionCall extends ExtensionFunctionCall {
 
-import net.sf.saxon.om.Sequence;
+  public PluggableIndexExtensionFunctionCall() {
+    super();
+  }
 
-public interface CustomIndex {
-  
-  public void init(Map<String, String> params);
-  
-  public Map<String, String> getParams();
-  
-  public void close();
-  
-  public CustomIndexExtensionFunctionCall getFunctionCall();
-  
-  public void indexNode(Document doc, Element node);
-  
-  public Query getQuery(Sequence[] functionArguments);
-  
 }

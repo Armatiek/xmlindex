@@ -3,14 +3,15 @@ package nl.armatiek.xmlindex.storage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Stack;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.lang3.CharUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -33,7 +34,6 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.ProcessingInstruction;
-import org.xml.sax.SAXException;
 
 import net.sf.saxon.dom.DocumentWrapper;
 import net.sf.saxon.dom.NodeOverNodeInfo;
@@ -42,9 +42,11 @@ import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XQueryEvaluator;
 import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmEmptySequence;
 import net.sf.saxon.s9api.XdmItem;
+import net.sf.saxon.s9api.XdmMap;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmSequenceIterator;
 import net.sf.saxon.s9api.XdmValue;
@@ -63,13 +65,15 @@ import net.sf.saxon.value.TimeValue;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.conf.Definitions;
-import nl.armatiek.xmlindex.conf.PluggableIndex;
 import nl.armatiek.xmlindex.conf.TypedValueDef;
 import nl.armatiek.xmlindex.conf.VirtualAttributeDef;
+import nl.armatiek.xmlindex.conf.VirtualAttributeDefConfig;
 import nl.armatiek.xmlindex.error.XMLIndexException;
+import nl.armatiek.xmlindex.extensions.PluggableIndex;
 import nl.armatiek.xmlindex.node.HierarchyNode;
 import nl.armatiek.xmlindex.node.IndexRootElement;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
+import nl.armatiek.xmlindex.saxon.util.SaxonUtils;
 
 public class DocumentIndexer {
   
@@ -104,7 +108,6 @@ public class DocumentIndexer {
   
   private final String USERDATA_KEY = "u";
   private final XMLIndex index;
-  //private final VirtualAttributeDefConfig vadConfig;
   private final int maxTermLength;
   private DocumentWrapper docWrapper;
   private long nodeCounter;
@@ -113,7 +116,6 @@ public class DocumentIndexer {
     this.index = index;
     this.nodeCounter = nodeCounter;
     this.maxTermLength = index.getMaxTermLength();
-    //this.vadConfig = index.getConfiguration().getVirtualAttributeConfig();
   }
   
   private void numberNode(Node node, byte depth) {
@@ -195,9 +197,9 @@ public class DocumentIndexer {
       doc.add(field);
   }
   
-  private void addVirtualAttributeFields(org.apache.lucene.document.Document doc, Element elem) throws SaxonApiException {
-    Map<String, VirtualAttributeDef> attrDefs = index.getConfiguration().getVirtualAttributeConfig().getForElement(
-        new QName(StringUtils.defaultString(elem.getNamespaceURI()), getLocalPart(elem)));  
+  private void addVirtualAttributeFields(org.apache.lucene.document.Document doc, Element elem, XdmMap params) throws SaxonApiException {
+    VirtualAttributeDefConfig vad = index.getConfiguration().getVirtualAttributeConfig();
+    Map<String, VirtualAttributeDef> attrDefs = vad.getForElement(new QName(StringUtils.defaultString(elem.getNamespaceURI()), getLocalPart(elem)));  
     if (attrDefs == null)
       return;
     
@@ -205,9 +207,21 @@ public class DocumentIndexer {
       this.docWrapper = new DocumentWrapper(elem.getOwnerDocument(), elem.getOwnerDocument().getBaseURI(), index.getSaxonConfiguration());
     NodeInfo nodeInfo = docWrapper.wrap(elem);
     
+    XQueryEvaluator evaluator = index.getConfiguration().getVirtualAttributeConfig().getVirtualAttrsEvaluator();
     for (VirtualAttributeDef attrDef : attrDefs.values()) {
-      // TODO: handle error if function does not exist!
-      XdmValue values = index.getConfiguration().getVirtualAttributeConfig().getVirtualAttrsEvaluator().callFunction(attrDef.getFunctionName(), new XdmValue[] { new XdmNode(nodeInfo) });
+      XdmValue values = null;
+      XdmValue[] args = null;
+      if (vad.functionExists(attrDef.getFunctionName(), 1))
+        args = new XdmValue[] { new XdmNode(nodeInfo) };
+      else if (vad.functionExists(attrDef.getFunctionName(), 2))
+        args = new XdmValue[] { new XdmNode(nodeInfo), params == null ? XdmEmptySequence.getInstance() : params };
+      else {
+        logger.warn("No virtual attribute function with name \"" + attrDef.getFunctionName().getEQName() + "\" found with one or two arguments");
+        continue;
+      }
+      
+      values = evaluator.callFunction(attrDef.getFunctionName(), args);
+        
       if (values instanceof XdmEmptySequence) 
         continue;
       
@@ -290,7 +304,8 @@ public class DocumentIndexer {
     doc.add(field);
   }
   
-  private void indexNode(Node node, long docLeft, long docRight, String uri) throws SaxonApiException, IOException  { 
+  private void indexNode(Node node, long docLeft, long docRight, String uri, XdmMap params) 
+      throws SaxonApiException, IOException  { 
     if (isWhitespaceTextNode(node))
       return;
     
@@ -360,7 +375,7 @@ public class DocumentIndexer {
       
       addFieldNameField(doc, fieldName);
       
-      addVirtualAttributeFields(doc, (Element) node);
+      addVirtualAttributeFields(doc, (Element) node, params);
       
       for (PluggableIndex pluggableIndex : index.getConfiguration().getPluggableIndexConfig().get())
         pluggableIndex.indexNode(doc, (Element) node);
@@ -409,7 +424,7 @@ public class DocumentIndexer {
       /* Childs: */
       Node child = node.getFirstChild();
       while (child != null) {
-        indexNode(child, docLeft, docRight, uri);
+        indexNode(child, docLeft, docRight, uri, params);
         child = child.getNextSibling();
       }
     }
@@ -512,7 +527,7 @@ public class DocumentIndexer {
       }
     }
     
-    addVirtualAttributeFields(newDoc, (Element) domNode);
+    addVirtualAttributeFields(newDoc, (Element) domNode, null); // TODO: what to do with params when reindexing?
     
     for (PluggableIndex pluggableIndex : index.getConfiguration().getPluggableIndexConfig().get())
       pluggableIndex.indexNode(newDoc, (Element) domNode);
@@ -525,58 +540,29 @@ public class DocumentIndexer {
     pushBackUsedFieldNameFields();
   }
   
-  /*
-  private String[] getPaths(String uri) {
-    try {
-      URI u = new URI(uri);
-      if (!u.isAbsolute() && !u.isOpaque()) {
-        String path = uri.replace('\\', '/');
-        path = StringUtils.prependIfMissing(path, "/", "/");
-        path = StringUtils.stripEnd(path, "/");
-        String parentPath = StringUtils.substringBeforeLast(path, "/");
-        parentPath = StringUtils.isEmpty(parentPath) ? "/" : parentPath;
-        return new String[] {path, parentPath}; 
-      }
-    } catch (Exception e) {
-      logger.warn("Ërror indexing directory \"" + uri + "\"", e);
-    }
-    return null;
-  }
-  
-  private void indexDirectory(String uri) {
-    try {
-      URI u = new URI(uri);
-      if (!u.isAbsolute() && !u.isOpaque()) {
-        uri = uri.replace('\\', '/');
-        uri = StringUtils.prependIfMissing(uri, "/", "/");
-        uri = StringUtils.stripEnd(uri, "/");
-        String parent = StringUtils.substringBeforeLast(uri, "/");
-        parent = StringUtils.isEmpty(parent) ? "/" : parent;
-        
-        org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
-        
-        index.getNodeStore().updateLuceneDocument(new Term(Definitions.FIELDNAME_PARENTDIR, ""), doc);
-      }
-    } catch (Exception e) {
-      logger.warn("Ërror indexing directory \"" + uri + "\"", e);
-    }
-  }
-  */
-  
-  private void indexDOMDocument(String uri, Document doc) throws SaxonApiException, IOException {   
+  private void indexDOMDocument(String uri, Document doc, Map<String, Object> params) throws Exception {   
     doc.setStrictErrorChecking(false);
     this.docWrapper = null;
     numberNode(doc.getDocumentElement(), (byte) 2);
-    indexNode(doc.getDocumentElement(), -1, -1, uri);
+    XdmMap map = null;
+    if (params != null) {
+      Map<XdmAtomicValue, XdmValue> paramMap = new HashMap<XdmAtomicValue, XdmValue>(); 
+      Iterator<Entry<String, Object>> it = params.entrySet().iterator();
+      while (it.hasNext()) {
+        Entry<String, Object> entry = (Entry<String, Object>) it.next();
+        paramMap.put(new XdmAtomicValue(entry.getKey()), SaxonUtils.convertObjectToXdmValue(entry.getValue()));
+      }
+      map = new XdmMap(paramMap);
+    }
+    indexNode(doc.getDocumentElement(), -1, -1, uri, map);
   }
   
-  public void index(String uri, Document doc) throws SaxonApiException, IOException {
+  public void index(String uri, Document doc, Map<String, Object> params) throws Exception {
     logger.info(String.format("Adding document with uri \"%s\" ...", uri));
-    indexDOMDocument(uri, doc);
+    indexDOMDocument(uri, doc, params);
   }
   
-  public void index(String uri, InputStream is, String systemId) throws ParserConfigurationException, 
-    SaxonApiException, SAXException, IOException {
+  public void index(String uri, InputStream is, String systemId, Map<String, Object> params) throws Exception {
     logger.info(String.format("Adding document with uri \"%s\" ...", uri));
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
     dbf.setAttribute(PROPNAME_BUFFER_SIZE, BUFFER_SIZE);
@@ -585,7 +571,7 @@ public class DocumentIndexer {
     dbf.setNamespaceAware(true);
     DocumentBuilder builder = dbf.newDocumentBuilder();
     Document doc = builder.parse(is, systemId);
-    indexDOMDocument(uri, doc);
+    indexDOMDocument(uri, doc, params);
   }
     
   public long getNodeCounter() {

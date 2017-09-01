@@ -26,7 +26,11 @@ public class Definitions {
   public static final String FILENAME_PREFIXES          = "prefixes.txt";
   public static final String FILENAME_VIRTATTRMODULE    = "virtual-attributes.xqy";
   public static final String FILENAME_PROPERTIES        = "configuration.properties";
+  public static final String FILENAME_INDEXCONFIG       = "index-configuration.xml";
+  public static final String FILENAME_INDEXCONFIG_XSD   = "index-configuration.xsd";
   
+  public static final String FOLDERNAME_CONF            = "conf";
+  public static final String FOLDERNAME_XSD             = "xsd";
   public static final String FOLDERNAME_ANALYZER        = "analyzer";
   public static final String FOLDERNAME_NAMESTORE       = "namestore";
   public static final String FOLDERNAME_NODESTORE       = "nodestore";
@@ -55,6 +59,7 @@ public class Definitions {
   public static final String FIELDNAME_DOCRIGHT         = "docright";
   
   /* TypedValueDef, VirtualAttributeDef and CustomIndex fields: */
+  /*
   public static final String FIELDNAME_DEFNAME          = "defname";
   public static final String FIELDNAME_ITEMTYPE         = "itemtype";
   public static final String FIELDNAME_NODETYPE         = "nodetype";
@@ -79,7 +84,13 @@ public class Definitions {
   
   public static final long FIELVALUE_NODECOUNTER_LEFT   = MAX_LONG - 1;
   public static final long FIELVALUE_CONFIG_LEFT        = FIELVALUE_NODECOUNTER_LEFT - 1;
+  */
   
+  public static final String FIELDNAME_INDEXINFO        = "indexinfo";
+  public static final String FIELDNAME_NODECOUNTER      = "nodecounter";
+  
+  public static final String FIELDVALUE_NODECOUNTER     = "nodecounter";
+  public static final long FIELVALUE_NODECOUNTER_LEFT   = MAX_LONG - 1;
   public static final String PROPNAME_INDEX_COMPRESSION = "index-compression";
   public static final String PROPNAME_MAX_TERM_LENGTH   = "max-term-length";
   
@@ -90,5 +101,7 @@ public class Definitions {
   
   public static final StructuredQName PARAM_SESSION_SQN = new StructuredQName("", "http://www.armatiek.nl/xmlindex/param/session", "session");
   public static final QName PARAM_SESSION_QN            = new QName("http://www.armatiek.nl/xmlindex/param/session", "session");
+  
+  public static final String EOL                        = System.getProperty("line.separator");
   
 }

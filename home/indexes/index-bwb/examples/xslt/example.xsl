@@ -7,17 +7,23 @@
   
   <xsl:template match="/">
     <resultaat>
+      <titels>
+        <xsl:apply-templates select="subsequence(//citeertitel[starts-with(., 'Wijzigingswet')], 1, 100)"/>
+      </titels>
       <xsl:sequence select="(//kop[label='Titre']/parent::titeldeel)[1]"/>
       <xsl:sequence select="//toestand[@bwb-id = 'BWBR0001822']"/>
     </resultaat>
   </xsl:template>
   
-  <!--
-  <xsl:template match="node()|@*">
-    <xsl:copy>
-      <xsl:apply-templates select="node()|@*"/>
-    </xsl:copy>
+  <xsl:template match="citeertitel">
+    <titel>
+      <inwerking>
+        <xsl:value-of select="@inwerking"/>
+      </inwerking>
+      <value>
+        <xsl:value-of select="."/>
+      </value>
+    </titel>
   </xsl:template>
-  -->  
 
 </xsl:stylesheet>
