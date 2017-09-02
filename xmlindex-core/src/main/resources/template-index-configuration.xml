@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<index-configuration 
+  xmlns:va="http://www.armatiek.nl/xmlindex/virtualattribute"
+  xmlns:ns1="http://www.my-domain.org/namespace"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="index-configuration.xsd">
+  
+  <typed-value-config>
+    <!--
+    <typed-value-def>
+      <node-type>attribute()</node-type>
+      <node-name>ns1:my-date-attr</node-name>
+      <item-type>xs:date</item-type>
+    </typed-value-def>
+    -->
+  </typed-value-config>
+  
+  <virtual-attribute-config>
+    <!--
+    <virtual-attribute-def>
+      <element-name>ns1:my-element</element-name>
+      <virtual-attribute-name>my-attribute</virtual-attribute-name>
+      <function-name>va:my-function</function-name>
+      <item-type>xs:string</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>my-root-elem</element-name>
+      <virtual-attribute-name>my-full-text-attr</virtual-attribute-name>
+      <function-name>va:my-fts-function</function-name>
+      <item-type>xs:string</item-type>
+      <index-analyzer>
+        <analyzer>
+          <tokenizer class="standard"/>
+          <filter class="standard"/>
+          <filter class="lowercase"/>
+          <filter class="stop" ignoreCase="true"/>
+        </analyzer>
+      </index-analyzer>
+      <query-analyzer>
+        <analyzer>
+          <tokenizer class="standard"/>
+          <filter class="standard"/>
+          <filter class="lowercase"/>
+          <filter class="stop" ignoreCase="true"/>
+        </analyzer>
+      </query-analyzer>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <element-name>ns1:my-root-elem1</element-name>
+      <element-name>ns1:my-root-elem2</element-name>
+      <virtual-attribute-name>file-creation-time</virtual-attribute-name>
+      <function-name>va:my-file-creation-time</function-name>
+      <item-type>xs:dateTime</item-type>
+    </virtual-attribute-def>
+    -->
+  </virtual-attribute-config>
+  
+  <pluggable-index-config>
+    <!--
+    <pluggable-index-def>
+      <class-name>nl.armatiek.xmlindex.extensions.SpatialIndex</class-name>
+      <param name="prefixTreeMaxLevels" value="11"/>
+      <param name="fieldName" value="shape"/>  
+    </pluggable-index-def>
+    -->
+  </pluggable-index-config>
+    
+</index-configuration>

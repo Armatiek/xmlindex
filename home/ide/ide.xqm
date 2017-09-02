@@ -5,9 +5,11 @@ declare namespace rest="http://exquery.org/ns/restxq";
 declare namespace request="http://exquery.org/ns/request";
 declare namespace file="http://expath.org/ns/file";
 declare namespace output="http://www.w3.org/2010/xslt-xquery-serialization";
+declare namespace err="http://www.w3.org/2005/xqt-errors";
 declare namespace xmi="http://www.armatiek.nl/xmlindex/functions";
 declare namespace config="http://www.armatiek.nl/xmlindex/config";
 declare namespace session="http://www.armatiek.nl/xmlindex/param/session";
+declare namespace json="http://www.armatiek.nl/xmlindex/functions/json";
 
 declare variable $config:development-mode as xs:boolean external;
 declare variable $config:home-dir as xs:string external;
@@ -63,20 +65,24 @@ declare
   %rest:form-param("path", "{$path}")
   %output:method("text")
 function ide:run($code as xs:string*, $path as xs:string*) as xs:string {
-  let $source-node as document-node() := document { <root/> }
-  let $result := transform(
-    map {
-      "stylesheet-location": "xsl/run.xsl",
-      "source-node": $source-node,
-      "stylesheet-params": map {
-        QName("", "home-dir") : $config:home-dir,
-        QName("", "code") : $code,
-        QName("", "path") : $path,
-        QName("http://www.armatiek.nl/xmlindex/param/session", "session") : $session:session
-      },
-      "cache" : not($config:development-mode)
-    })
-  return $result?output
+  try {
+    let $source-node as document-node() := document { <root/> }
+    let $result := transform(
+      map {
+        "stylesheet-location": "xsl/run.xsl",
+        "source-node": $source-node,
+        "stylesheet-params": map {
+          QName("", "home-dir") : $config:home-dir,
+          QName("", "code") : $code,
+          QName("", "path") : $path,
+          QName("http://www.armatiek.nl/xmlindex/param/session", "session") : $session:session
+        },
+        "cache" : not($config:development-mode)
+      })
+    return $result?output
+  } catch * {
+    ide:get-json-error($err:code, $err:description, $err:module, $err:line-number, $err:column-number)
+  }
 };
 
 declare
@@ -85,18 +91,22 @@ declare
   %rest:form-param("code", "{$code}")
   %output:method("text")
 function ide:explain($code as xs:string*) as xs:string {
-  let $source-node as document-node() := document { <root/> }
-  let $result := transform(
-    map {
-      "stylesheet-location": "xsl/explain.xsl",
-      "source-node": $source-node,
-      "stylesheet-params": map {
-        QName("", "code") : $code,
-        QName("http://www.armatiek.nl/xmlindex/param/session", "session") : $session:session
-      },
-      "cache" : not($config:development-mode)
-    })
-  return $result?output
+  try {
+    let $source-node as document-node() := document { <root/> }
+    let $result := transform(
+      map {
+        "stylesheet-location": "xsl/explain.xsl",
+        "source-node": $source-node,
+        "stylesheet-params": map {
+          QName("", "code") : $code,
+          QName("http://www.armatiek.nl/xmlindex/param/session", "session") : $session:session
+        },
+        "cache" : not($config:development-mode)
+      })
+    return $result?output
+  } catch * {
+    ide:get-json-error($err:code, $err:description, $err:module, $err:line-number, $err:column-number)
+  }
 };
 
 declare
@@ -169,6 +179,36 @@ function ide:createindex($name as xs:string*, $max-term-length as xs:integer*, $
   } catch * {
     "Error creating index: " || $err:description
   }
+};
+
+declare function ide:get-json-error($code as xs:string?, $description as xs:string?, $module as xs:string?, 
+  $line as xs:integer?, $col as xs:integer?) as xs:string? {
+  let $err-xml as element(err:error) := 
+    <err:error>
+      <err:code>{$code}</err:code>
+      <err:description>{$description}</err:description>
+      <err:module>{$module}</err:module>
+      <err:line-number>{$line}</err:line-number>
+      <err:column-number>{$col}</err:column-number>
+    </err:error>
+  
+  let $output-parameters as element(output:serialization-parameters) := 
+    <output:serialization-parameters>
+      <output:method value="xml"/>
+      <output:indent value="yes"/>
+      <output:omit-xml-declaration value="yes"/>
+    </output:serialization-parameters>  
+  
+  return
+    '{' ||
+      '"time": 0,' ||
+      '"errCode": "' || json:escape($code) || '",' || 
+      '"errDescription": "' || json:escape($description) || '",' ||
+      '"errModule": "' || json:escape($module) || '",' ||
+      '"errLine": ' || $line || ',' ||
+      '"errColumn": ' || $col || ',' ||
+      '"result": "' || json:escape(serialize($err-xml, $output-parameters)) ||  '",' ||
+    '}'
 };
 
 ()

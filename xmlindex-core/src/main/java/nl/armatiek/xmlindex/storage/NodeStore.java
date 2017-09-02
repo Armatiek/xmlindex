@@ -98,7 +98,6 @@ public class NodeStore {
     this.indexReopenThread.setDaemon(true);
     this.indexReopenThread.start();
     createRootNode();
-    // indexWriter.forceMergeDeletes(true);
     logger.info("Number of documents in index: " + getNumberOfIndexDocs());
     logger.info("Index has deletions: " + indexWriter.hasDeletions());
     long nodeCounter = getNodeCounter();   

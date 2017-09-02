@@ -48,7 +48,8 @@ public class XMLIndex {
   private final Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
   private final PerFieldAnalyzerWrapper perFieldWrapper = new PerFieldAnalyzerWrapper(new StandardAnalyzer(), analyzerPerField);
   
-  private final IndexConfig config;
+  private volatile IndexConfig config;
+  private final Schema configSchema;
   private final String indexName;
   private final Path indexPath;
   private final Path configPath;
@@ -66,6 +67,9 @@ public class XMLIndex {
       Mode indexCompression, Schema configSchema) throws IOException {
     this.indexName = indexName;
     this.indexPath = indexPath;
+    this.maxTermLength = maxTermLength;
+    this.indexCompression = indexCompression;
+    this.configSchema = configSchema;
     File indexDir = indexPath.toFile();
     if (!indexDir.isDirectory() && !indexDir.mkdirs())
       throw new XMLIndexException("Unable to create index directory \"" + indexDir.getAbsolutePath() + "\"");
@@ -73,10 +77,8 @@ public class XMLIndex {
     File configDir = configPath.toFile();
     if (!configDir.isDirectory() && !configDir.mkdirs())
       throw new XMLIndexException("Unable to create configuration directory \"" + configDir.getAbsolutePath() + "\"");
-    
-    this.maxTermLength = maxTermLength;
-    this.indexCompression = indexCompression;
-    this.processConfigProperties();
+      
+    processConfigProperties();
     saxonConfig = new XMLIndexConfiguration(this);
     initializer = new XMLIndexInitializer();
     initializer.initializeConfiguration(saxonConfig);
@@ -84,8 +86,6 @@ public class XMLIndex {
     itemTypeFactory = new ItemTypeFactory(saxonProcessor);
     nameStore = new NameStore(this);
     nodeStore = new NodeStore(this);
-    open();
-    config = new IndexConfig(this, analyzerPerField, configSchema);
   }
   
   public XMLIndex(String indexName, Path indexPath, int maxTermLength, 
@@ -101,6 +101,17 @@ public class XMLIndex {
     this(indexName, indexPath, DEFAULT_MAX_TERM_LENGTH, DEFAULT_INDEX_COMPRESSION); 
   }
   
+  public synchronized void reloadConfig() {
+    IndexConfig newConfig = null;
+    try {
+      newConfig = new IndexConfig(this, analyzerPerField, configSchema);
+    } catch (Exception e) {
+      logger.error("Error reloading configuration of index \"" + indexName + "\"", e);
+      throw e;
+    }
+    this.config = newConfig;
+  }
+  
   public boolean isOpen() {
     return isOpen;
   }
@@ -109,20 +120,31 @@ public class XMLIndex {
     if (isOpen)
       throw new XMLIndexException("Index already opened");
     logger.info("Opening index \"" + indexName + "\" ...");
-    nodeStore.open();
-    nameStore.open();
-    isOpen = true;
-    logger.info("Index \"" + indexName + "\" opened");
+    try {
+      config = new IndexConfig(this, analyzerPerField, configSchema);
+      nodeStore.open();
+      nameStore.open();
+      isOpen = true;
+      logger.info("Index \"" + indexName + "\" opened");
+    } catch (Exception e) {
+      logger.error("Error opening index \"" + indexName + "\"", e);
+      throw e;
+    }
   }
   
   public void close() throws IOException {
     if (!isOpen)
       return;
-    logger.info("Closing index \"" + indexName + "\"");
-    nodeStore.close();
-    nameStore.close();
-    isOpen = false;
-    logger.info("Index \"" + indexName + "\" closed");
+    logger.info("Closing index \"" + indexName + "\" ...");
+    try {
+      nodeStore.close();
+      nameStore.close();
+      isOpen = false;
+      logger.info("Index \"" + indexName + "\" closed");
+    } catch (Exception e) {
+      logger.error("Error closing index \"" + indexName + "\"", e);
+      throw e;
+    }
   }
     
   public IndexConfig getConfiguration() {
@@ -244,7 +266,7 @@ public class XMLIndex {
   }
   
   private void processConfigProperties() throws IOException {
-    File propsFile = new File(indexPath.toFile(), Definitions.FILENAME_PROPERTIES);
+    File propsFile = new File(configPath.toFile(), Definitions.FILENAME_PROPERTIES);
     Properties props = new Properties();
     if (propsFile.exists()) {
       InputStreamReader reader = new InputStreamReader(new FileInputStream(propsFile), StandardCharsets.UTF_8);

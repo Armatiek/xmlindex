@@ -72,17 +72,7 @@ public class VirtualAttributeDef {
   public List<QName> getElemNames() {
     return elemNames;
   }
-  
-  /*
-  public String getElemNamespaceUri() {
-    return elemName.getNamespaceURI();
-  }
-
-  public String getElemLocalPart() {
-    return elemName.getLocalName();
-  }
-  */
-  
+    
   public String getVirtualAttributeName() {
     return virtualAttrName;
   }

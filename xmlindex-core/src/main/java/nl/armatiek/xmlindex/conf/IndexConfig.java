@@ -19,7 +19,6 @@ package nl.armatiek.xmlindex.conf;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
 
@@ -27,7 +26,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.validation.Schema;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +37,7 @@ import org.xml.sax.SAXParseException;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 
-public class IndexConfig implements ErrorHandler {
+public class IndexConfig extends ConfigBase implements ErrorHandler {
   
   private static final Logger logger = LoggerFactory.getLogger(IndexConfig.class);
   
@@ -54,9 +52,10 @@ public class IndexConfig implements ErrorHandler {
       this.index = index;
       File configFile = index.getConfigPath().resolve(Definitions.FILENAME_INDEXCONFIG).toFile();
       if (!configFile.isFile())
-        FileUtils.writeStringToFile(configFile, 
-            "<?xml version=\"1.0\"?>" + Definitions.EOL + "<index-configuration/>", StandardCharsets.UTF_8);
-      
+        copyFromClassPath("template-index-configuration.xml", configFile, null);
+      File virtAttrsFile = index.getConfigPath().resolve(Definitions.FILENAME_VIRTATTRMODULE).toFile();
+      if (!virtAttrsFile.isFile())
+        copyFromClassPath("template-virtual-attributes.xqy", virtAttrsFile, null);
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
       dbf.setNamespaceAware(true);
       if (configSchema != null)

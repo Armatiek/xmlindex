@@ -15,13 +15,13 @@ import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.node.DocumentElement;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
 
-public class MiscTest extends TestBase {
+public class MiscTest {
   
   private static final Logger logger = LoggerFactory.getLogger(MiscTest.class);
   
   private void runTest(String indexPath) throws IOException, SaxonApiException {
     XMLIndex index = new XMLIndex("Test", Paths.get(indexPath));
-    configure(index);
+    index.open();
     try {
       Session session = index.aquireSession();
       try {

@@ -96,6 +96,7 @@ public class NameStore {
     this.nameToCodeMapping = null;
     this.codeToPrefixMapping = null;
     this.prefixToCodeMapping = null;
+    logger.info("Name store closed");
   }
   
   public boolean isOpen() {

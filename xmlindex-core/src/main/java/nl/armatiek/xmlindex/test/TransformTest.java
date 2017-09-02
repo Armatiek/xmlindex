@@ -15,13 +15,13 @@ import net.sf.saxon.s9api.Serializer;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
 
-public class TransformTest extends TestBase {
+public class TransformTest {
   
   private static final Logger logger = LoggerFactory.getLogger(TransformTest.class);
   
   private void runTest(String indexPath, String xsltPath) throws IOException, SaxonApiException {
     XMLIndex index = new XMLIndex("Test", Paths.get(indexPath));
-    configure(index);
+    index.open();
     try {
       Session session = index.aquireSession();
       try {

@@ -18,13 +18,11 @@
 package nl.armatiek.xmlindex.conf;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.w3c.dom.Element;
 
@@ -57,6 +55,9 @@ public class VirtualAttributeDefConfig {
     Element virtualAttributeDefElem = XMLUtils.getFirstChildElement(virtualAttributeConfigElem);
     while (virtualAttributeDefElem != null) {
       VirtualAttributeDef virtualAttributeDef = new VirtualAttributeDef(virtualAttributeDefElem, analyzerConfigPath);
+      if (!functionExists(virtualAttributeDef.getFunctionName(), 1) && !functionExists(virtualAttributeDef.getFunctionName(), 2))
+        throw new XMLIndexException("Error loading virtual attribute defintions. The virtual attribute function \"" + virtualAttributeDef.getFunctionName().getEQName() + "\""
+            + " that was configured in \"" + Definitions.FILENAME_INDEXCONFIG + "\" was not defined in \"" + Definitions.FILENAME_VIRTATTRMODULE + "\".");
       cacheVirtualAttributeDef(virtualAttributeDef);
       virtualAttributeDefElem = XMLUtils.getNextSiblingElement(virtualAttributeDefElem);
     }  
@@ -89,8 +90,6 @@ public class VirtualAttributeDefConfig {
   public void reloadXQueryModule() {
     try {
       File xqueryFile = index.getConfigPath().resolve(Definitions.FILENAME_VIRTATTRMODULE).toFile();
-      if (!xqueryFile.isFile())
-        FileUtils.writeStringToFile(xqueryFile, "xquery version \"3.1\";" + Definitions.EOL + Definitions.EOL + "()", StandardCharsets.UTF_8);
       Processor proc = new Processor(false);
       XQueryCompiler compiler = proc.newXQueryCompiler();
       XQueryExecutable virtualAttrsExecutable = compiler.compile(xqueryFile);

@@ -272,7 +272,8 @@ public class XMLIndexOptimizer extends Optimizer {
         if (attrDefs == null || (attrDef = attrDefs.get(localPart)) == null)
           throw new XMLIndexException("Virtual attribute definition \"" + localPart + "\" not "
               + "found for contextitem {" + baseName.getURI() + "}" + baseName.getLocalPart());
-        fieldName = attrDef.getVirtualAttributeName();
+        // fieldName = attrDef.getVirtualAttributeName();
+        fieldName = getFieldName(Node.ATTRIBUTE_NODE, Definitions.NAMESPACE_VIRTUALATTR, attrDef.getVirtualAttributeName(), itemType);
         if (attrDef.getQueryAnalyzer() != null) {
           if (operator != Token.FEQ && operator != Token.EQUALS)
             throw new XPathException(String.format("Only the operator \"=\" is supported in the "

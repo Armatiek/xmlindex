@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
 
-public class TestBed extends TestBase {
+public class TestBed {
   
   private static final Logger logger = LoggerFactory.getLogger(TestBed.class);
   
@@ -22,7 +22,7 @@ public class TestBed extends TestBase {
   
   private void runTest(String indexPath) throws Exception {
     XMLIndex index = new XMLIndex("Test", Paths.get(indexPath));
-    configure(index);
+    index.open();
     try {
       Session session = index.aquireSession();
       try {

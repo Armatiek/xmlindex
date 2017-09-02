@@ -32,7 +32,7 @@
       <element-name>wetstechnische-informatie</element-name>
       <virtual-attribute-name>file-creation-time</virtual-attribute-name>
       <function-name>va:file-creation-time</function-name>
-      <item-type>xs:date</item-type>
+      <item-type>xs:dateTime</item-type>
     </virtual-attribute-def>
     <virtual-attribute-def>
       <element-name>toestand</element-name>
@@ -40,7 +40,7 @@
       <element-name>wetstechnische-informatie</element-name>
       <virtual-attribute-name>file-last-modified-time</virtual-attribute-name>
       <function-name>va:file-last-modified-time</function-name>
-      <item-type>xs:date</item-type>
+      <item-type>xs:dateTime</item-type>
     </virtual-attribute-def>
     <virtual-attribute-def>
       <element-name>toestand</element-name>
@@ -48,7 +48,7 @@
       <element-name>wetstechnische-informatie</element-name>
       <virtual-attribute-name>file-size</virtual-attribute-name>
       <function-name>va:file-size</function-name>
-      <item-type>xs:int</item-type>
+      <item-type>xs:long</item-type>
     </virtual-attribute-def>
     <virtual-attribute-def>
       <element-name>expression</element-name>

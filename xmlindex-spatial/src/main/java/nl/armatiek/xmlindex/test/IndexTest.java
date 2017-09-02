@@ -1,6 +1,5 @@
 package nl.armatiek.xmlindex.test;
 
-
 import java.nio.file.Paths;
 
 import org.apache.commons.lang3.time.StopWatch;
@@ -10,13 +9,13 @@ import org.slf4j.LoggerFactory;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
 
-public class IndexTest extends TestBase {
+public class IndexTest {
   
   private static final Logger logger = LoggerFactory.getLogger(IndexTest.class);
   
   private void runTest(String indexPath, String gmlFolder) throws Exception {
     XMLIndex index = new XMLIndex("Test", Paths.get(indexPath));
-    // configure(index);
+    index.open();
     try {
       Session session = index.aquireSession();
       try {

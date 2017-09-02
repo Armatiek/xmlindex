@@ -197,7 +197,7 @@ public class DocumentIndexer {
       doc.add(field);
   }
   
-  private void addVirtualAttributeFields(org.apache.lucene.document.Document doc, Element elem, XdmMap params) throws SaxonApiException {
+  private void addVirtualAttributeFields(org.apache.lucene.document.Document doc, Element elem, XdmMap params) throws IOException, SaxonApiException {
     VirtualAttributeDefConfig vad = index.getConfiguration().getVirtualAttributeConfig();
     Map<String, VirtualAttributeDef> attrDefs = vad.getForElement(new QName(StringUtils.defaultString(elem.getNamespaceURI()), getLocalPart(elem)));  
     if (attrDefs == null)
@@ -225,7 +225,14 @@ public class DocumentIndexer {
       if (values instanceof XdmEmptySequence) 
         continue;
       
-      String fieldName = attrDef.getVirtualAttributeName();
+      int nameCode = index.getNameStore().putName(Definitions.NAMESPACE_VIRTUALATTR, attrDef.getVirtualAttributeName());
+      String fieldName = Integer.toString(Type.ATTRIBUTE) + "_" + Integer.toString(nameCode);
+      /*
+      if (attr.getPrefix() != null)
+        // TODO: ontdubbelen??
+        doc.add(new StoredField(Definitions.FIELDNAME_PREFIXES, attrFieldName + ";" + index.putPrefix(attr.getPrefix())));
+      */
+      
       IndexableField field = null;
       
       XdmSequenceIterator valueIter = values.iterator();
@@ -236,7 +243,7 @@ public class DocumentIndexer {
           throw new XMLIndexException("Error creating virtual attribute \"" + attrDef.getVirtualAttributeName() + "\". The result of the virtual attribute function must be a sequence of atomic values.");
         XdmAtomicValue value = (XdmAtomicValue) item;
         AtomicValue atomicVal = (AtomicValue) value.getUnderlyingValue();
-        BuiltInAtomicType itemType = atomicVal.getPrimitiveType();
+        BuiltInAtomicType itemType = (BuiltInAtomicType) atomicVal.getItemType();
         
         try {
           if (!attrDef.getItemType().matches(atomicVal, index.getSaxonConfiguration().getTypeHierarchy()))
@@ -277,8 +284,11 @@ public class DocumentIndexer {
           logger.warn("Skipping indexing virtual attribute \"" + attrDef.getVirtualAttributeName() + "\". Value \"" + values.toString() + "\" could not be converted to type \"" + itemType.getDisplayName() + ".", xe);
         }
         
-        if (field != null)
+        if (field != null) {
           doc.add(field);
+          addFieldNameField(doc, fieldName);
+        }
+        
       }
     }
   }
@@ -396,6 +406,7 @@ public class DocumentIndexer {
           attrType = Type.ATTRIBUTE;
           String attrFieldName = getFieldName(attrType, attr);
           if (attr.getPrefix() != null)
+            // TODO: ontdubbelen??
             doc.add(new StoredField(Definitions.FIELDNAME_PREFIXES, attrFieldName + ";" + index.putPrefix(attr.getPrefix())));
           doc.add(new StringField(attrFieldName, attr.getValue(), Field.Store.YES));
           addTypedValueField(doc, attr);

@@ -96,10 +96,8 @@ public class WebContext {
     
     isOpen = false;
    
-    for (XMLIndex index : indexes.values()) {
-      logger.info("Closing index \"" + index.getIndexName() + "\" ... ");
+    for (XMLIndex index : indexes.values())
       index.close();
-    }
      
     logger.info("XMLIndex Context closed.");
   }
@@ -266,7 +264,9 @@ public class WebContext {
       if (!indexDir.isDirectory())
         throw new FileNotFoundException("Index directory \"" + indexDir.getAbsolutePath() + "\" not found");
       index = new XMLIndex(name, indexDir.toPath(), configSchema);
+      index.open();
       indexes.put(name, index);
+      
     }
     return index;
   }

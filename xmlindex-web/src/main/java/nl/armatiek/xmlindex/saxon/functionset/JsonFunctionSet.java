@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.functions.SystemFunction;
 import net.sf.saxon.functions.registry.BuiltInFunctionSet;
+import net.sf.saxon.om.Item;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.om.ZeroOrOne;
 import net.sf.saxon.trans.XPathException;
@@ -42,7 +43,10 @@ public class JsonFunctionSet extends BuiltInFunctionSet {
   
   public static class EscapeFn extends SystemFunction {
     public ZeroOrOne<StringValue> call(XPathContext context, Sequence[] arguments) throws XPathException {
-      String json = ((StringValue) arguments[0].head()).getStringValue();
+      Item item = arguments[0].head();
+      if (item == null)
+        return ZeroOrOne.empty();
+      String json = ((StringValue) item).getStringValue();
       if (StringUtils.isBlank(json))
         return ZeroOrOne.empty();
       return new ZeroOrOne<StringValue>(new StringValue(StringEscapeUtils.escapeJson(json)));
@@ -51,6 +55,9 @@ public class JsonFunctionSet extends BuiltInFunctionSet {
   
   public static class UnescapeFn extends SystemFunction {
     public ZeroOrOne<StringValue> call(XPathContext context, Sequence[] arguments) throws XPathException {
+      Item item = arguments[0].head();
+      if (item == null)
+        return ZeroOrOne.empty();
       String json = ((StringValue) arguments[0].head()).getStringValue();
       if (StringUtils.isBlank(json))
         return ZeroOrOne.empty();

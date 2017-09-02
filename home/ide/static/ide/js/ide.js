@@ -348,32 +348,42 @@ $(function() {
 	  setStatusMessage('Status : running ...');
 	  var tab = $("#tabs .ui-tabs-active a");
 	  var editor = tab.data("editor");
-    $.post("ide/run", { index: $("#index").val(), code: editor.getValue(), path: tab.data("path") }).done(function(data) {
-	    var json = JSON.parse(data);
-	    setStatusMessage('Status : Finished in ' + Math.round(json.time / 1000) + ' ms');
-	    resultsCodeMirror.setValue(json.result);
-	    if (json.errLine && json.errLine > -1) {
-	      var col = (json.errColumn && json.errColumn > -1) ? json.errColumn : 0;
-		    editor.setCursor(json.errLine - 1, col - 1);
-		    editor.focus();
-	    }
-    }, "json");
+    $.post("ide/run", { index: $("#index").val(), code: editor.getValue(), path: tab.data("path") })
+      .done(function(data) {
+	      var json = JSON.parse(data);
+	      setStatusMessage('Status : Finished in ' + Math.round(json.time / 1000) + ' ms');
+	      resultsCodeMirror.setValue(json.result);
+	      if (json.errLine && json.errLine > -1) {
+	        var col = (json.errColumn && json.errColumn > -1) ? json.errColumn : 0;
+		      editor.setCursor(json.errLine - 1, col - 1);
+		      editor.focus();
+	      }
+      }, "json")
+      .fail(function() {
+        setStatusMessage('Status : Error');
+        resultsCodeMirror.setValue("An error occured preceding the execution of the query or transformation; possibly a configuration error. Please check the server logs.");
+      });
   });
   
   $('#explainBtn').on('click', function () {
     setStatusMessage('Status : running ...');
     var tab = $("#tabs .ui-tabs-active a");
     var editor = tab.data("editor");
-    $.post("ide/explain", { index: $("#index").val(), code: editor.getValue() }).done(function(data) {
-      var json = JSON.parse(data);
-      setStatusMessage('Status : Finished in ' + Math.round(json.time / 1000) + ' ms');
-      resultsCodeMirror.setValue(json.result);
-      if (json.errLine && json.errLine > -1) {
-        var col = (json.errColumn && json.errColumn > -1) ? json.errColumn : 0;
-        editor.setCursor(json.errLine - 1, col - 1);
-        editor.focus();
-      }
-    }, "json");
+    $.post("ide/explain", { index: $("#index").val(), code: editor.getValue() })
+      .done(function(data) {
+        var json = JSON.parse(data);
+        setStatusMessage('Status : Finished in ' + Math.round(json.time / 1000) + ' ms');
+        resultsCodeMirror.setValue(json.result);
+        if (json.errLine && json.errLine > -1) {
+          var col = (json.errColumn && json.errColumn > -1) ? json.errColumn : 0;
+          editor.setCursor(json.errLine - 1, col - 1);
+          editor.focus();
+        }
+      }, "json")
+      .fail(function() {
+        setStatusMessage('Status : Error');
+        resultsCodeMirror.setValue("An error occured preceding the execution of the query or transformation; possibly a configuration error. Please check the server logs.");
+      });
   });
   
   $('#uploadBtn').on('click', function () {

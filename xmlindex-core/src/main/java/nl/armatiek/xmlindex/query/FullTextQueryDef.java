@@ -55,7 +55,8 @@ public final class FullTextQueryDef extends QueryDefWithRelation {
   @Override
   public void export(ExpressionPresenter destination) {
     destination.startElement("fulltext-query");
-    destination.emitAttribute("field-name", fieldName);
+    destination.emitAttribute("name-code", fieldName);
+    destination.emitAttribute("field-name", getEQName(index, fieldName));
     destination.emitAttribute("node-type", "attribute()");
     destination.emitAttribute("value", valueExpression.toString());
     if (analyzer != null)
