@@ -44,6 +44,7 @@ public class IndexConfig extends ConfigBase implements ErrorHandler {
   private final TypedValueDefConfig typedValueConfig;
   private final VirtualAttributeDefConfig virtualAttributeConfig;
   private final PluggableIndexConfig pluggableIndexConfig;
+  private final PluggableFileConvertorConfig pluggableFileConvertorConfig;
   private final Path analyzerConfigPath;
   private final XMLIndex index;
   
@@ -72,6 +73,7 @@ public class IndexConfig extends ConfigBase implements ErrorHandler {
       this.typedValueConfig = new TypedValueDefConfig(configElem);
       this.virtualAttributeConfig = new VirtualAttributeDefConfig(index, configElem, analyzerPerField, analyzerConfigPath);    
       this.pluggableIndexConfig = new PluggableIndexConfig(index, configElem);
+      this.pluggableFileConvertorConfig = new PluggableFileConvertorConfig(index, configElem);
     } catch (XMLIndexException e) {
       throw e;
     } catch (Exception e) {
@@ -89,6 +91,10 @@ public class IndexConfig extends ConfigBase implements ErrorHandler {
   
   public PluggableIndexConfig getPluggableIndexConfig() {
     return pluggableIndexConfig;
+  }
+  
+  public PluggableFileConvertorConfig getPluggableFileConvertorConfig() {
+    return pluggableFileConvertorConfig;
   }
   
   public Path getAnalyzerConfigPath() {

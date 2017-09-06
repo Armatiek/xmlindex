@@ -3,8 +3,10 @@ package nl.armatiek.xmlindex.storage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
@@ -42,7 +44,6 @@ import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.SaxonApiException;
-import net.sf.saxon.s9api.XQueryEvaluator;
 import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmEmptySequence;
 import net.sf.saxon.s9api.XdmItem;
@@ -105,6 +106,7 @@ public class DocumentIndexer {
   private final StoredField docLeftField_sf = new StoredField(Definitions.FIELDNAME_DOCLEFT, (long) 0);
   private final StoredField docRightField_sf = new StoredField(Definitions.FIELDNAME_DOCRIGHT, (long) 0);
   private final StringField baseUriField = new StringField(Definitions.FIELDNAME_BASEURI, "", Field.Store.NO);
+  private final List<VirtualAttributeDef> vads = new ArrayList<VirtualAttributeDef>();
   
   private final String USERDATA_KEY = "u";
   private final XMLIndex index;
@@ -199,28 +201,38 @@ public class DocumentIndexer {
   
   private void addVirtualAttributeFields(org.apache.lucene.document.Document doc, Element elem, XdmMap params) throws IOException, SaxonApiException {
     VirtualAttributeDefConfig vad = index.getConfiguration().getVirtualAttributeConfig();
+    vads.clear();
     Map<String, VirtualAttributeDef> attrDefs = vad.getForElement(new QName(StringUtils.defaultString(elem.getNamespaceURI()), getLocalPart(elem)));  
-    if (attrDefs == null)
+    if (attrDefs != null)
+      vads.addAll(attrDefs.values());
+    if (elem.getParentNode().getNodeType() == Node.DOCUMENT_NODE) {
+      attrDefs = vad.getForElement(Definitions.QNAME_VA_BINDING_DOCUMENT_ELEMENT);  
+      if (attrDefs != null)
+        vads.addAll(attrDefs.values());
+    }
+      
+    if (vads.isEmpty())
       return;
     
     if (this.docWrapper == null)
       this.docWrapper = new DocumentWrapper(elem.getOwnerDocument(), elem.getOwnerDocument().getBaseURI(), index.getSaxonConfiguration());
     NodeInfo nodeInfo = docWrapper.wrap(elem);
     
-    XQueryEvaluator evaluator = index.getConfiguration().getVirtualAttributeConfig().getVirtualAttrsEvaluator();
-    for (VirtualAttributeDef attrDef : attrDefs.values()) {
+    // XQueryEvaluator evaluator = index.getConfiguration().getVirtualAttributeConfig().getVirtualAttrsEvaluator();
+    for (VirtualAttributeDef attrDef : vads) {
       XdmValue values = null;
       XdmValue[] args = null;
-      if (vad.functionExists(attrDef.getFunctionName(), 1))
-        args = new XdmValue[] { new XdmNode(nodeInfo) };
-      else if (vad.functionExists(attrDef.getFunctionName(), 2))
+      if (attrDef.getFunctionName().getNamespaceURI().equals(Definitions.NAMESPACE_STD_VIRTUALATTR) || 
+          vad.functionExists(attrDef.getFunctionName(), 2))
         args = new XdmValue[] { new XdmNode(nodeInfo), params == null ? XdmEmptySequence.getInstance() : params };
+      else if (vad.functionExists(attrDef.getFunctionName(), 1))
+        args = new XdmValue[] { new XdmNode(nodeInfo) };
       else {
         logger.warn("No virtual attribute function with name \"" + attrDef.getFunctionName().getEQName() + "\" found with one or two arguments");
         continue;
       }
       
-      values = evaluator.callFunction(attrDef.getFunctionName(), args);
+      values = attrDef.getXQueryEvaluator().callFunction(attrDef.getFunctionName(), args);
         
       if (values instanceof XdmEmptySequence) 
         continue;

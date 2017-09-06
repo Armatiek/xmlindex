@@ -20,8 +20,10 @@ package nl.armatiek.xmlindex.conf;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 public abstract class ConfigBase {
 
@@ -32,6 +34,15 @@ public abstract class ConfigBase {
     else
       is = scope.getResourceAsStream(resource);
     FileUtils.copyInputStreamToFile(is, target);
+  }
+  
+  public String readFromClassPath(String resource, Class<?> scope) throws IOException {
+    InputStream is = null;
+    if (scope == null)
+      is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resource);
+    else
+      is = scope.getResourceAsStream(resource);
+    return IOUtils.toString(is, StandardCharsets.UTF_8);
   }
 
 }

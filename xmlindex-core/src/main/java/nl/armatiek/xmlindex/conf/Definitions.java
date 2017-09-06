@@ -58,34 +58,6 @@ public class Definitions {
   public static final String FIELDNAME_DOCLEFT          = "docleft";
   public static final String FIELDNAME_DOCRIGHT         = "docright";
   
-  /* TypedValueDef, VirtualAttributeDef and CustomIndex fields: */
-  /*
-  public static final String FIELDNAME_DEFNAME          = "defname";
-  public static final String FIELDNAME_ITEMTYPE         = "itemtype";
-  public static final String FIELDNAME_NODETYPE         = "nodetype";
-  public static final String FIELDNAME_NODENAMESPACEURI = "nodenamespaceuri";
-  public static final String FIELDNAME_NODELOCALNAME    = "nodelocalname";
-  public static final String FIELDNAME_VIRTATTRNAME     = "virtattrname";
-  public static final String FIELDNAME_FUNCNAMESPACEURI = "funcnamespaceuri";
-  public static final String FIELDNAME_FUNCLOCALNAME    = "funclocalname";
-  public static final String FIELDNAME_ANALYZERINDEX    = "analyzerindex";
-  public static final String FIELDNAME_ANALYZERQUERY    = "analyzerquery";
-  public static final String FIELDNAME_CLASSNAME        = "classname";
-  public static final String FIELDNAME_PARAMS           = "params";
-  
-  public static final String FIELDNAME_INDEXINFO        = "indexinfo";
-  public static final String FIELDNAME_NODECOUNTER      = "nodecounter";
-  
-  public static final String FIELDVALUE_NODECOUNTER     = "nodecounter";
-  public static final String FIELDVALUE_TYPEDVALDEF     = "typedvaldef";
-  public static final String FIELDVALUE_VIRTATTRDEF     = "virtattrdef";
-  public static final String FIELDVALUE_PLUGGABLEINDEX  = "pluggableindex";
-  public static final String FIELDVALUE_PROPERTY        = "property";
-  
-  public static final long FIELVALUE_NODECOUNTER_LEFT   = MAX_LONG - 1;
-  public static final long FIELVALUE_CONFIG_LEFT        = FIELVALUE_NODECOUNTER_LEFT - 1;
-  */
-  
   public static final String FIELDNAME_INDEXINFO        = "indexinfo";
   public static final String FIELDNAME_NODECOUNTER      = "nodecounter";
   
@@ -97,11 +69,14 @@ public class Definitions {
   public static final String SCHEME_XMLINDEX            = "xmlindex";
   
   public static final String NAMESPACE_VIRTUALATTR      = "http://www.armatiek.nl/xmlindex/virtualattribute";
+  public static final String NAMESPACE_STD_VIRTUALATTR  = "http://www.armatiek.nl/xmlindex/standard-virtualattribute";
   public static final String NAMESPACE_EXT_FUNCTIONS    = "http://www.armatiek.nl/xmlindex/functions";
   
   public static final StructuredQName PARAM_SESSION_SQN = new StructuredQName("", "http://www.armatiek.nl/xmlindex/param/session", "session");
   public static final QName PARAM_SESSION_QN            = new QName("http://www.armatiek.nl/xmlindex/param/session", "session");
   
+  public static final QName QNAME_VA_BINDING_DOCUMENT_ELEMENT = new QName("root()");
+    
   public static final String EOL                        = System.getProperty("line.separator");
   
 }

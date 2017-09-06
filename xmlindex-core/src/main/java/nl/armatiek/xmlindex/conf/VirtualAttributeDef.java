@@ -37,6 +37,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 import net.sf.saxon.s9api.QName;
+import net.sf.saxon.s9api.XQueryEvaluator;
 import net.sf.saxon.type.ItemType;
 import net.sf.saxon.type.Type;
 import nl.armatiek.xmlindex.Session;
@@ -54,11 +55,31 @@ public class VirtualAttributeDef {
   private final ItemType itemType;
   private final Analyzer indexAnalyzer;
   private final Analyzer queryAnalyzer;
+  private final boolean storeValue;
+  private final XQueryEvaluator eval;
   
-  public VirtualAttributeDef(Element virtualAttributeDefElem, Path analyzerConfigPath) {
-    this.index = null;
+  public VirtualAttributeDef(XMLIndex index, String virtualAttrName, QName functionName, ItemType itemType, 
+      boolean storeValue, XQueryEvaluator eval) {
+    this.index = index;
     this.elemNames = new ArrayList<QName>();
-    NodeList elemNameNodes = virtualAttributeDefElem.getElementsByTagName("element-name");
+    this.elemNames.add(Definitions.QNAME_VA_BINDING_DOCUMENT_ELEMENT);
+    this.virtualAttrName = virtualAttrName;
+    this.functionName = functionName;
+    this.itemType = itemType;
+    this.storeValue = storeValue;
+    this.indexAnalyzer = null;
+    this.queryAnalyzer = null;
+    this.eval = eval;
+  }
+  
+  public VirtualAttributeDef(XMLIndex index, Element virtualAttributeDefElem, Path analyzerConfigPath,
+      XQueryEvaluator eval) {
+    this.index = index;
+    this.elemNames = new ArrayList<QName>();
+    Element bindingsElement = XMLUtils.getChildElementByLocalName(virtualAttributeDefElem, "bindings");
+    if (XMLUtils.getChildElementByLocalName(bindingsElement, "document-element") != null)
+      elemNames.add(Definitions.QNAME_VA_BINDING_DOCUMENT_ELEMENT);
+    NodeList elemNameNodes = bindingsElement.getElementsByTagName("element-name");
     for (int i=0; i<elemNameNodes.getLength(); i++)
       elemNames.add(SaxonUtils.getQName(elemNameNodes.item(i)));
     virtualAttrName = XMLUtils.getValueOfChildElementByLocalName(virtualAttributeDefElem, "virtual-attribute-name");
@@ -67,6 +88,8 @@ public class VirtualAttributeDef {
     itemType = Type.getBuiltInItemType(XMLConstants.W3C_XML_SCHEMA_NS_URI, StringUtils.substringAfter(type, ":"));
     queryAnalyzer = getAnalyzer(virtualAttributeDefElem, "index-analyzer", analyzerConfigPath);
     indexAnalyzer = getAnalyzer(virtualAttributeDefElem, "query-analyzer", analyzerConfigPath);
+    storeValue = XMLUtils.getBooleanValue(XMLUtils.getValueOfChildElementByLocalName(virtualAttributeDefElem, "store-value"), false);
+    this.eval = eval; 
   }
   
   public List<QName> getElemNames() {
@@ -91,6 +114,14 @@ public class VirtualAttributeDef {
   
   public Analyzer getIndexAnalyzer() {
     return indexAnalyzer;
+  }
+  
+  public boolean getStoreValue() {
+    return storeValue;
+  }
+  
+  public XQueryEvaluator getXQueryEvaluator() {
+    return eval;
   }
 
   public void reindex() throws IOException {

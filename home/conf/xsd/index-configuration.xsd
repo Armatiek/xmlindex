@@ -24,14 +24,22 @@
             <xs:sequence>
               <xs:element name="virtual-attribute-def" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
-                  <xs:sequence>
-                    <xs:element name="element-name" type="xs:QName" minOccurs="1" maxOccurs="unbounded"/>
+                  <xs:all>
+                    <xs:element name="bindings">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="document-element" minOccurs="0"/>
+                          <xs:element name="element-name" type="xs:QName" minOccurs="0" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
                     <xs:element name="virtual-attribute-name" type="xs:string"/>
                     <xs:element name="function-name" type="xs:QName"/>
                     <xs:element name="item-type" type="item-type"/>
+                    <xs:element name="store-value" type="xs:boolean" minOccurs="0" default="false"/>
                     <xs:element name="index-analyzer" type="analyzer-type" minOccurs="0"/>
                     <xs:element name="query-analyzer" type="analyzer-type" minOccurs="0"/>
-                  </xs:sequence>
+                  </xs:all>
                 </xs:complexType>
               </xs:element>
             </xs:sequence>
@@ -41,6 +49,25 @@
           <xs:complexType>
             <xs:sequence>
               <xs:element name="pluggable-index-def" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="class-name" type="xs:string"/>
+                    <xs:element name="param" minOccurs="0" maxOccurs="unbounded">
+                      <xs:complexType>
+                        <xs:attribute name="name" type="xs:string" use="required"/>
+                        <xs:attribute name="value" type="xs:string" use="required"/>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="pluggable-file-convertor-config" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="pluggable-file-convertor-def" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                   <xs:sequence>
                     <xs:element name="class-name" type="xs:string"/>

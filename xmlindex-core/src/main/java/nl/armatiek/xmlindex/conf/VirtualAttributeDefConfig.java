@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.xml.XMLConstants;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.w3c.dom.Element;
 
@@ -32,11 +34,16 @@ import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.XQueryCompiler;
 import net.sf.saxon.s9api.XQueryEvaluator;
 import net.sf.saxon.s9api.XQueryExecutable;
+import net.sf.saxon.type.Type;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.util.XMLUtils;
 
-public class VirtualAttributeDefConfig {
+public class VirtualAttributeDefConfig extends ConfigBase {
+  
+  private final String[][] STANDARD_ATTRS = {{"path", "string"}, {"parent-path", "string"}, 
+      {"name", "string"}, {"creation-time", "dateTime"}, {"last-modified-time", "dateTime"}, 
+      {"last-access-time", "dateTime"}, {"size", "long"}, {"is-symbolic-link", "boolean"}};
   
   private final HashMap<QName, Map<String, VirtualAttributeDef>> nameToVirtualAttrDefMap = new HashMap<QName, Map<String, VirtualAttributeDef>>();
   private final HashMap<String, VirtualAttributeDef> virtualAttributeDefs = new HashMap<String, VirtualAttributeDef>();
@@ -44,28 +51,37 @@ public class VirtualAttributeDefConfig {
   private final XMLIndex index;
   private XQueryFunctionLibrary functionLibrary;
   private XQueryEvaluator virtualAttrsEvaluator;
+  private XQueryEvaluator standardVirtualAttrsEvaluator;
   
   public VirtualAttributeDefConfig(XMLIndex index, Element configElem, Map<String, Analyzer> analyzerPerField, Path analyzerConfigPath) {
     this.index = index;
     this.analyzerPerField = analyzerPerField;
-    reloadXQueryModule();
+    Processor proc = new Processor(false);
+    reloadXQueryModule(proc);
+    reloadStandardXQueryModule(proc);
     Element virtualAttributeConfigElem = XMLUtils.getFirstChildElementByLocalName(configElem, "virtual-attribute-config");
     if (virtualAttributeConfigElem == null)
       return;
     Element virtualAttributeDefElem = XMLUtils.getFirstChildElement(virtualAttributeConfigElem);
     while (virtualAttributeDefElem != null) {
-      VirtualAttributeDef virtualAttributeDef = new VirtualAttributeDef(virtualAttributeDefElem, analyzerConfigPath);
+      VirtualAttributeDef virtualAttributeDef = new VirtualAttributeDef(index, virtualAttributeDefElem, analyzerConfigPath, virtualAttrsEvaluator);
       if (!functionExists(virtualAttributeDef.getFunctionName(), 1) && !functionExists(virtualAttributeDef.getFunctionName(), 2))
         throw new XMLIndexException("Error loading virtual attribute defintions. The virtual attribute function \"" + virtualAttributeDef.getFunctionName().getEQName() + "\""
             + " that was configured in \"" + Definitions.FILENAME_INDEXCONFIG + "\" was not defined in \"" + Definitions.FILENAME_VIRTATTRMODULE + "\".");
       cacheVirtualAttributeDef(virtualAttributeDef);
       virtualAttributeDefElem = XMLUtils.getNextSiblingElement(virtualAttributeDefElem);
-    }  
+    }
+    
+    /* Cache standard virtual attribute definitions: */
+    for (String[] attr : STANDARD_ATTRS)
+      cacheStandardVirtualAttributeDef(attr[0], attr[1]);
   }
   
+  /*
   public XQueryEvaluator getVirtualAttrsEvaluator() {
     return virtualAttrsEvaluator;
   }
+  */
   
   public Map<String, VirtualAttributeDef> getForElement(QName elemName) {
     return nameToVirtualAttrDefMap.get(elemName);
@@ -87,16 +103,26 @@ public class VirtualAttributeDefConfig {
     return functionLibrary.getDeclaration(functionName.getStructuredQName(), argCount) != null;
   }
   
-  public void reloadXQueryModule() {
+  public void reloadXQueryModule(Processor proc) {
     try {
       File xqueryFile = index.getConfigPath().resolve(Definitions.FILENAME_VIRTATTRMODULE).toFile();
-      Processor proc = new Processor(false);
       XQueryCompiler compiler = proc.newXQueryCompiler();
       XQueryExecutable virtualAttrsExecutable = compiler.compile(xqueryFile);
       this.functionLibrary = virtualAttrsExecutable.getUnderlyingCompiledQuery().getMainModule().getGlobalFunctionLibrary();
       this.virtualAttrsEvaluator = virtualAttrsExecutable.load();
     } catch (Exception e) {
       throw new XMLIndexException("Error compiling virtual attribute definitions XQuery file for index \"" + index.getIndexName() + "\"", e);
+    } 
+  }
+  
+  public void reloadStandardXQueryModule(Processor proc) {
+    try {
+      String xquery = this.readFromClassPath("document-element-virtual-attributes.xqy", null);
+      XQueryCompiler compiler = proc.newXQueryCompiler();
+      XQueryExecutable virtualAttrsExecutable = compiler.compile(xquery);
+      this.standardVirtualAttrsEvaluator = virtualAttrsExecutable.load();
+    } catch (Exception e) {
+      throw new XMLIndexException("Error compiling standard virtual attribute definitions XQuery file for index \"" + index.getIndexName() + "\"", e);
     } 
   }
   
@@ -112,6 +138,18 @@ public class VirtualAttributeDefConfig {
     virtualAttributeDefs.put(attrDef.getVirtualAttributeName(), attrDef);
     if (attrDef.getIndexAnalyzer() != null)
       analyzerPerField.put(attrDef.getVirtualAttributeName(), attrDef.getIndexAnalyzer());
+  }
+  
+  private void cacheStandardVirtualAttributeDef(String name, String itemType) {
+    VirtualAttributeDef def =  
+        new VirtualAttributeDef(
+          index, 
+          name, 
+          new QName(Definitions.NAMESPACE_STD_VIRTUALATTR, "file-" + name), 
+          Type.getBuiltInItemType(XMLConstants.W3C_XML_SCHEMA_NS_URI, itemType), 
+          true,
+          standardVirtualAttrsEvaluator);
+    cacheVirtualAttributeDef(def);
   }
   
 }

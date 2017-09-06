@@ -175,6 +175,7 @@ public class NodeStore {
         try {
           Map<String, Object> pathParams = new HashMap<String, Object>();
           pathParams.put("path", t.normalize().toString());
+          pathParams.put("parent-path", t.getParent().toString());
           pathParams.put("name", t.getFileName().toString());
           BasicFileAttributes attrs = Files.readAttributes(t, BasicFileAttributes.class);
           pathParams.put("creation-time", attrs.creationTime());

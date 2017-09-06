@@ -75,14 +75,11 @@ import nl.armatiek.xmlindex.saxon.functions.xmlindex.GetConfiguration;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.IndexRoot;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.LocalVariableReferencer;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.OwnerDocument;
-import nl.armatiek.xmlindex.saxon.functions.xmlindex.PluggableIndexExists;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.Query;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.QueryAdHoc;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.RemoveDocument;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.Transform;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.TransformAdHoc;
-import nl.armatiek.xmlindex.saxon.functions.xmlindex.TypedValueDefExists;
-import nl.armatiek.xmlindex.saxon.functions.xmlindex.VirtualAttributeDefExists;
 
 public class XMLIndexInitializer implements Initializer {
   
@@ -116,9 +113,6 @@ public class XMLIndexInitializer implements Initializer {
     registerFunction(new ExplainQuery(), configuration);
     registerFunction(new ExplainTransformation(), configuration);
     registerFunction(new GetConfiguration(), configuration);
-    registerFunction(new PluggableIndexExists(), configuration);
-    registerFunction(new TypedValueDefExists(), configuration);
-    registerFunction(new VirtualAttributeDefExists(), configuration);
     
     /* EXPath File: */
     registerFunction(new Append(), configuration);

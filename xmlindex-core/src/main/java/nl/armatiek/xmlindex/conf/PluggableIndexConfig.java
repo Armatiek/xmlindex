@@ -17,9 +17,10 @@
 
 package nl.armatiek.xmlindex.conf;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import org.w3c.dom.Element;
 
@@ -33,19 +34,18 @@ import nl.armatiek.xmlindex.util.XMLUtils;
 
 public class PluggableIndexConfig {
   
-  private final Map<String, PluggableIndex> pluggableIndexes = new HashMap<String, PluggableIndex>(); 
+  private final List<PluggableIndex> pluggableIndexes = new ArrayList<PluggableIndex>(); 
   private final HashMap<StructuredQName, PluggableIndex> pluggableIndexesCallMap = new HashMap<StructuredQName, PluggableIndex>();
-  
   
   public PluggableIndexConfig(XMLIndex index, Element configElem) {
     try {
       Element pluggableIndexConfigElem = XMLUtils.getFirstChildElementByLocalName(configElem, "pluggable-index-config");
       if (pluggableIndexConfigElem == null)
         return;
-      
       Element pluggableIndexDefElem = XMLUtils.getFirstChildElement(pluggableIndexConfigElem);
       while (pluggableIndexDefElem != null) {
         PluggableIndex pluggableIndex = PluggableIndex.fromConfigElem(index, pluggableIndexDefElem);
+        pluggableIndexes.add(pluggableIndex);
         pluggableIndexesCallMap.put(pluggableIndex.getFunctionCall().getDefinition().getFunctionQName(), pluggableIndex);
         ExtensionFunctionDefinition extensionFunction = pluggableIndex.getFunctionCall().getDefinition();
         index.getSaxonConfiguration().registerExtensionFunction(extensionFunction);
@@ -56,20 +56,12 @@ public class PluggableIndexConfig {
     } 
   }
    
-  public PluggableIndex get(String className) {
-    return pluggableIndexes.get(className);
-  }
-  
   public Collection<PluggableIndex> get() {
-    return pluggableIndexes.values();
+    return pluggableIndexes;
   }
   
   public PluggableIndex get(PluggableIndexExtensionFunctionCall call) {
     return pluggableIndexesCallMap.get(call.getDefinition().getFunctionQName());
   }
-  
-  public boolean exists(String pluggableIndexClassName) {
-    return pluggableIndexes.containsKey(pluggableIndexClassName);
-  }
-
+ 
 }
