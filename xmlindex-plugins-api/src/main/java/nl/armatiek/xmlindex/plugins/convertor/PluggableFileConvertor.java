@@ -15,19 +15,14 @@
  * limitations under the License.
  */
 
-package nl.armatiek.xmlindex.extensions;
+package nl.armatiek.xmlindex.plugins.convertor;
 
-import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.Sequence;
-import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.value.BooleanValue;
-import nl.armatiek.xmlindex.plugins.index.PluggableIndexExtensionFunctionCall;
+import nl.armatiek.xmlindex.plugins.XMLIndexPlugin;
 
-public class SpatialIndexExtensionFunctionCall extends PluggableIndexExtensionFunctionCall {
+public abstract class PluggableFileConvertor extends XMLIndexPlugin implements FileConvertor {
   
-  @Override
-  public BooleanValue call(XPathContext context, Sequence[] arguments) throws XPathException {            
-    return BooleanValue.TRUE;
+  public PluggableFileConvertor(String name) {
+    super(name);
   }
   
 }

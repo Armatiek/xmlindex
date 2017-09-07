@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-package nl.armatiek.xmlindex.extensions;
+package nl.armatiek.xmlindex.plugins.convertor;
 
-import net.sf.saxon.lib.ExtensionFunctionCall;
+import java.io.InputStream;
+import java.io.OutputStream;
 
-public abstract class PluggableIndexExtensionFunctionCall extends ExtensionFunctionCall {
-
-  public PluggableIndexExtensionFunctionCall() {
-    super();
-  }
-
+public interface FileConvertor {
+  
+  public void convert(InputStream is, String systemId, OutputStream xmlStream) throws Exception;
+  
 }

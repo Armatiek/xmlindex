@@ -1,6 +1,7 @@
 package nl.armatiek.xmlindex.test;
 
 import java.nio.file.Paths;
+import java.util.HashMap;
 
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
@@ -8,6 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
+import nl.armatiek.xmlindex.extensions.TikaConvertor;
+import nl.armatiek.xmlindex.plugins.convertor.FileConvertor;
 
 public class IndexTest {
   
@@ -22,7 +25,12 @@ public class IndexTest {
         logger.info("Starting batch indexing ...");
         StopWatch sw = new StopWatch();
         sw.start();
-        session.addDocuments(Paths.get(importPath), Integer.MAX_VALUE, pattern, null);
+        HashMap<String, FileConvertor> fileSpecs = new HashMap<String, FileConvertor>();
+        fileSpecs.put("\\.(xml|WTI)", null);
+        fileSpecs.put("\\.pdf", new TikaConvertor("tika"));
+        
+        // fileSpecs.put(pattern, null);
+        session.addDocuments(Paths.get(importPath), Integer.MAX_VALUE, fileSpecs, true, null);
         session.commit();
         logger.info("Batch indexing execution time: " + sw.toString());
         sw.stop();

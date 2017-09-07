@@ -17,10 +17,9 @@
 
 package nl.armatiek.xmlindex.conf;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Map;
 
 import org.w3c.dom.Element;
 
@@ -28,13 +27,13 @@ import net.sf.saxon.lib.ExtensionFunctionDefinition;
 import net.sf.saxon.om.StructuredQName;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.error.XMLIndexException;
-import nl.armatiek.xmlindex.extensions.PluggableIndex;
-import nl.armatiek.xmlindex.extensions.PluggableIndexExtensionFunctionCall;
-import nl.armatiek.xmlindex.util.XMLUtils;
+import nl.armatiek.xmlindex.plugins.index.PluggableIndex;
+import nl.armatiek.xmlindex.plugins.index.PluggableIndexExtensionFunctionCall;
+import nl.armatiek.xmlindex.utils.XMLUtils;
 
 public class PluggableIndexConfig {
   
-  private final List<PluggableIndex> pluggableIndexes = new ArrayList<PluggableIndex>(); 
+  private final Map<String, PluggableIndex> pluggableIndexes = new HashMap<String, PluggableIndex>(); 
   private final HashMap<StructuredQName, PluggableIndex> pluggableIndexesCallMap = new HashMap<StructuredQName, PluggableIndex>();
   
   public PluggableIndexConfig(XMLIndex index, Element configElem) {
@@ -44,8 +43,8 @@ public class PluggableIndexConfig {
         return;
       Element pluggableIndexDefElem = XMLUtils.getFirstChildElement(pluggableIndexConfigElem);
       while (pluggableIndexDefElem != null) {
-        PluggableIndex pluggableIndex = PluggableIndex.fromConfigElem(index, pluggableIndexDefElem);
-        pluggableIndexes.add(pluggableIndex);
+        PluggableIndex pluggableIndex = (PluggableIndex) PluggableIndex.fromConfigElem(pluggableIndexDefElem);
+        pluggableIndexes.put(pluggableIndex.getName(), pluggableIndex);
         pluggableIndexesCallMap.put(pluggableIndex.getFunctionCall().getDefinition().getFunctionQName(), pluggableIndex);
         ExtensionFunctionDefinition extensionFunction = pluggableIndex.getFunctionCall().getDefinition();
         index.getSaxonConfiguration().registerExtensionFunction(extensionFunction);
@@ -56,8 +55,12 @@ public class PluggableIndexConfig {
     } 
   }
    
-  public Collection<PluggableIndex> get() {
-    return pluggableIndexes;
+  public Collection<PluggableIndex> getIndexes() {
+    return pluggableIndexes.values();
+  }
+  
+  public PluggableIndex getByName(String name) {
+    return pluggableIndexes.get(name);
   }
   
   public PluggableIndex get(PluggableIndexExtensionFunctionCall call) {

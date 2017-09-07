@@ -19,14 +19,14 @@ package nl.armatiek.xmlindex.query;
 
 import net.sf.saxon.expr.oper.OperandArray;
 import net.sf.saxon.trace.ExpressionPresenter;
-import nl.armatiek.xmlindex.extensions.PluggableIndex;
+import nl.armatiek.xmlindex.plugins.index.PluggableIndex;
 
-public final class CustomIndexQueryDef extends QueryDef {
+public final class PluggableIndexQueryDef extends QueryDef {
   
   private PluggableIndex index;
   private OperandArray params;
   
-  public CustomIndexQueryDef(PluggableIndex index, OperandArray params) { 
+  public PluggableIndexQueryDef(PluggableIndex index, OperandArray params) { 
     this.index = index;
     this.params = params;
   }

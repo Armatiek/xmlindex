@@ -37,7 +37,7 @@ import net.sf.saxon.s9api.XQueryExecutable;
 import net.sf.saxon.type.Type;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.error.XMLIndexException;
-import nl.armatiek.xmlindex.util.XMLUtils;
+import nl.armatiek.xmlindex.utils.XMLUtils;
 
 public class VirtualAttributeDefConfig extends ConfigBase {
   

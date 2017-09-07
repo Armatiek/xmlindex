@@ -26,11 +26,15 @@
   <dependencies> 
     <dependency>
       <groupId>nl.armatiek.xmlindex</groupId>
-      <artifactId>xmlindex-core</artifactId>
+      <artifactId>xmlindex-plugins-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>

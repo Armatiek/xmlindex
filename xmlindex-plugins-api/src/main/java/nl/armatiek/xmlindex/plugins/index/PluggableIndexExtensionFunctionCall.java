@@ -15,19 +15,14 @@
  * limitations under the License.
  */
 
-package nl.armatiek.xmlindex.extensions;
+package nl.armatiek.xmlindex.plugins.index;
 
-import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.Sequence;
-import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.value.BooleanValue;
-import nl.armatiek.xmlindex.plugins.index.PluggableIndexExtensionFunctionCall;
+import net.sf.saxon.lib.ExtensionFunctionCall;
 
-public class SpatialIndexExtensionFunctionCall extends PluggableIndexExtensionFunctionCall {
-  
-  @Override
-  public BooleanValue call(XPathContext context, Sequence[] arguments) throws XPathException {            
-    return BooleanValue.TRUE;
+public abstract class PluggableIndexExtensionFunctionCall extends ExtensionFunctionCall {
+
+  public PluggableIndexExtensionFunctionCall() {
+    super();
   }
-  
+
 }

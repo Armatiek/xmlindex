@@ -72,11 +72,11 @@ import nl.armatiek.xmlindex.conf.TypedValueDef;
 import nl.armatiek.xmlindex.conf.VirtualAttributeDef;
 import nl.armatiek.xmlindex.error.OptimizationFailureException;
 import nl.armatiek.xmlindex.error.XMLIndexException;
-import nl.armatiek.xmlindex.extensions.PluggableIndex;
-import nl.armatiek.xmlindex.extensions.PluggableIndexExtensionFunctionCall;
+import nl.armatiek.xmlindex.plugins.index.PluggableIndex;
+import nl.armatiek.xmlindex.plugins.index.PluggableIndexExtensionFunctionCall;
 import nl.armatiek.xmlindex.query.BooleanQueryDef;
 import nl.armatiek.xmlindex.query.ComparisonQueryDef;
-import nl.armatiek.xmlindex.query.CustomIndexQueryDef;
+import nl.armatiek.xmlindex.query.PluggableIndexQueryDef;
 import nl.armatiek.xmlindex.query.ExistsQueryDef;
 import nl.armatiek.xmlindex.query.FullTextQueryDef;
 import nl.armatiek.xmlindex.query.QueryDef;
@@ -326,7 +326,7 @@ public class XMLIndexOptimizer extends Optimizer {
       if (operand.getChildExpression() instanceof LocalVariableReference)
         localVars.add((LocalVariableReference) operand.getChildExpression());
     }
-    return new CustomIndexQueryDef(pluggableIndex, expr.getOperanda());
+    return new PluggableIndexQueryDef(pluggableIndex, expr.getOperanda());
   }
   
   private String getFieldName(AxisExpression base, Expression fieldExpression) {

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package nl.armatiek.xmlindex.util;
+package nl.armatiek.xmlindex.utils;
 
 import java.io.IOException;
 import java.io.StringReader;

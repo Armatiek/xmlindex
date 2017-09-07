@@ -69,9 +69,10 @@ import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.conf.TypedValueDef;
 import nl.armatiek.xmlindex.conf.VirtualAttributeDef;
 import nl.armatiek.xmlindex.error.XMLIndexException;
-import nl.armatiek.xmlindex.extensions.PluggableIndex;
 import nl.armatiek.xmlindex.node.DocumentElement;
 import nl.armatiek.xmlindex.node.IndexRootElement;
+import nl.armatiek.xmlindex.plugins.convertor.FileConvertor;
+import nl.armatiek.xmlindex.plugins.index.PluggableIndex;
 import nl.armatiek.xmlindex.saxon.XMLIndexURIResolver;
 import nl.armatiek.xmlindex.saxon.optim.XMLIndexOptimizer;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
@@ -238,9 +239,10 @@ public class Session {
     index.addDocument(uri, doc, params);
   }
   
-  public void addDocuments(Path path, int maxDepth, String pattern, Map<String, Object> params) throws Exception {
+  public void addDocuments(Path path, int maxDepth, Map<String, FileConvertor> fileSpecs, 
+      boolean addDirectories, Map<String, Object> params) throws Exception {
     checkOpen();
-    index.addDocuments(path, maxDepth, pattern, params);
+    index.addDocuments(path, maxDepth, fileSpecs, addDirectories, params);
   }
   
   public void removeDocument(String uri) throws IOException {

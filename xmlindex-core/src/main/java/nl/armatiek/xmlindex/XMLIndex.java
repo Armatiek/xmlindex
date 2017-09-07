@@ -31,6 +31,7 @@ import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.conf.IndexConfig;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.lucene.codec.XMLIndexStoredFieldsFormat.Mode;
+import nl.armatiek.xmlindex.plugins.convertor.FileConvertor;
 import nl.armatiek.xmlindex.saxon.conf.XMLIndexConfiguration;
 import nl.armatiek.xmlindex.saxon.conf.XMLIndexInitializer;
 import nl.armatiek.xmlindex.storage.NameStore;
@@ -224,9 +225,10 @@ public class XMLIndex {
     nodeStore.addDocument(uri, doc, params);
   }
   
-  public void addDocuments(Path path, int maxDepth, String pattern, Map<String, Object> params) throws Exception {
+  public void addDocuments(Path path, int maxDepth, Map<String, FileConvertor> fileSpecs, 
+      boolean addDirectories, Map<String, Object> params) throws Exception {
     checkOpen();
-    nodeStore.addDocuments(path, maxDepth, pattern, params);
+    nodeStore.addDocuments(path, maxDepth, fileSpecs, addDirectories, params);
   }
   
   public void removeDocument(String uri) throws IOException {

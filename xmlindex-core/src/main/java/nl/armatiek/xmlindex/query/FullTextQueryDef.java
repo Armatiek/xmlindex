@@ -25,7 +25,6 @@ import nl.armatiek.xmlindex.XMLIndex;
 
 public final class FullTextQueryDef extends QueryDefWithRelation {
   
-  @SuppressWarnings("unused")
   private XMLIndex index;
   private String fieldName;
   private Expression valueExpression;

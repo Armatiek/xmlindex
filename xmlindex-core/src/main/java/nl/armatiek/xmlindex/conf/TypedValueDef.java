@@ -30,7 +30,7 @@ import net.sf.saxon.type.Type;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.saxon.util.SaxonUtils;
-import nl.armatiek.xmlindex.util.XMLUtils;
+import nl.armatiek.xmlindex.utils.XMLUtils;
 
 public class TypedValueDef {
  

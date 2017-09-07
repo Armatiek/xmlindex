@@ -31,7 +31,7 @@ import net.sf.saxon.s9api.XdmEmptySequence;
 import net.sf.saxon.s9api.XdmValue;
 import net.sf.saxon.trans.XPathException;
 import nl.armatiek.xmlindex.error.XMLIndexException;
-import nl.armatiek.xmlindex.util.XMLUtils;
+import nl.armatiek.xmlindex.utils.XMLUtils;
 
 public class SaxonUtils {
   

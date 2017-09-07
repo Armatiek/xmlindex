@@ -25,8 +25,8 @@ import org.w3c.dom.Element;
 
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.error.XMLIndexException;
-import nl.armatiek.xmlindex.extensions.PluggableFileConvertor;
-import nl.armatiek.xmlindex.util.XMLUtils;
+import nl.armatiek.xmlindex.plugins.convertor.PluggableFileConvertor;
+import nl.armatiek.xmlindex.utils.XMLUtils;
 
 public class PluggableFileConvertorConfig {
   
@@ -39,8 +39,8 @@ public class PluggableFileConvertorConfig {
         return;
       Element pluggableFileConvertorDefElem = XMLUtils.getFirstChildElement(pluggableFileConvertorConfigElem);
       while (pluggableFileConvertorDefElem != null) {
-        PluggableFileConvertor convertor = PluggableFileConvertor.fromConfigElem(index, pluggableFileConvertorDefElem);
-        pluggableFileConvertors.put(convertor.getClass().getName(), convertor);
+        PluggableFileConvertor convertor = (PluggableFileConvertor) PluggableFileConvertor.fromConfigElem(pluggableFileConvertorDefElem);
+        pluggableFileConvertors.put(convertor.getName(), convertor);
         pluggableFileConvertorDefElem = XMLUtils.getNextSiblingElement(pluggableFileConvertorDefElem);
       }
     } catch (Exception e) {
@@ -52,8 +52,8 @@ public class PluggableFileConvertorConfig {
     return pluggableFileConvertors.values();
   }
   
-  public PluggableFileConvertor getByClassName(String className) {
-    return pluggableFileConvertors.get(className);
+  public PluggableFileConvertor getByName(String name) {
+    return pluggableFileConvertors.get(name);
   }
   
 }

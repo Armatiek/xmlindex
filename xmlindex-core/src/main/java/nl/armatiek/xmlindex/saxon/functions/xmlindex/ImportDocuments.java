@@ -18,6 +18,7 @@
 package nl.armatiek.xmlindex.saxon.functions.xmlindex;
 
 import java.nio.file.Paths;
+import java.util.HashMap;
 
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.lib.ExtensionFunctionDefinition;
@@ -30,6 +31,7 @@ import net.sf.saxon.value.Int64Value;
 import net.sf.saxon.value.SequenceType;
 import net.sf.saxon.value.StringValue;
 import nl.armatiek.xmlindex.conf.Definitions;
+import nl.armatiek.xmlindex.plugins.convertor.FileConvertor;
 import nl.armatiek.xmlindex.saxon.functions.ExtensionFunctionCall;
 
 /**
@@ -89,7 +91,9 @@ public class ImportDocuments extends ExtensionFunctionDefinition {
       if (length > 2)
         pattern = ((StringValue) arguments[2].head()).getStringValue();
       try {
-        getSession(context).addDocuments(Paths.get(path), maxDepth, pattern, null);
+        HashMap<String, FileConvertor> fileSpecs = new HashMap<String, FileConvertor>();
+        fileSpecs.put(pattern, null);
+        getSession(context).addDocuments(Paths.get(path), maxDepth, fileSpecs, true, null);
         return ZeroOrOne.empty();
       } catch (Exception e) {
         throw new XPathException("Error importing documents from \"" + path + "\"", e);

@@ -63,11 +63,11 @@ import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.error.OptimizationFailureException;
 import nl.armatiek.xmlindex.error.XMLIndexException;
-import nl.armatiek.xmlindex.extensions.PluggableIndex;
+import nl.armatiek.xmlindex.plugins.index.PluggableIndex;
 import nl.armatiek.xmlindex.query.BooleanClauseDef;
 import nl.armatiek.xmlindex.query.BooleanQueryDef;
 import nl.armatiek.xmlindex.query.ComparisonQueryDef;
-import nl.armatiek.xmlindex.query.CustomIndexQueryDef;
+import nl.armatiek.xmlindex.query.PluggableIndexQueryDef;
 import nl.armatiek.xmlindex.query.ExistsQueryDef;
 import nl.armatiek.xmlindex.query.FullTextQueryDef;
 import nl.armatiek.xmlindex.query.QueryDef;
@@ -122,8 +122,8 @@ public class QueryConstructor {
       } else if (queryDef instanceof StringFunctionQueryDef) {
         Query query = stringFunctionQueryDefToQuery((StringFunctionQueryDef) queryDef, xpathContext);
         queryBuilder.add(new BooleanClause(query, occur));
-      } else if (queryDef instanceof CustomIndexQueryDef) {
-        Query query = customIndexQueryDefToQuery((CustomIndexQueryDef) queryDef, session, xpathContext);
+      } else if (queryDef instanceof PluggableIndexQueryDef) {
+        Query query = customIndexQueryDefToQuery((PluggableIndexQueryDef) queryDef, session, xpathContext);
         queryBuilder.add(new BooleanClause(query, occur));
       }
     }
@@ -210,7 +210,7 @@ public class QueryConstructor {
     return new WildcardQuery(new Term(queryDef.getFieldName(), queryText));
   }
   
-  public static Query customIndexQueryDefToQuery(CustomIndexQueryDef queryDef, Session session, 
+  public static Query customIndexQueryDefToQuery(PluggableIndexQueryDef queryDef, Session session, 
       XPathContext xpathContext) throws XPathException {
     PluggableIndex pluggableIndex = queryDef.getIndex();
     OperandArray params = queryDef.getParams();
@@ -306,8 +306,8 @@ public class QueryConstructor {
         query = comparisonQueryDefToQuery((ComparisonQueryDef) queryDef, session, xpathContext);
       else if (queryDef instanceof FullTextQueryDef)
         query = fullTextQueryDefToQuery((FullTextQueryDef) queryDef, session, xpathContext);
-      else if (queryDef instanceof CustomIndexQueryDef)
-        query = customIndexQueryDefToQuery((CustomIndexQueryDef) queryDef, session, xpathContext);
+      else if (queryDef instanceof PluggableIndexQueryDef)
+        query = customIndexQueryDefToQuery((PluggableIndexQueryDef) queryDef, session, xpathContext);
       else if (queryDef instanceof ExistsQueryDef)
         query = existsQueryDefToQuery((ExistsQueryDef) queryDef);
       else if (queryDef instanceof StringFunctionQueryDef)

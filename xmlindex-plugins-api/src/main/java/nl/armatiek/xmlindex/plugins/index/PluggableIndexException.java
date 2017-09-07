@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package nl.armatiek.xmlindex.extensions;
+package nl.armatiek.xmlindex.plugins.index;
 
 /**
- * XSLWeb Exception class
+ * PluggableIndexException Exception class
  * 
  * @author Maarten Kroon
  */

@@ -48,38 +48,14 @@
         <xs:element name="pluggable-index-config" minOccurs="0">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="pluggable-index-def" minOccurs="0" maxOccurs="unbounded">
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element name="class-name" type="xs:string"/>
-                    <xs:element name="param" minOccurs="0" maxOccurs="unbounded">
-                      <xs:complexType>
-                        <xs:attribute name="name" type="xs:string" use="required"/>
-                        <xs:attribute name="value" type="xs:string" use="required"/>
-                      </xs:complexType>
-                    </xs:element>
-                  </xs:sequence>
-                </xs:complexType>
-              </xs:element>
+              <xs:element name="pluggable-index-def" type="plugin-type" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
           </xs:complexType>
         </xs:element>
         <xs:element name="pluggable-file-convertor-config" minOccurs="0">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="pluggable-file-convertor-def" minOccurs="0" maxOccurs="unbounded">
-                <xs:complexType>
-                  <xs:sequence>
-                    <xs:element name="class-name" type="xs:string"/>
-                    <xs:element name="param" minOccurs="0" maxOccurs="unbounded">
-                      <xs:complexType>
-                        <xs:attribute name="name" type="xs:string" use="required"/>
-                        <xs:attribute name="value" type="xs:string" use="required"/>
-                      </xs:complexType>
-                    </xs:element>
-                  </xs:sequence>
-                </xs:complexType>
-              </xs:element>
+              <xs:element name="pluggable-file-convertor-def" type="plugin-type" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
           </xs:complexType>
         </xs:element>
@@ -128,6 +104,19 @@
   <xs:complexType name="filter-type">
     <xs:attribute name="class" type="xs:string" use="required"/>
     <xs:anyAttribute namespace="##local" processContents="lax"/>
+  </xs:complexType>
+  
+  <xs:complexType name="plugin-type">
+    <xs:sequence>
+      <xs:element name="name" type="xs:string"/>
+      <xs:element name="class-name" type="xs:string"/>
+      <xs:element name="param" minOccurs="0" maxOccurs="unbounded">
+        <xs:complexType>
+          <xs:attribute name="name" type="xs:string" use="required"/>
+          <xs:attribute name="value" type="xs:string" use="required"/>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
   </xs:complexType>
 
 </xs:schema>

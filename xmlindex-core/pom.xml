@@ -15,7 +15,21 @@
     <version>0.1</version>
   </parent>
   
-  <dependencies>         
+  <dependencies>
+    
+    <dependency>
+      <groupId>nl.armatiek.xmlindex</groupId>
+      <artifactId>xmlindex-convertor-tika</artifactId>
+    </dependency>
+    
+    <dependency>
+      <groupId>nl.armatiek.xmlindex</groupId>
+      <artifactId>xmlindex-plugins-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>nl.armatiek.xmlindex</groupId>
+      <artifactId>xmlindex-utils</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.apache.lucene</groupId>
       <artifactId>lucene-core</artifactId>

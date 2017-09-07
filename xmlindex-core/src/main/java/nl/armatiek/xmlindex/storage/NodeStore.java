@@ -1,18 +1,24 @@
 package nl.armatiek.xmlindex.storage;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -44,6 +50,7 @@ import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.lucene.codec.XMLIndexCodec;
+import nl.armatiek.xmlindex.plugins.convertor.FileConvertor;
 
 public class NodeStore {
   
@@ -167,17 +174,42 @@ public class NodeStore {
     }
   }
   
-  public void addDocuments(Path path, int maxDepth, String pattern, Map<String, Object> params) throws IOException {
-    pattern = (pattern == null) ? "(.*?)" : pattern;
-    PathMatcher matcher = FileSystems.getDefault().getPathMatcher("regex:" + pattern);
-    Files.walk(path, maxDepth).filter(Files::isRegularFile).filter(matcher::matches).forEach(new Consumer<Path>() {
-      public void accept(Path t) {
+  public void addDocuments(Path path, int maxDepth, Map<String, FileConvertor> fileSpecs, 
+      boolean addDirectories, Map<String, Object> params) throws IOException {
+    
+    Map<PathMatcher, FileConvertor> matchers = new HashMap<PathMatcher, FileConvertor>();
+    Iterator<Entry<String, FileConvertor>> it = fileSpecs.entrySet().iterator();
+    while (it.hasNext()) {
+      Entry<String, FileConvertor> entry = (Entry<String, FileConvertor>) it.next();
+      String pattern = entry.getKey();
+      pattern = (pattern == null) ? "(.*?)" : pattern;
+      PathMatcher matcher = FileSystems.getDefault().getPathMatcher("regex:" + pattern);
+      matchers.put(matcher, entry.getValue());
+    }
+    
+    Files.walk(path, maxDepth).forEach(new Consumer<Path>() {
+      public void accept(Path filePath) {
         try {
+          boolean isDirectory = Files.isDirectory(filePath);
+          if (!addDirectories && isDirectory)
+            return;
+          
+          Entry<PathMatcher, FileConvertor> matcher = null;
+          Iterator<Entry<PathMatcher, FileConvertor>> it = matchers.entrySet().iterator();
+          while (it.hasNext()) {
+            matcher = (Entry<PathMatcher, FileConvertor>) it.next();
+            if (matcher.getKey().matches(filePath))
+              break;
+          }
+          
+          if (matcher == null)
+            return;
+          
           Map<String, Object> pathParams = new HashMap<String, Object>();
-          pathParams.put("path", t.normalize().toString());
-          pathParams.put("parent-path", t.getParent().toString());
-          pathParams.put("name", t.getFileName().toString());
-          BasicFileAttributes attrs = Files.readAttributes(t, BasicFileAttributes.class);
+          pathParams.put("path", filePath.normalize().toString());
+          pathParams.put("parent-path", filePath.getParent().toString());
+          pathParams.put("name", filePath.getFileName().toString());
+          BasicFileAttributes attrs = Files.readAttributes(filePath, BasicFileAttributes.class);
           pathParams.put("creation-time", attrs.creationTime());
           pathParams.put("last-modified-time", attrs.lastModifiedTime());
           pathParams.put("last-access-time", attrs.lastAccessTime());
@@ -185,14 +217,27 @@ public class NodeStore {
           pathParams.put("is-symbolic-link", attrs.isSymbolicLink());
           if (params != null)
             pathParams.putAll(params);
-          InputStream is = new BufferedInputStream(new FileInputStream(t.toFile()));
-          try {
-            addDocument(path.relativize(t).toString(), is, t.toAbsolutePath().toString(), pathParams);
-          } finally {
-            is.close();
+          
+          if (isDirectory) {
+            InputStream content = IOUtils.toInputStream("<dir:directory xmlns:dir=\"" + Definitions.NAMESPACE_DIRECTORY + "\">", StandardCharsets.UTF_8);
+            addDocument(path.relativize(filePath).toString(), content , filePath.toAbsolutePath().toString(), pathParams);
+          } else {
+            InputStream is = new BufferedInputStream(new FileInputStream(filePath.toFile()));
+            try {
+              InputStream cis = null;
+              FileConvertor convertor = matcher.getValue();
+              if (convertor != null) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                convertor.convert(is, filePath.toString(), baos);
+                cis = new ByteArrayInputStream(baos.toByteArray());
+              }
+              addDocument(path.relativize(filePath).toString(), (cis != null) ? cis : is, filePath.toAbsolutePath().toString(), pathParams);
+            } finally {
+              is.close();
+            }
           }
         } catch (Exception e) {
-          logger.error("Error adding document \"" + t.toString() + "\"", e);
+          logger.error("Error adding document \"" + filePath.toString() + "\"", e);
         }
       }
     });

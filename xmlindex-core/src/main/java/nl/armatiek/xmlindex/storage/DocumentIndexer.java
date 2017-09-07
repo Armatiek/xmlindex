@@ -70,9 +70,9 @@ import nl.armatiek.xmlindex.conf.TypedValueDef;
 import nl.armatiek.xmlindex.conf.VirtualAttributeDef;
 import nl.armatiek.xmlindex.conf.VirtualAttributeDefConfig;
 import nl.armatiek.xmlindex.error.XMLIndexException;
-import nl.armatiek.xmlindex.extensions.PluggableIndex;
 import nl.armatiek.xmlindex.node.HierarchyNode;
 import nl.armatiek.xmlindex.node.IndexRootElement;
+import nl.armatiek.xmlindex.plugins.index.PluggableIndex;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
 import nl.armatiek.xmlindex.saxon.util.SaxonUtils;
 
@@ -218,7 +218,6 @@ public class DocumentIndexer {
       this.docWrapper = new DocumentWrapper(elem.getOwnerDocument(), elem.getOwnerDocument().getBaseURI(), index.getSaxonConfiguration());
     NodeInfo nodeInfo = docWrapper.wrap(elem);
     
-    // XQueryEvaluator evaluator = index.getConfiguration().getVirtualAttributeConfig().getVirtualAttrsEvaluator();
     for (VirtualAttributeDef attrDef : vads) {
       XdmValue values = null;
       XdmValue[] args = null;
@@ -245,7 +244,8 @@ public class DocumentIndexer {
         doc.add(new StoredField(Definitions.FIELDNAME_PREFIXES, attrFieldName + ";" + index.putPrefix(attr.getPrefix())));
       */
       
-      IndexableField field = null;
+      IndexableField indexedField = null;
+      StoredField storedField = null;
       
       XdmSequenceIterator valueIter = values.iterator();
       
@@ -262,33 +262,58 @@ public class DocumentIndexer {
             throw new XMLIndexException("Error creating virtual attribute \"" + attrDef.getVirtualAttributeName() + "\". The itemtype of the virtual attribute definition does not match the type of results of the actual function call.");
           
           if (attrDef.getQueryAnalyzer() != null) {
-            String text = value.getStringValue();
-            field = new TextField(fieldName, new StringReader(text));
+            String val = value.getStringValue();
+            indexedField = new TextField(fieldName, new StringReader(val));
+            if (attrDef.getStoreValue())
+              storedField = new StoredField(fieldName, val);
           } else if (itemType.equals(BuiltInAtomicType.STRING)) {
-            field = new StringField(fieldName, value.getStringValue(), Field.Store.NO);
+            String val = value.getStringValue();
+            indexedField = new StringField(fieldName, val, attrDef.getStoreValue() ? Field.Store.YES : Field.Store.NO);
           } else if (itemType.equals(BuiltInAtomicType.BOOLEAN)) {
-            field = new StringField(fieldName, Boolean.toString(value.getBooleanValue()), Field.Store.NO);
+            String val = Boolean.toString(value.getBooleanValue());
+            indexedField = new StringField(fieldName, val, attrDef.getStoreValue() ? Field.Store.YES : Field.Store.NO);
           } else if (itemType.equals(BuiltInAtomicType.INT) || itemType.equals(BuiltInAtomicType.SHORT) || itemType.equals(BuiltInAtomicType.BYTE)) {
             IntegerValue iv = (IntegerValue) atomicVal;
-            field = new IntPoint(fieldName, iv.asBigInteger().intValue());
+            int val = iv.asBigInteger().intValue();
+            indexedField = new IntPoint(fieldName, val);
+            if (attrDef.getStoreValue())
+              storedField = new StoredField(fieldName, val);
           } else if (itemType.equals(BuiltInAtomicType.LONG)) {
             IntegerValue iv = (IntegerValue) atomicVal;
-            field = new LongPoint(fieldName, iv.asBigInteger().longValue());
+            long val = iv.asBigInteger().longValue();
+            indexedField = new LongPoint(fieldName, val);
+            if (attrDef.getStoreValue())
+              storedField = new StoredField(fieldName, val);
           } else if (itemType.equals(BuiltInAtomicType.DOUBLE)) {
             DoubleValue dv = (DoubleValue) atomicVal;
-            field = new DoublePoint(fieldName, dv.getDecimalValue().doubleValue());
+            double val = dv.getDecimalValue().doubleValue();
+            indexedField = new DoublePoint(fieldName, val);
+            if (attrDef.getStoreValue())
+              storedField = new StoredField(fieldName, val);
           } else if (itemType.equals(BuiltInAtomicType.FLOAT)) {
             FloatValue fv = (FloatValue) atomicVal;
-            field = new FloatPoint(fieldName, fv.getDecimalValue().floatValue());
+            float val = fv.getDecimalValue().floatValue();
+            indexedField = new FloatPoint(fieldName, val);
+            if (attrDef.getStoreValue())
+              storedField = new StoredField(fieldName, val);
           } else if (itemType.equals(BuiltInAtomicType.DATE_TIME)) {
             DateTimeValue dtv = (DateTimeValue) atomicVal;
-            field = new LongPoint(fieldName, dtv.getCalendar().getTimeInMillis());
+            long val = dtv.getCalendar().getTimeInMillis();
+            indexedField = new LongPoint(fieldName, val);
+            if (attrDef.getStoreValue())
+              storedField = new StoredField(fieldName, val);
           } else if (itemType.equals(BuiltInAtomicType.DATE)) {
             DateValue dv = (DateValue) atomicVal;
-            field = new LongPoint(fieldName, dv.getCalendar().getTimeInMillis());
+            long val = dv.getCalendar().getTimeInMillis();
+            indexedField = new LongPoint(fieldName, val);
+            if (attrDef.getStoreValue())
+              storedField = new StoredField(fieldName, val);
           } else if (itemType.equals(BuiltInAtomicType.TIME)) {
             TimeValue tv = (TimeValue) atomicVal;
-            field = new LongPoint(fieldName, tv.getCalendar().getTimeInMillis());
+            long val = tv.getCalendar().getTimeInMillis();
+            indexedField = new LongPoint(fieldName, val);
+            if (attrDef.getStoreValue())
+              storedField = new StoredField(fieldName, val);
           } else {
             throw new XMLIndexException("Error indexing virtual attribute \"" + attrDef.getVirtualAttributeName() + "\". Type of virtual attribute function result \"" + value.getPrimitiveTypeName().toString() + "\" is not supported.");
           }
@@ -296,10 +321,13 @@ public class DocumentIndexer {
           logger.warn("Skipping indexing virtual attribute \"" + attrDef.getVirtualAttributeName() + "\". Value \"" + values.toString() + "\" could not be converted to type \"" + itemType.getDisplayName() + ".", xe);
         }
         
-        if (field != null) {
-          doc.add(field);
+        if (indexedField != null) {
+          doc.add(indexedField);
           addFieldNameField(doc, fieldName);
         }
+        
+        if (storedField != null) 
+          doc.add(storedField);
         
       }
     }
@@ -399,7 +427,7 @@ public class DocumentIndexer {
       
       addVirtualAttributeFields(doc, (Element) node, params);
       
-      for (PluggableIndex pluggableIndex : index.getConfiguration().getPluggableIndexConfig().get())
+      for (PluggableIndex pluggableIndex : index.getConfiguration().getPluggableIndexConfig().getIndexes())
         pluggableIndex.indexNode(doc, (Element) node);
        
       /* Attributes and namespace declarations: */
@@ -552,7 +580,7 @@ public class DocumentIndexer {
     
     addVirtualAttributeFields(newDoc, (Element) domNode, null); // TODO: what to do with params when reindexing?
     
-    for (PluggableIndex pluggableIndex : index.getConfiguration().getPluggableIndexConfig().get())
+    for (PluggableIndex pluggableIndex : index.getConfiguration().getPluggableIndexConfig().getIndexes())
       pluggableIndex.indexNode(newDoc, (Element) domNode);
     
     // Term term = new Term(Definitions.FIELDNAME_LEFT, Long.toString(((HierarchyNode) indexNode).left));

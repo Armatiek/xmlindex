@@ -24,7 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Element;
 
 import net.sf.saxon.s9api.QName;
-import nl.armatiek.xmlindex.util.XMLUtils;
+import nl.armatiek.xmlindex.utils.XMLUtils;
 
 public class TypedValueDefConfig {
   

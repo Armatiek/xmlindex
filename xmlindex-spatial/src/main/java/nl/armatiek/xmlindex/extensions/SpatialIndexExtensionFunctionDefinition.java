@@ -20,6 +20,7 @@ package nl.armatiek.xmlindex.extensions;
 import net.sf.saxon.lib.ExtensionFunctionDefinition;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.value.SequenceType;
+import nl.armatiek.xmlindex.plugins.index.PluggableIndexExtensionFunctionCall;
 
 /**
  * 

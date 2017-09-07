@@ -12,7 +12,7 @@ import net.sf.saxon.lib.StandardURIResolver;
 import net.sf.saxon.trans.XPathException;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.conf.Definitions;
-import nl.armatiek.xmlindex.util.URIUtil;
+import nl.armatiek.xmlindex.utils.URIUtils;
 
 public class XMLIndexURIResolver extends StandardURIResolver {
   
@@ -33,7 +33,7 @@ public class XMLIndexURIResolver extends StandardURIResolver {
     } 
     if (uri.isAbsolute() && uri.getScheme().equals(Definitions.SCHEME_XMLINDEX)) {  
       try {
-        Map<String, List<String>> params = URIUtil.getQueryParams(uri);
+        Map<String, List<String>> params = URIUtils.getQueryParams(uri);
         List<String> uris = params.get("uri");
         if (uris == null || uris.size() != 1)
           throw new XPathException("Missing required parameter \"uri\"");

@@ -44,7 +44,7 @@ import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.saxon.util.SaxonUtils;
-import nl.armatiek.xmlindex.util.XMLUtils;
+import nl.armatiek.xmlindex.utils.XMLUtils;
 
 public class VirtualAttributeDef {
   
