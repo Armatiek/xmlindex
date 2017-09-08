@@ -59,6 +59,7 @@ import net.sf.saxon.om.AxisInfo;
 import net.sf.saxon.om.FingerprintedQName;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.pattern.NameTest;
+import net.sf.saxon.pattern.NodeKindTest;
 import net.sf.saxon.pattern.NodeTest;
 import net.sf.saxon.s9api.QName;
 import net.sf.saxon.trans.XPathException;
@@ -112,6 +113,10 @@ public class XMLIndexOptimizer extends Optimizer {
     return (nodeTest instanceof NameTest) && ((NameTest) nodeTest).getNodeKind() == Type.ELEMENT;
   }
   
+  private boolean isElementNodeTest(NodeTest nodeTest) {
+    return (nodeTest instanceof NodeKindTest) && ((NodeKindTest) nodeTest).getNodeKind() == Type.ELEMENT;
+  }
+  
   private boolean isAttributeNameTest(NodeTest nodeTest) {
     return (nodeTest instanceof NameTest) && ((NameTest) nodeTest).getNodeKind() == Type.ATTRIBUTE;
   }
@@ -121,14 +126,6 @@ public class XMLIndexOptimizer extends Optimizer {
       return QueryDefWithRelation.RELATION_CHILDELEM;
     return QueryDefWithRelation.RELATION_ATTR;
   }
-  
-  /*
-  private int getFieldNamePrefix(Expression expr) {
-    if (isChildAxisExpressionWithElementNameTest(expr))
-      return Type.ELEMENT;
-    return Type.ATTRIBUTE;
-  }
-  */
   
   private QueryDef booleanExpression2QueryDef(AxisExpression base, BooleanExpression expr, 
       List<LocalVariableReference> localVars) throws XPathException {
@@ -231,7 +228,7 @@ public class XMLIndexOptimizer extends Optimizer {
     ItemType itemType = null;
     
     NodeTest baseNodeTest = base.getNodeTest();
-    if (!isElementNameTest(baseNodeTest))
+    if (!isElementNameTest(baseNodeTest) /* && !isElementNodeTest(baseNodeTest) */)
       throw new OptimizationFailureException("The base axis expression does not select elements on fully qualified names");
       
     if (fieldExpression instanceof ContextItemExpression) { 

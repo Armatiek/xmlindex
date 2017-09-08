@@ -41,8 +41,6 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import net.sf.saxon.type.Type;
-
 /**
  * Helper class containing several XML/DOM/JAXP related methods.  
  * 
@@ -108,18 +106,15 @@ public class XMLUtils {
   }
   
   public static String getTextFromNode(Node node, String defaultValue) {
-    if (node == null) {
+    if (node == null)
       return defaultValue;
-    }
-    if (node.getNodeType() == Node.ATTRIBUTE_NODE) {
+    if (node.getNodeType() == Node.ATTRIBUTE_NODE)
       return ((Attr)node).getValue();
-    } else if (node.getNodeType() == Node.TEXT_NODE) {
+    if (node.getNodeType() == Node.TEXT_NODE)
       return node.getNodeValue();
-    } else {
-      StringBuffer text = new StringBuffer();
-      getTextFromNode(node, text, true);
-      return text.toString().trim();
-    }
+    StringBuffer text = new StringBuffer();
+    getTextFromNode(node, text, true);
+    return text.toString().trim();
   }
 
   public static String getTextFromNode(Node node) {
@@ -248,19 +243,19 @@ public class XMLUtils {
   public static int toNodeType(String type) {
     switch (type) {
     case "document-node()":
-      return Type.DOCUMENT;
+      return Node.DOCUMENT_NODE;
     case "element()":
-      return Type.ELEMENT;
+      return Node.ELEMENT_NODE;
     case "attribute()":
-      return Type.ATTRIBUTE;
+      return Node.ATTRIBUTE_NODE;
     case "comment()":
-      return Type.COMMENT;
+      return Node.COMMENT_NODE;
     case "text()":
-      return Type.TEXT;
+      return Node.TEXT_NODE;
     case "processing-instruction()":
-      return Type.PROCESSING_INSTRUCTION;
+      return Node.PROCESSING_INSTRUCTION_NODE;
     case "namespace-node()":
-      return Type.NAMESPACE;
+      return 13; // avoid Saxon dependency here
     default:
       return 0;
     }

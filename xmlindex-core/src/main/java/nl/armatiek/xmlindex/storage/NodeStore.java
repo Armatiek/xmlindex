@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -208,18 +209,23 @@ public class NodeStore {
           Map<String, Object> pathParams = new HashMap<String, Object>();
           pathParams.put("path", filePath.normalize().toString());
           pathParams.put("parent-path", filePath.getParent().toString());
-          pathParams.put("name", filePath.getFileName().toString());
+          String fileName = filePath.getFileName().toString();
+          pathParams.put("name", fileName);
+          String ext = !isDirectory ? StringUtils.substringAfterLast(fileName, ".") : null;
+          if (ext != null)
+            pathParams.put("extension", ext);
           BasicFileAttributes attrs = Files.readAttributes(filePath, BasicFileAttributes.class);
           pathParams.put("creation-time", attrs.creationTime());
           pathParams.put("last-modified-time", attrs.lastModifiedTime());
           pathParams.put("last-access-time", attrs.lastAccessTime());
           pathParams.put("size", attrs.size());
           pathParams.put("is-symbolic-link", attrs.isSymbolicLink());
+          pathParams.put("is-file", !isDirectory);
           if (params != null)
             pathParams.putAll(params);
           
           if (isDirectory) {
-            InputStream content = IOUtils.toInputStream("<dir:directory xmlns:dir=\"" + Definitions.NAMESPACE_DIRECTORY + "\">", StandardCharsets.UTF_8);
+            InputStream content = IOUtils.toInputStream("<dir:directory xmlns:dir=\"" + Definitions.NAMESPACE_DIRECTORY + "\"/>", StandardCharsets.UTF_8);
             addDocument(path.relativize(filePath).toString(), content , filePath.toAbsolutePath().toString(), pathParams);
           } else {
             InputStream is = new BufferedInputStream(new FileInputStream(filePath.toFile()));

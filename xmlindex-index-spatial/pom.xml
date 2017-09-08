@@ -7,7 +7,7 @@
   <modelVersion>4.0.0</modelVersion>
   
   <name>XMLIndex - spatial</name>  
-  <artifactId>xmlindex-spatial</artifactId>
+  <artifactId>xmlindex-index-spatial</artifactId>
   
   <parent>
     <groupId>nl.armatiek.xmlindex</groupId>

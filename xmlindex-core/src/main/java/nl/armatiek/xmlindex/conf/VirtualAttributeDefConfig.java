@@ -43,7 +43,8 @@ public class VirtualAttributeDefConfig extends ConfigBase {
   
   private final String[][] STANDARD_ATTRS = {{"path", "string"}, {"parent-path", "string"}, 
       {"name", "string"}, {"creation-time", "dateTime"}, {"last-modified-time", "dateTime"}, 
-      {"last-access-time", "dateTime"}, {"size", "long"}, {"is-symbolic-link", "boolean"}};
+      {"last-access-time", "dateTime"}, {"size", "long"}, {"is-symbolic-link", "boolean"},
+      {"extension", "string"}, {"is-file", "boolean"}};
   
   private final HashMap<QName, Map<String, VirtualAttributeDef>> nameToVirtualAttrDefMap = new HashMap<QName, Map<String, VirtualAttributeDef>>();
   private final HashMap<String, VirtualAttributeDef> virtualAttributeDefs = new HashMap<String, VirtualAttributeDef>();
@@ -76,12 +77,6 @@ public class VirtualAttributeDefConfig extends ConfigBase {
     for (String[] attr : STANDARD_ATTRS)
       cacheStandardVirtualAttributeDef(attr[0], attr[1]);
   }
-  
-  /*
-  public XQueryEvaluator getVirtualAttrsEvaluator() {
-    return virtualAttrsEvaluator;
-  }
-  */
   
   public Map<String, VirtualAttributeDef> getForElement(QName elemName) {
     return nameToVirtualAttrDefMap.get(elemName);
@@ -145,7 +140,7 @@ public class VirtualAttributeDefConfig extends ConfigBase {
         new VirtualAttributeDef(
           index, 
           name, 
-          new QName(Definitions.NAMESPACE_STD_VIRTUALATTR, "file-" + name), 
+          new QName(Definitions.NAMESPACE_VIRTUALATTR, "file-" + name), 
           Type.getBuiltInItemType(XMLConstants.W3C_XML_SCHEMA_NS_URI, itemType), 
           true,
           standardVirtualAttrsEvaluator);

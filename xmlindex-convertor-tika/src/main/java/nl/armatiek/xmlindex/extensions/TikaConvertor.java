@@ -19,9 +19,6 @@ package nl.armatiek.xmlindex.extensions;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
@@ -32,9 +29,6 @@ import nl.armatiek.xmlindex.plugins.convertor.PluggableFileConvertor;
 
 public class TikaConvertor extends PluggableFileConvertor {
   
-  public final static String PROPERTYNAME_EXTENSIONS = "extensions";
-  
-  private final Set<String> supportedExtensions = new HashSet<String>();
   private final AutoDetectParser parser;
 
   public TikaConvertor(String name) {
@@ -42,18 +36,6 @@ public class TikaConvertor extends PluggableFileConvertor {
     parser = new AutoDetectParser();
   }
   
-  @Override
-  public void init(Map<String, String> params) {
-    super.init(params);
-    if (params != null) {
-      if (params.containsKey(PROPERTYNAME_EXTENSIONS)) {
-        String[] extensions = params.get(PROPERTYNAME_EXTENSIONS).split(",");
-        for (String ext : extensions)
-          supportedExtensions.add(ext.trim().toLowerCase());
-      }
-    }
-  }
-
   @Override
   public void convert(InputStream is, String systemId, OutputStream xmlStream) throws Exception {
     ContentHandler handler = new ToXMLContentHandler(xmlStream, "UTF-8");

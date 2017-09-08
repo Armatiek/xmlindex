@@ -1,4 +1,4 @@
-package nl.armatiek.xmlindex.test;
+package nl.armatiek.xmlindex.tests.core;
 
 import java.io.File;
 import java.io.IOException;

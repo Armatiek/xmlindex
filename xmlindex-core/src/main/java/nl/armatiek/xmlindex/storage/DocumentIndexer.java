@@ -221,7 +221,7 @@ public class DocumentIndexer {
     for (VirtualAttributeDef attrDef : vads) {
       XdmValue values = null;
       XdmValue[] args = null;
-      if (attrDef.getFunctionName().getNamespaceURI().equals(Definitions.NAMESPACE_STD_VIRTUALATTR) || 
+      if (attrDef.getFunctionName().getNamespaceURI().equals(Definitions.NAMESPACE_VIRTUALATTR) || 
           vad.functionExists(attrDef.getFunctionName(), 2))
         args = new XdmValue[] { new XdmNode(nodeInfo), params == null ? XdmEmptySequence.getInstance() : params };
       else if (vad.functionExists(attrDef.getFunctionName(), 1))

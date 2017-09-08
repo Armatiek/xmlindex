@@ -69,7 +69,6 @@ public class Definitions {
   public static final String SCHEME_XMLINDEX            = "xmlindex";
   
   public static final String NAMESPACE_VIRTUALATTR      = "http://www.armatiek.nl/xmlindex/virtualattribute";
-  public static final String NAMESPACE_STD_VIRTUALATTR  = "http://www.armatiek.nl/xmlindex/standard-virtualattribute";
   public static final String NAMESPACE_EXT_FUNCTIONS    = "http://www.armatiek.nl/xmlindex/functions";
   public static final String NAMESPACE_DIRECTORY        = "http://www.armatiek.nl/xmlindex/directory";
   
