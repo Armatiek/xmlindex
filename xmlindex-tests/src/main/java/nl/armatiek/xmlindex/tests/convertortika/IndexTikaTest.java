@@ -26,8 +26,8 @@ public class IndexTikaTest {
         StopWatch sw = new StopWatch();
         sw.start();
         HashMap<String, FileConvertor> fileSpecs = new HashMap<String, FileConvertor>();
-        fileSpecs.put("\\.xml", null);
-        fileSpecs.put("\\.pdf", new TikaConvertor("tika"));
+        fileSpecs.put("(.*)\\.xml$", null);
+        fileSpecs.put("(.*)\\.pdf$", new TikaConvertor("tika"));
         session.addDocuments(Paths.get(importPath), Integer.MAX_VALUE, fileSpecs, true, null);
         session.commit();
         logger.info("Batch indexing execution time: " + sw.toString());

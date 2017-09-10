@@ -17,23 +17,18 @@
 
 package nl.armatiek.xmlindex.saxon.functions.xmlindex;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Document;
-
-import net.sf.saxon.dom.DOMWriter;
-import net.sf.saxon.event.NamespaceReducer;
-import net.sf.saxon.event.Receiver;
 import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.expr.parser.ExplicitLocation;
 import net.sf.saxon.lib.ExtensionFunctionDefinition;
-import net.sf.saxon.om.CopyOptions;
+import net.sf.saxon.lib.ParseOptions;
+import net.sf.saxon.om.AllElementsSpaceStrippingRule;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.om.StructuredQName;
+import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.om.ZeroOrOne;
+import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.tree.wrapper.SpaceStrippedDocument;
 import net.sf.saxon.type.Type;
 import net.sf.saxon.value.BooleanValue;
 import net.sf.saxon.value.SequenceType;
@@ -92,21 +87,15 @@ public class AddDocument extends ExtensionFunctionDefinition {
       NodeInfo node = ((NodeInfo) arguments[1].head());
       if (node.getNodeKind() != Type.DOCUMENT && node.getNodeKind() != Type.ELEMENT)
         throw new XPathException("Could not add document; supplied node is not a document or element node");
-      node = unwrapNodeInfo(node);
       try {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setValidating(false);
-        dbf.setXIncludeAware(true);
-        dbf.setNamespaceAware(true);
-        DocumentBuilder builder = dbf.newDocumentBuilder();
-        Document doc = builder.newDocument();
-        DOMWriter writer = new DOMWriter();
-        writer.setPipelineConfiguration(context.getConfiguration().makePipelineConfiguration());
-        writer.setNode(doc);
-        Receiver receiver = new NamespaceReducer((Receiver) writer);
-        node.copy(receiver, CopyOptions.TYPE_ANNOTATIONS | CopyOptions.LOCAL_NAMESPACES, 
-            ExplicitLocation.UNKNOWN_LOCATION);
+        node = unwrapNodeInfo(node);
+        ParseOptions parseOptions = new ParseOptions();
+        parseOptions.setSpaceStrippingRule(AllElementsSpaceStrippingRule.getInstance());
+        TreeInfo treeInfo = context.getConfiguration().buildDocumentTree(node, parseOptions);
+        TreeInfo strippedTreeInfo = new SpaceStrippedDocument(treeInfo, AllElementsSpaceStrippingRule.getInstance());
+        XdmNode doc = new XdmNode(strippedTreeInfo.getRootNode());       
         getSession(context).addDocument(uri, doc, null);
+        getSession(context).commit();
         return ZeroOrOne.empty();
       } catch (Exception e) {
         throw new XPathException("Error adding document \"" + uri + "\"", e);

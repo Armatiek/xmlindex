@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
 
 import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.XdmNode;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.conf.Definitions;
@@ -160,7 +161,7 @@ public class NodeStore {
     }
   }
   
-  public void addDocument(String uri, org.w3c.dom.Document doc, Map<String, Object> params) throws Exception {
+  public void addDocument(String uri, XdmNode doc, Map<String, Object> params) throws Exception {
     synchronized (documentIndexer) {
       long nodeCounter = documentIndexer.getNodeCounter();
       try {     
@@ -198,9 +199,11 @@ public class NodeStore {
           Entry<PathMatcher, FileConvertor> matcher = null;
           Iterator<Entry<PathMatcher, FileConvertor>> it = matchers.entrySet().iterator();
           while (it.hasNext()) {
-            matcher = (Entry<PathMatcher, FileConvertor>) it.next();
-            if (matcher.getKey().matches(filePath))
+            Entry<PathMatcher, FileConvertor> currentMatcher = (Entry<PathMatcher, FileConvertor>) it.next();
+            if (currentMatcher.getKey().matches(filePath)) {
+              matcher = currentMatcher;
               break;
+            }
           }
           
           if (matcher == null)

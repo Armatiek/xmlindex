@@ -19,9 +19,9 @@ package nl.armatiek.xmlindex.plugins.index;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.Query;
-import org.w3c.dom.Element;
 
 import net.sf.saxon.om.Sequence;
+import net.sf.saxon.s9api.XdmNode;
 import nl.armatiek.xmlindex.plugins.XMLIndexPlugin;
 
 public abstract class PluggableIndex extends XMLIndexPlugin {
@@ -32,7 +32,7 @@ public abstract class PluggableIndex extends XMLIndexPlugin {
   
   public abstract PluggableIndexExtensionFunctionCall getFunctionCall();
   
-  public abstract void indexNode(Document doc, Element node);
+  public abstract void indexElement(Document doc, XdmNode element);
   
   public abstract Query getQuery(Sequence[] functionArguments);
   

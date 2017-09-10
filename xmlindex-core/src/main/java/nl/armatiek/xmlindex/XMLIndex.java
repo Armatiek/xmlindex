@@ -21,12 +21,12 @@ import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.s9api.ItemTypeFactory;
 import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.XdmNode;
 import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.conf.IndexConfig;
 import nl.armatiek.xmlindex.error.XMLIndexException;
@@ -220,7 +220,7 @@ public class XMLIndex {
     nodeStore.addDocument(uri, is, systemId, params);
   }
   
-  public void addDocument(String uri, Document doc, Map<String, Object> params) throws Exception {
+  public void addDocument(String uri, XdmNode doc, Map<String, Object> params) throws Exception {
     checkOpen();
     nodeStore.addDocument(uri, doc, params);
   }

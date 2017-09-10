@@ -94,6 +94,7 @@ public class ImportDocuments extends ExtensionFunctionDefinition {
         HashMap<String, FileConvertor> fileSpecs = new HashMap<String, FileConvertor>();
         fileSpecs.put(pattern, null);
         getSession(context).addDocuments(Paths.get(path), maxDepth, fileSpecs, true, null);
+        getSession(context).commit();
         return ZeroOrOne.empty();
       } catch (Exception e) {
         throw new XPathException("Error importing documents from \"" + path + "\"", e);

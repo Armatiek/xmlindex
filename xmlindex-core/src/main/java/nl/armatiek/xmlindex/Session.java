@@ -234,7 +234,7 @@ public class Session {
     }
   }
   
-  public void addDocument(String uri, org.w3c.dom.Document doc, Map<String, Object> params) throws Exception {
+  public void addDocument(String uri, XdmNode doc, Map<String, Object> params) throws Exception {
     checkOpen();
     index.addDocument(uri, doc, params);
   }

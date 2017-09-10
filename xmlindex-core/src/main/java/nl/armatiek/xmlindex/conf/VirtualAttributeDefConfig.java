@@ -54,12 +54,12 @@ public class VirtualAttributeDefConfig extends ConfigBase {
   private XQueryEvaluator virtualAttrsEvaluator;
   private XQueryEvaluator standardVirtualAttrsEvaluator;
   
-  public VirtualAttributeDefConfig(XMLIndex index, Element configElem, Map<String, Analyzer> analyzerPerField, Path analyzerConfigPath) {
+  public VirtualAttributeDefConfig(XMLIndex index, Processor processor, Element configElem, 
+      Map<String, Analyzer> analyzerPerField, Path analyzerConfigPath) {
     this.index = index;
     this.analyzerPerField = analyzerPerField;
-    Processor proc = new Processor(false);
-    reloadXQueryModule(proc);
-    reloadStandardXQueryModule(proc);
+    reloadXQueryModule(processor);
+    reloadStandardXQueryModule(processor);
     Element virtualAttributeConfigElem = XMLUtils.getFirstChildElementByLocalName(configElem, "virtual-attribute-config");
     if (virtualAttributeConfigElem == null)
       return;
@@ -140,7 +140,7 @@ public class VirtualAttributeDefConfig extends ConfigBase {
         new VirtualAttributeDef(
           index, 
           name, 
-          new QName(Definitions.NAMESPACE_VIRTUALATTR, "file-" + name), 
+          new QName(Definitions.NAMESPACE_VIRTUALATTR, "_file-" + name), 
           Type.getBuiltInItemType(XMLConstants.W3C_XML_SCHEMA_NS_URI, itemType), 
           true,
           standardVirtualAttrsEvaluator);

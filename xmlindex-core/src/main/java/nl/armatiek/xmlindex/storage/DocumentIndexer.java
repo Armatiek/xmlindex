@@ -11,12 +11,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.lang3.CharUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoublePoint;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FloatPoint;
@@ -29,26 +28,22 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexableField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.ProcessingInstruction;
 
-import net.sf.saxon.dom.DocumentWrapper;
-import net.sf.saxon.dom.NodeOverNodeInfo;
 import net.sf.saxon.lib.ConversionRules;
+import net.sf.saxon.om.NamespaceBinding;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.StructuredQName;
+import net.sf.saxon.s9api.Axis;
+import net.sf.saxon.s9api.DocumentBuilder;
 import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.WhitespaceStrippingPolicy;
 import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmEmptySequence;
 import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmMap;
 import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.s9api.XdmNodeKind;
 import net.sf.saxon.s9api.XdmSequenceIterator;
 import net.sf.saxon.s9api.XdmValue;
 import net.sf.saxon.trans.XPathException;
@@ -72,6 +67,7 @@ import nl.armatiek.xmlindex.conf.VirtualAttributeDefConfig;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.node.HierarchyNode;
 import nl.armatiek.xmlindex.node.IndexRootElement;
+import nl.armatiek.xmlindex.node.Node;
 import nl.armatiek.xmlindex.plugins.index.PluggableIndex;
 import nl.armatiek.xmlindex.saxon.tree.XMLIndexNodeInfo;
 import nl.armatiek.xmlindex.saxon.util.SaxonUtils;
@@ -80,8 +76,10 @@ public class DocumentIndexer {
   
   private static final Logger logger = LoggerFactory.getLogger(DocumentIndexer.class);
   
+  /*
   private static final String PROPNAME_BUFFER_SIZE = "http://apache.org/xml/properties/input-buffer-size";
   private static final Integer BUFFER_SIZE = new Integer(8 * 1024);
+  */
   
   private final StringField typeField = new StringField(Definitions.FIELDNAME_TYPE, "", Field.Store.YES);
   private final StoredField depthField = new StoredField(Definitions.FIELDNAME_DEPTH, "");
@@ -108,10 +106,11 @@ public class DocumentIndexer {
   private final StringField baseUriField = new StringField(Definitions.FIELDNAME_BASEURI, "", Field.Store.NO);
   private final List<VirtualAttributeDef> vads = new ArrayList<VirtualAttributeDef>();
   
-  private final String USERDATA_KEY = "u";
+  private final Map<XdmNode, UserData> userDataMap = new HashMap<XdmNode, UserData>();
+  private NamespaceBinding[] namespaceBindings = new NamespaceBinding[12];
+  
   private final XMLIndex index;
   private final int maxTermLength;
-  private DocumentWrapper docWrapper;
   private long nodeCounter;
   
   public DocumentIndexer(XMLIndex index, long nodeCounter) {
@@ -120,24 +119,28 @@ public class DocumentIndexer {
     this.maxTermLength = index.getMaxTermLength();
   }
   
-  private void numberNode(Node node, byte depth) {
+  private void numberNode(XdmNode node, byte depth) {
     if (isWhitespaceTextNode(node))
       return;
+    
     UserData userData = new UserData(depth, nodeCounter++);
-    node.setUserData(USERDATA_KEY, userData, null);
+    userDataMap.put(node, userData);
     depth++;
-    for (Node childNode=node.getFirstChild(); childNode!=null; childNode=childNode.getNextSibling())
-      numberNode(childNode, depth);
+    XdmSequenceIterator childNodes = node.axisIterator(Axis.CHILD);
+    while (childNodes.hasNext())
+      numberNode((XdmNode) childNodes.next(), depth);
     userData.right = nodeCounter++;    
   }
     
-  private boolean isTextOnlyElem(Node node) {
-    if (node.getNodeType() != Node.ELEMENT_NODE)
+  private boolean isTextOnlyElem(XdmNode node) {
+    if (node.getNodeKind() != XdmNodeKind.ELEMENT)
       return false;
-    NodeList childNodes = node.getChildNodes();
-    return childNodes.getLength() == 1 && childNodes.item(0).getNodeType() == Node.TEXT_NODE;
+    XdmSequenceIterator iter = node.axisIterator(Axis.CHILD);
+    XdmNode firstChild = iter.hasNext() ? (XdmNode) iter.next() : null;
+    return (firstChild != null) && !iter.hasNext() && (firstChild.getNodeKind() == XdmNodeKind.TEXT);
   }
   
+  /*
   private String getLocalPart(Node node) {
     return node.getNamespaceURI() == null ? node.getNodeName() : node.getLocalName();
   }
@@ -145,24 +148,31 @@ public class DocumentIndexer {
   private boolean isWhitespaceTextNode(Node node) {
     return node.getNodeType() == Node.TEXT_NODE && StringUtils.isWhitespace(node.getTextContent());
   }
+  */
   
-  private String getFieldName(int nodeType, Node node) throws IOException {
-    String uri = node.getNamespaceURI();
-    int nameCode = index.getNameStore().putName(StringUtils.defaultString(uri), getLocalPart(node));
+  private boolean isWhitespaceTextNode(XdmNode node) {
+    return node.getNodeKind() == XdmNodeKind.TEXT && StringUtils.isWhitespace(node.getStringValue());
+  }
+  
+  private String getFieldName(int nodeType, XdmNode node) throws IOException {
+    QName nodeName = node.getNodeName();
+    String uri = nodeName.getNamespaceURI();
+    int nameCode = index.getNameStore().putName(uri, nodeName.getLocalName());
     return Integer.toString(nodeType) + "_" + Integer.toString(nameCode);    
   }
   
-  private void addTypedValueField(org.apache.lucene.document.Document doc, Node node) throws IOException {
+  private void addTypedValueField(Document doc, XdmNode node) throws IOException {
     IndexableField field = null;
-    int nodeType = node.getNodeType();
+    int nodeType = node.getUnderlyingNode().getNodeKind();
+    QName nodeName = node.getNodeName();
     TypedValueDef tvd = index.getConfiguration().getTypedValueConfig().get(nodeType, 
-        StringUtils.defaultString(node.getNamespaceURI()), getLocalPart(node));
+        nodeName.getNamespaceURI(), nodeName.getLocalName());
     if (tvd == null)
       return;
     ItemType itemType = tvd.getItemType();
     String typeName = ((BuiltInAtomicType) itemType).getName();
     String fieldName = getFieldName(nodeType, node) + "_" + typeName;
-    String value = node.getTextContent(); 
+    String value = node.getStringValue(); 
     try {
       if (itemType.equals(BuiltInAtomicType.BOOLEAN)) {
         BooleanValue bv = (BooleanValue) BooleanValue.fromString(value).asAtomic();
@@ -191,7 +201,7 @@ public class DocumentIndexer {
         field = new LongPoint(fieldName, tv.getCalendar().getTimeInMillis());
       }
     } catch (XPathException xe) {
-      String location = new StructuredQName("", StringUtils.defaultString(node.getNamespaceURI()), getLocalPart(node)).getClarkName(); 
+      String location = new StructuredQName("", nodeName.getNamespaceURI(), nodeName.getLocalName()).getClarkName(); 
       logger.warn("Skipping indexing typed value of \"" + location + "\". Value \"" + value + "\" could not be converted to type xs:\"" + typeName + ".", xe);
     }
     
@@ -199,13 +209,13 @@ public class DocumentIndexer {
       doc.add(field);
   }
   
-  private void addVirtualAttributeFields(org.apache.lucene.document.Document doc, Element elem, XdmMap params) throws IOException, SaxonApiException {
+  private void addVirtualAttributeFields(Document doc, XdmNode elem, XdmMap params) throws IOException, SaxonApiException {
     VirtualAttributeDefConfig vad = index.getConfiguration().getVirtualAttributeConfig();
     vads.clear();
-    Map<String, VirtualAttributeDef> attrDefs = vad.getForElement(new QName(StringUtils.defaultString(elem.getNamespaceURI()), getLocalPart(elem)));  
+    Map<String, VirtualAttributeDef> attrDefs = vad.getForElement(elem.getNodeName());  
     if (attrDefs != null)
       vads.addAll(attrDefs.values());
-    if (elem.getParentNode().getNodeType() == Node.DOCUMENT_NODE) {
+    if (elem.getParent().getNodeKind() == XdmNodeKind.DOCUMENT) {
       attrDefs = vad.getForElement(Definitions.QNAME_VA_BINDING_DOCUMENT_ELEMENT);  
       if (attrDefs != null)
         vads.addAll(attrDefs.values());
@@ -214,18 +224,13 @@ public class DocumentIndexer {
     if (vads.isEmpty())
       return;
     
-    if (this.docWrapper == null)
-      this.docWrapper = new DocumentWrapper(elem.getOwnerDocument(), elem.getOwnerDocument().getBaseURI(), index.getSaxonConfiguration());
-    NodeInfo nodeInfo = docWrapper.wrap(elem);
-    
     for (VirtualAttributeDef attrDef : vads) {
       XdmValue values = null;
       XdmValue[] args = null;
-      if (attrDef.getFunctionName().getNamespaceURI().equals(Definitions.NAMESPACE_VIRTUALATTR) || 
-          vad.functionExists(attrDef.getFunctionName(), 2))
-        args = new XdmValue[] { new XdmNode(nodeInfo), params == null ? XdmEmptySequence.getInstance() : params };
+      if (attrDef.getFunctionName().getLocalName().startsWith("_") || vad.functionExists(attrDef.getFunctionName(), 2))
+        args = new XdmValue[] { elem, params == null ? XdmEmptySequence.getInstance() : params };
       else if (vad.functionExists(attrDef.getFunctionName(), 1))
-        args = new XdmValue[] { new XdmNode(nodeInfo) };
+        args = new XdmValue[] { elem };
       else {
         logger.warn("No virtual attribute function with name \"" + attrDef.getFunctionName().getEQName() + "\" found with one or two arguments");
         continue;
@@ -348,23 +353,25 @@ public class DocumentIndexer {
     usedFieldNameFields.setSize(0);
   }
   
-  private void addFieldNameField(org.apache.lucene.document.Document doc, String fieldName) {
+  private void addFieldNameField(Document doc, String fieldName) {
     StringField field = getFieldNameField();
     field.setStringValue(fieldName);
     doc.add(field);
   }
   
-  private void indexNode(Node node, long docLeft, long docRight, String uri, XdmMap params) 
+  private void indexNode(XdmNode node, long docLeft, long docRight, String uri, XdmMap params) 
       throws SaxonApiException, IOException  { 
+    
     if (isWhitespaceTextNode(node))
       return;
     
-    UserData userData = (UserData) node.getUserData(USERDATA_KEY);
+    UserData userData = userDataMap.get(node);
     
-    short nodeType = node.getNodeType();
+    NodeInfo nodeInfo = node.getUnderlyingNode();
+    XdmNodeKind nodeKind = node.getNodeKind();
     
-    org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
-    typeField.setStringValue(Integer.toString(nodeType));
+    Document doc = new Document();
+    typeField.setStringValue(Integer.toString(nodeInfo.getNodeKind()));
     doc.add(typeField);
     depthField.setStringValue(Integer.toString(userData.depth));
     doc.add(depthField);
@@ -381,16 +388,16 @@ public class DocumentIndexer {
     doc.add(rightField_dv);
     doc.add(rightField_sf);
     
-    Node parentNode = node.getParentNode();
+    XdmNode parentNode = node.getParent();
     long parent;
-    if (parentNode.getNodeType() == Node.DOCUMENT_NODE) {
+    if (parentNode.getNodeKind() == XdmNodeKind.DOCUMENT) {
       parent = IndexRootElement.LEFT;
       docLeft = userData.left;
       docRight = userData.right;
       uriField.setStringValue(uri);
       doc.add(uriField);
     } else
-      parent = ((UserData) parentNode.getUserData(USERDATA_KEY)).left;
+      parent = userDataMap.get(parentNode).left;
     parentField_lp.setLongValue(parent);
     doc.add(parentField_lp);
     parentField_sf.setLongValue(parent);
@@ -407,11 +414,11 @@ public class DocumentIndexer {
     baseUriField.setStringValue(uri);
     doc.add(baseUriField);
     
-    if (nodeType == Node.ELEMENT_NODE) {
+    if (nodeKind == XdmNodeKind.ELEMENT) {
       /* Element name and value */
       boolean isTextOnly = isTextOnlyElem(node);
-      String elemValue = isTextOnly ? node.getTextContent() : "";
-      String fieldName = getFieldName(node.getNodeType(), node);
+      String elemValue = isTextOnly ? node.getStringValue() : "";
+      String fieldName = getFieldName(nodeInfo.getNodeKind(), node);
       if (elemValue.length() <= maxTermLength)
         doc.add(new StringField(fieldName, elemValue, Field.Store.NO));
       doc.add(new StoredField(fieldName, elemValue));
@@ -420,50 +427,54 @@ public class DocumentIndexer {
         addTypedValueField(doc, node);
       
       /* Prefix */
-      if (node.getPrefix() != null)
-        doc.add(new StoredField(Definitions.FIELDNAME_PREFIXES, fieldName + ";" + index.putPrefix(node.getPrefix())));
+      if (StringUtils.isNotEmpty(node.getNodeName().getPrefix()))
+        doc.add(new StoredField(Definitions.FIELDNAME_PREFIXES, fieldName + ";" + index.putPrefix(node.getNodeName().getPrefix())));
       
       addFieldNameField(doc, fieldName);
       
-      addVirtualAttributeFields(doc, (Element) node, params);
+      addVirtualAttributeFields(doc, node, params);
       
       for (PluggableIndex pluggableIndex : index.getConfiguration().getPluggableIndexConfig().getIndexes())
-        pluggableIndex.indexNode(doc, (Element) node);
+        pluggableIndex.indexElement(doc, node);
        
       /* Attributes and namespace declarations: */
-      NamedNodeMap attrs = node.getAttributes();
-      for (int i=0; i<attrs.getLength(); i++) {
-        Attr attr = (Attr) attrs.item(i);
-        int attrType;
-        if (XMLConstants.XMLNS_ATTRIBUTE_NS_URI.equals(attr.getNamespaceURI())
-            && (XMLConstants.XMLNS_ATTRIBUTE.equals(attr.getName()) || attr.getName().startsWith(XMLConstants.XMLNS_ATTRIBUTE))) {
-          attrType = Type.NAMESPACE;
-          String nsuri = attr.getValue();
-          int nameCode = index.getNameStore().putName("", StringUtils.defaultIfBlank(StringUtils.substringAfter(attr.getName(), ":"), "_"));
-          fieldName = Integer.toString(attrType) + "_" + Integer.toString(nameCode); 
-          doc.add(new StringField(fieldName, nsuri, Field.Store.YES));
-        } else {
-          attrType = Type.ATTRIBUTE;
-          String attrFieldName = getFieldName(attrType, attr);
-          if (attr.getPrefix() != null)
-            // TODO: ontdubbelen??
-            doc.add(new StoredField(Definitions.FIELDNAME_PREFIXES, attrFieldName + ";" + index.putPrefix(attr.getPrefix())));
-          doc.add(new StringField(attrFieldName, attr.getValue(), Field.Store.YES));
-          addTypedValueField(doc, attr);
-          addFieldNameField(doc, attrFieldName);
-        }
+      XdmSequenceIterator iter = node.axisIterator(Axis.ATTRIBUTE);
+      while (iter.hasNext()) {
+        XdmNode attr = (XdmNode) iter.next();
+        QName attrName = attr.getNodeName();
+        String attrFieldName = getFieldName(Type.ATTRIBUTE, attr);
+        if (StringUtils.isNotEmpty(attrName.getPrefix()))
+          // TODO: ontdubbelen??
+          doc.add(new StoredField(Definitions.FIELDNAME_PREFIXES, attrFieldName + ";" + index.putPrefix(attrName.getPrefix())));
+        doc.add(new StringField(attrFieldName, attr.getStringValue(), Field.Store.YES));
+        addTypedValueField(doc, attr);
+        addFieldNameField(doc, attrFieldName);
       }
-    } else if (nodeType == Node.TEXT_NODE || nodeType == Node.COMMENT_NODE) {
-      String value = node.getTextContent();
+      
+      NamespaceBinding[] namespaceBindings = nodeInfo.getDeclaredNamespaces(this.namespaceBindings);
+      for (NamespaceBinding binding: namespaceBindings) {
+        if (binding == null)
+          break;
+        if (binding.isXmlNamespace())
+          continue;
+        String localPart = (binding.getPrefix().equals("")) ? "_" : binding.getPrefix();
+        int nameCode = index.getNameStore().putName("", localPart);
+        fieldName = Integer.toString(Type.NAMESPACE) + "_" + Integer.toString(nameCode); 
+        doc.add(new StringField(fieldName, binding.getURI(), Field.Store.YES));
+      }
+      
+    } else if (nodeKind == XdmNodeKind.TEXT || nodeKind == XdmNodeKind.COMMENT) {
+      String value = node.getStringValue();
       if (value.length() <= maxTermLength) {
         valueField.setStringValue(value);
         doc.add(valueField);
       }
       valueField_sf.setStringValue(value);
       doc.add(valueField_sf);
-    } else if (nodeType == Node.PROCESSING_INSTRUCTION_NODE) {
-      String value = ((ProcessingInstruction) node).getData();
-      String fieldName = getFieldName(node.getNodeType(), node);
+    } else if (nodeKind == XdmNodeKind.PROCESSING_INSTRUCTION) {
+      /* TODO: check */
+      String value = node.getStringValue(); 
+      String fieldName = getFieldName(Type.PROCESSING_INSTRUCTION, node);
       doc.add(new StringField(fieldName, value, Field.Store.YES));
     }
     
@@ -471,23 +482,22 @@ public class DocumentIndexer {
     
     pushBackUsedFieldNameFields();
       
-    if (nodeType == Node.ELEMENT_NODE) {
+    if (nodeKind == XdmNodeKind.ELEMENT) {
       /* Childs: */
-      Node child = node.getFirstChild();
-      while (child != null) {
-        indexNode(child, docLeft, docRight, uri, params);
-        child = child.getNextSibling();
-      }
+      XdmSequenceIterator iter = node.axisIterator(Axis.CHILD);
+      while (iter.hasNext())
+        indexNode((XdmNode) iter.next(), docLeft, docRight, uri, params);
     }
   }
   
-  public void reindexNode(Session session, org.apache.lucene.document.Document doc, Map<Long, String> baseUriMap) throws IOException, SaxonApiException {
-    nl.armatiek.xmlindex.node.Node indexNode = nl.armatiek.xmlindex.node.Node.createNode(doc, session);
+  public void reindexNode(Session session, Document doc, Map<Long, String> baseUriMap) throws IOException, SaxonApiException {
+    Node indexNode = Node.createNode(doc, session);
     if (indexNode.type != Type.ELEMENT)
       throw new XMLIndexException("Reindexing of nodes other than element nodes is not supported");
     XMLIndexNodeInfo nodeInfo = new XMLIndexNodeInfo(session, indexNode);
-    Node domNode = NodeOverNodeInfo.wrap(nodeInfo);
-    org.apache.lucene.document.Document newDoc = new org.apache.lucene.document.Document();
+    XdmNode node = new XdmNode(nodeInfo);
+    
+    Document newDoc = new Document();
     
     long docLeft = ((StoredField) doc.getField(Definitions.FIELDNAME_DOCLEFT)).numericValue().longValue();
     long docRight = ((StoredField) doc.getField(Definitions.FIELDNAME_DOCRIGHT)).numericValue().longValue();
@@ -510,7 +520,7 @@ public class DocumentIndexer {
         if (StringUtils.isNotBlank(value)) {
           if (value.length() <= maxTermLength)
             newDoc.add(new StringField(fieldName, value, Field.Store.NO));
-          addTypedValueField(newDoc, domNode);
+          addTypedValueField(newDoc, node);
         }
         addFieldNameField(newDoc, fieldName);
       } else {
@@ -578,10 +588,10 @@ public class DocumentIndexer {
       }
     }
     
-    addVirtualAttributeFields(newDoc, (Element) domNode, null); // TODO: what to do with params when reindexing?
+    addVirtualAttributeFields(newDoc, node, null); // TODO: what to do with params when reindexing?
     
     for (PluggableIndex pluggableIndex : index.getConfiguration().getPluggableIndexConfig().getIndexes())
-      pluggableIndex.indexNode(newDoc, (Element) domNode);
+      pluggableIndex.indexElement(newDoc, node);
     
     // Term term = new Term(Definitions.FIELDNAME_LEFT, Long.toString(((HierarchyNode) indexNode).left));
     
@@ -591,10 +601,9 @@ public class DocumentIndexer {
     pushBackUsedFieldNameFields();
   }
   
-  private void indexDOMDocument(String uri, Document doc, Map<String, Object> params) throws Exception {   
-    doc.setStrictErrorChecking(false);
-    this.docWrapper = null;
-    numberNode(doc.getDocumentElement(), (byte) 2);
+  private void indexDocument(String uri, XdmNode doc, Map<String, Object> params) throws Exception {   
+    XdmNode docElem = SaxonUtils.getFirstChildElement(doc);
+    numberNode(docElem, (byte) 2);
     XdmMap map = null;
     if (params != null) {
       Map<XdmAtomicValue, XdmValue> paramMap = new HashMap<XdmAtomicValue, XdmValue>(); 
@@ -605,24 +614,21 @@ public class DocumentIndexer {
       }
       map = new XdmMap(paramMap);
     }
-    indexNode(doc.getDocumentElement(), -1, -1, uri, map);
+    indexNode(docElem, -1, -1, uri, map);
   }
   
-  public void index(String uri, Document doc, Map<String, Object> params) throws Exception {
+  public void index(String uri, XdmNode doc, Map<String, Object> params) throws Exception {
     logger.info(String.format("Adding document with uri \"%s\" ...", uri));
-    indexDOMDocument(uri, doc, params);
+    indexDocument(uri, doc, params);
   }
   
   public void index(String uri, InputStream is, String systemId, Map<String, Object> params) throws Exception {
     logger.info(String.format("Adding document with uri \"%s\" ...", uri));
-    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-    dbf.setAttribute(PROPNAME_BUFFER_SIZE, BUFFER_SIZE);
-    dbf.setValidating(false);
-    dbf.setXIncludeAware(true);
-    dbf.setNamespaceAware(true);
-    DocumentBuilder builder = dbf.newDocumentBuilder();
-    Document doc = builder.parse(is, systemId);
-    indexDOMDocument(uri, doc, params);
+    userDataMap.clear();
+    DocumentBuilder builder = index.getConfiguration().getProcessor().newDocumentBuilder();
+    builder.setWhitespaceStrippingPolicy(WhitespaceStrippingPolicy.ALL);
+    XdmNode doc = builder.build(new StreamSource(is, systemId));
+    indexDocument(uri, doc, params);
   }
     
   public long getNodeCounter() {

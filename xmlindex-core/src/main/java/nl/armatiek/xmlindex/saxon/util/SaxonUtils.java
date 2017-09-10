@@ -24,16 +24,30 @@ import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Node;
 
 import net.sf.saxon.expr.parser.Token;
+import net.sf.saxon.om.AxisInfo;
+import net.sf.saxon.om.NodeInfo;
+import net.sf.saxon.pattern.NodeKindTest;
+import net.sf.saxon.s9api.Axis;
 import net.sf.saxon.s9api.ItemType;
 import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmEmptySequence;
+import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.s9api.XdmNodeKind;
+import net.sf.saxon.s9api.XdmSequenceIterator;
 import net.sf.saxon.s9api.XdmValue;
 import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.type.Type;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.utils.XMLUtils;
 
 public class SaxonUtils {
+  
+  public static NodeInfo unwrapNodeInfo(NodeInfo nodeInfo) {
+    if (nodeInfo != null && nodeInfo.getNodeKind() == Type.DOCUMENT)
+      nodeInfo = nodeInfo.iterateAxis(AxisInfo.CHILD, NodeKindTest.ELEMENT).next();
+    return nodeInfo;
+  }
   
   public static String token2String(int operator) {
     switch (operator) {
@@ -85,5 +99,14 @@ public class SaxonUtils {
     }
     return new QName(text);
   }
-
+  
+  public static XdmNode getFirstChildElement(XdmNode node) {
+    XdmSequenceIterator childNodes = node.axisIterator(Axis.CHILD);
+    XdmNode elem = null;
+    while (childNodes.hasNext())
+      if ((elem = (XdmNode) childNodes.next()).getNodeKind() == XdmNodeKind.ELEMENT)
+        return elem;
+    return null;
+  }
+  
 }

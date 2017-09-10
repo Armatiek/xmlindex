@@ -34,6 +34,8 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import net.sf.saxon.Configuration;
+import net.sf.saxon.s9api.Processor;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 
@@ -41,6 +43,8 @@ public class IndexConfig extends ConfigBase implements ErrorHandler {
   
   private static final Logger logger = LoggerFactory.getLogger(IndexConfig.class);
   
+  private final Configuration configuration;
+  private final Processor processor;
   private final TypedValueDefConfig typedValueConfig;
   private final VirtualAttributeDefConfig virtualAttributeConfig;
   private final PluggableIndexConfig pluggableIndexConfig;
@@ -51,6 +55,8 @@ public class IndexConfig extends ConfigBase implements ErrorHandler {
   public IndexConfig(XMLIndex index, Map<String, Analyzer> analyzerPerField, Schema configSchema) {
     try {
       this.index = index;
+      this.configuration = new Configuration();
+      this.processor = new Processor(configuration);
       File configFile = index.getConfigPath().resolve(Definitions.FILENAME_INDEXCONFIG).toFile();
       if (!configFile.isFile())
         copyFromClassPath("template-index-configuration.xml", configFile, null);
@@ -71,7 +77,7 @@ public class IndexConfig extends ConfigBase implements ErrorHandler {
         throw new FileNotFoundException("Error creating directory \"" + analyzerConfigDir.getAbsolutePath() + "\"");
       this.analyzerConfigPath = analyzerConfigDir.toPath();
       this.typedValueConfig = new TypedValueDefConfig(configElem);
-      this.virtualAttributeConfig = new VirtualAttributeDefConfig(index, configElem, analyzerPerField, analyzerConfigPath);    
+      this.virtualAttributeConfig = new VirtualAttributeDefConfig(index, processor, configElem, analyzerPerField, analyzerConfigPath);    
       this.pluggableIndexConfig = new PluggableIndexConfig(index, configElem);
       this.pluggableFileConvertorConfig = new PluggableFileConvertorConfig(index, configElem);
     } catch (XMLIndexException e) {
@@ -79,6 +85,14 @@ public class IndexConfig extends ConfigBase implements ErrorHandler {
     } catch (Exception e) {
       throw new XMLIndexException("Error initializing index \"" + index.getIndexName() + "\"", e);
     }
+  }
+  
+  public Configuration getConfiguration() {
+    return configuration;
+  }
+  
+  public Processor getProcessor() {
+    return processor;
   }
   
   public TypedValueDefConfig getTypedValueConfig() {

@@ -30,6 +30,7 @@
                         <xs:sequence>
                           <xs:element name="document-element" minOccurs="0"/>
                           <xs:element name="element-name" type="xs:QName" minOccurs="0" maxOccurs="unbounded"/>
+                          <xs:element name="pattern" type="xs:string"/>
                         </xs:sequence>
                       </xs:complexType>
                     </xs:element>

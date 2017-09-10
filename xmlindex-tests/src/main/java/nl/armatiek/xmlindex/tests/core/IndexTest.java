@@ -25,7 +25,7 @@ public class IndexTest {
         StopWatch sw = new StopWatch();
         sw.start();
         HashMap<String, FileConvertor> fileSpecs = new HashMap<String, FileConvertor>();
-        fileSpecs.put("\\.(xml|WTI)", null);
+        fileSpecs.put("(.*)\\.(xml|WTI)$", null);
         session.addDocuments(Paths.get(importPath), Integer.MAX_VALUE, fileSpecs, true, null);
         session.commit();
         logger.info("Batch indexing execution time: " + sw.toString());

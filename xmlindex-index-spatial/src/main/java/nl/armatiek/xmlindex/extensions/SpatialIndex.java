@@ -17,15 +17,9 @@
 
 package nl.armatiek.xmlindex.extensions;
 
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
@@ -46,20 +40,23 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.MathTransform;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.PrecisionModel;
 import com.vividsolutions.jts.io.gml2.GMLReader;
 
-import net.sf.saxon.dom.NodeOverNodeInfo;
 import net.sf.saxon.om.AxisInfo;
 import net.sf.saxon.om.GroundedValue;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.pattern.NodeKindTest;
+import net.sf.saxon.s9api.Axis;
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.QName;
+import net.sf.saxon.s9api.Serializer;
+import net.sf.saxon.s9api.XdmNode;
+import net.sf.saxon.s9api.XdmSequenceIterator;
 import net.sf.saxon.type.Type;
 import net.sf.saxon.value.StringValue;
 import nl.armatiek.xmlindex.plugins.index.PluggableIndex;
@@ -75,7 +72,7 @@ public class SpatialIndex extends PluggableIndex {
   
   private final static String NAMESPACE_GML_32       = "http://www.opengis.net/gml/3.2";
   private final static String NAMESPACE_GML          = "http://www.opengis.net/gml";
-  private final static String ATTRNAME_SRSNAME       = "srsName";
+  private final static QName ATTRNAME_SRSNAME        = new QName("srsName");
   private final static String DEFAULT_FIELDNAME      = "shape";
   private final static int DEFAULT_MAXLEVELS         = 11;
   private final static int SRID_WGS84                = 4326;
@@ -137,9 +134,11 @@ public class SpatialIndex extends PluggableIndex {
   private JtsShapeFactory shapeFactory;
   private String fieldName;
   private int prefixTreeMaxLevels;
+  private final Processor processor;
   
   public SpatialIndex(String name) {
     super(name);
+    processor = new Processor(false);
   }
   
   @Override
@@ -163,21 +162,20 @@ public class SpatialIndex extends PluggableIndex {
   }
   
   @Override
-  public void indexNode(Document doc, Element node) throws PluggableIndexException {
-    if (!isGMLGeometry(node))
+  public void indexElement(Document doc, XdmNode element) throws PluggableIndexException {
+    if (!isGMLGeometry(element))
       return;
     
-    if (isNestedGeometry(node)) 
+    if (isNestedGeometry(element)) 
       return;
     
     try {
       /* Convert GML element to JTS Geometry: */
-      Geometry geometry = gmlToGeometry(node);
+      Geometry geometry = gmlToGeometry(element);
       
       /* Add shape fields to Lucene document: */
-      for (IndexableField field:spatialStrategy.createIndexableFields(shapeFactory.makeShapeFromGeometry(geometry))) {
+      for (IndexableField field:spatialStrategy.createIndexableFields(shapeFactory.makeShapeFromGeometry(geometry)))
         doc.add(field);
-      }
       
     } catch (PluggableIndexException e) {
       throw e;
@@ -205,10 +203,10 @@ public class SpatialIndex extends PluggableIndex {
       else 
         nodeInfo = (NodeInfo) functionParams[2];
       
-      Node gmlNode = NodeOverNodeInfo.wrap(unwrapNodeInfo(nodeInfo));
+      NodeInfo gmlNode = unwrapNodeInfo(nodeInfo);
       
       /* Convert GML element to JTS Geometry: */
-      Geometry geometry = gmlToGeometry((Element) gmlNode);
+      Geometry geometry = gmlToGeometry(new XdmNode(gmlNode));
       
       SpatialOperation operation = SpatialOperation.get(op);
       
@@ -220,7 +218,7 @@ public class SpatialIndex extends PluggableIndex {
     }
   }
   
-  private Geometry gmlToGeometry(Element gmlNode) throws Exception {
+  private Geometry gmlToGeometry(XdmNode gmlNode) throws Exception {
     String srsName = getSrsName(gmlNode);
    
     if (StringUtils.isBlank(srsName))
@@ -232,11 +230,12 @@ public class SpatialIndex extends PluggableIndex {
     int srid = Integer.parseInt(CRS.toSRS(crs, true));
     
     /* Serialize GML DOM element to string: */
-    String gml = nodeToString(gmlNode);
-    
+    Serializer ser = processor.newSerializer();
+    String gml = ser.serializeNodeToString(gmlNode);
+   
     /* Parse GML string to JTS geometry: */
     Geometry geometry;
-    if (gmlNode.getNamespaceURI().equals(NAMESPACE_GML_32))
+    if (gmlNode.getNodeName().getNamespaceURI().equals(NAMESPACE_GML_32))
       geometry = tryParser32Cache(srid).toJTSGeometry(gml);
     else
       try {
@@ -291,40 +290,32 @@ public class SpatialIndex extends PluggableIndex {
     return parser;
   }
   
-  private String getSrsName(Element elem) {
-    Node e = elem; 
-    String srsName = "";
-    while (e != null && e.getNodeType() != Node.DOCUMENT_NODE && (srsName = ((Element) e).getAttribute(ATTRNAME_SRSNAME)).equals(""))
-      e = e.getParentNode();
-    return srsName;
+  private String getSrsName(XdmNode element) {
+    XdmSequenceIterator ancestors = element.axisIterator(Axis.ANCESTOR_OR_SELF);
+    while (ancestors.hasNext()) {
+      XdmNode ancestor = (XdmNode) ancestors.next(); 
+      XdmSequenceIterator attr = ancestor.axisIterator(Axis.ATTRIBUTE, ATTRNAME_SRSNAME);
+      if (attr.hasNext())
+        return attr.next().getStringValue();
+    }
+    return "";
   }
   
-  private boolean isGMLGeometry(Element node) {
-    String namespace = node.getNamespaceURI();
+  private boolean isGMLGeometry(XdmNode element) {
+    String namespace = element.getNodeName().getNamespaceURI();
     if (namespace == null || !namespace.startsWith(NAMESPACE_GML))
       return false;
-    if (!geometryNames32.contains(node.getLocalName()))
+    if (!geometryNames32.contains(element.getNodeName().getLocalName()))
       return false;
     return true;
   }
   
-  private boolean isNestedGeometry(Element elem) {
-    Node parent = elem.getParentNode();
-    while (parent != null && parent.getNodeType() != Node.DOCUMENT_NODE) {
-      if (isGMLGeometry((Element) parent))
+  private boolean isNestedGeometry(XdmNode element) {
+    XdmSequenceIterator ancestors = element.axisIterator(Axis.ANCESTOR);
+    while (ancestors.hasNext())
+      if (isGMLGeometry((XdmNode) ancestors.next()))
         return true;
-      parent = parent.getParentNode();
-    }
     return false;
-  }
-  
-  private String nodeToString(Node node) throws Exception {
-    Transformer transformer = TransformerFactory.newInstance().newTransformer();
-    DOMSource source = new DOMSource(node);
-    StringWriter sw = new StringWriter();
-    StreamResult result = new StreamResult(sw);
-    transformer.transform(source, result);
-    return sw.toString();
   }
   
   private NodeInfo unwrapNodeInfo(NodeInfo nodeInfo) {
