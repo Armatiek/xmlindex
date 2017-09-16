@@ -34,7 +34,6 @@ import net.sf.saxon.type.ItemType;
 import net.sf.saxon.type.StringConverter;
 import net.sf.saxon.type.ValidationException;
 import net.sf.saxon.value.AtomicValue;
-import nl.armatiek.xmlindex.conf.WebContext;
 import nl.armatiek.xmlindex.restxq.adapter.FunctionSignatureAdapter;
 import nl.armatiek.xmlindex.restxq.adapter.SequenceAdapter;
 import nl.armatiek.xmlindex.saxon.TransformationErrorListener;
@@ -46,14 +45,16 @@ public class ResourceFunctionExecutorImpl implements ResourceFunctionExecuter {
   private final Configuration config;
   private final XdmItem contextItem;
   private final HttpServletResponse response;
+  private final boolean developmentMode;
   
-  public ResourceFunctionExecutorImpl(final XQueryExecutable restXQuery, Map<QName, XdmValue> params, 
-      final XdmItem contextItem, final Configuration config, final HttpServletResponse response) {
-    this.restXQuery = restXQuery;
-    this.params = params;
-    this.contextItem = contextItem;
-    this.config = config;
+  public ResourceFunctionExecutorImpl(final RestXqStaticContext staticContext, final RestXqDynamicContext dynamicContext, 
+      final HttpServletResponse response) {
+    this.restXQuery = staticContext.getRestXQuery();
+    this.params = dynamicContext.getAllExternalVariables();
+    this.contextItem = dynamicContext.getContextItem();
+    this.config = staticContext.getConfiguration();
     this.response = response;
+    this.developmentMode = dynamicContext.getDevelopmentMode();
   }
   
   @SuppressWarnings("rawtypes")
@@ -66,7 +67,7 @@ public class ResourceFunctionExecutorImpl implements ResourceFunctionExecuter {
       if (params != null)
         for (Map.Entry<QName, XdmValue> entry : params.entrySet())
           eval.setExternalVariable(entry.getKey(), entry.getValue());
-      eval.setErrorListener(new TransformationErrorListener(response, WebContext.getInstance().getDevelopmentMode()));
+      eval.setErrorListener(new TransformationErrorListener(response, developmentMode));
       eval.setContextItem(contextItem);
       XdmValue value = eval.callFunction(new QName(func.getFunctionName()), convertToSaxonFunctionArguments(arguments, func));
       return new SequenceAdapter(value, config);

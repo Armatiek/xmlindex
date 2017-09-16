@@ -104,7 +104,7 @@ public class ExplainTransformation extends ExtensionFunctionDefinition {
           XMLStreamWriterDestination dest = new XMLStreamWriterDestination(xsw);
           ErrorListener errorListener = new ErrorListener("on index \"" + session.getIndex().getIndexName() + "\"");            
           try {
-            session.transform(new StreamSource(new StringReader(xsl)), dest, null, errorListener, null, true);
+            session.transform(new StreamSource(new StringReader(xsl)), dest, null, errorListener, null, null, true);
           } catch (SaxonApiException sae) {
             XPathException xpe = this.getXPathException(errorListener, sae);
             if (xpe != null)

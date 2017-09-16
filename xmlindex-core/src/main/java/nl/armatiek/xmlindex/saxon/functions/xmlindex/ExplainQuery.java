@@ -103,7 +103,7 @@ public class ExplainQuery extends ExtensionFunctionDefinition {
           XMLStreamWriterDestination dest = new XMLStreamWriterDestination(xsw);
           ErrorListener errorListener = new ErrorListener("on index \"" + session.getIndex().getIndexName() + "\"");            
           try {
-            session.query(new StringReader(xquery), null, dest, null, errorListener, null, true);
+            session.query(new StringReader(xquery), null, dest, null, errorListener, null, null, true);
           } catch (SaxonApiException sae) {
             XPathException xpe = this.getXPathException(errorListener, sae);
             if (xpe != null)

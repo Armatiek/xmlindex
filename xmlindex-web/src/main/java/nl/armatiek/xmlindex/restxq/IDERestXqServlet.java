@@ -22,6 +22,7 @@ import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.XQueryExecutable;
 import net.sf.saxon.s9api.XdmValue;
+import net.sf.saxon.value.BooleanValue;
 import net.sf.saxon.value.ObjectValue;
 import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
@@ -91,10 +92,12 @@ public class IDERestXqServlet extends AbstractRestXqServlet {
       RestXqDynamicContext dynamicContext;
       try {
         Map<QName, XdmValue> vars = getDefaultExternalVariables(req, resp);
+        boolean developmentMode = index.getConfiguration().getDevelopmentMode();
+        vars.put(XI_DEV_MODE, XdmValue.wrap(BooleanValue.get(developmentMode)));
         if (session != null)
           vars.put(Definitions.PARAM_SESSION_QN, XdmValue.wrap(new ObjectValue<Session>(session)));
         HttpRequest request = new HttpServletRequestAdapter(req, req.getPathInfo());
-        dynamicContext = new RestXqDynamicContext(staticContext, request, vars);
+        dynamicContext = new RestXqDynamicContext(staticContext, request, vars, developmentMode);
       } catch (Exception e) {
         handleError("Error initializing RESTXQ dynamic context", e, resp);
         return;

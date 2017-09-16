@@ -15,18 +15,24 @@ public class RestXqDynamicContext {
   private final HttpRequest request;
   private final Map<QName, XdmValue> externalVariables;
   private final XdmItem contextItem;
+  private final boolean developmentMode;
   
   public RestXqDynamicContext(RestXqStaticContext staticContext, HttpRequest request, 
-      Map<QName, XdmValue> externalVariables, XdmItem contextItem) {
+      Map<QName, XdmValue> externalVariables, XdmItem contextItem, boolean developmentMode) {
     this.staticContext = staticContext;
     this.request = request;
     this.externalVariables = externalVariables;
     this.contextItem = contextItem;
+    this.developmentMode = developmentMode;
   }
   
   public RestXqDynamicContext(RestXqStaticContext staticContext, HttpRequest request, 
-      Map<QName, XdmValue> externalVariables) {
-    this(staticContext, request, externalVariables, null);
+      Map<QName, XdmValue> externalVariables, boolean developmentMode) {
+    this(staticContext, request, externalVariables, null, developmentMode);
+  }
+  
+  public boolean getDevelopmentMode() {
+    return developmentMode;
   }
   
   public RestXqStaticContext getStaticContext() {

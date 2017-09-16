@@ -143,7 +143,7 @@ public class TransformAdHoc extends ExtensionFunctionDefinition {
               stopwatch = new StopWatch();
               stopwatch.start();
             }
-            session.transform(new StreamSource(new StringReader(xsl), baseURI.toString()), dest, params, errorListener, null);
+            session.transform(new StreamSource(new StringReader(xsl), baseURI.toString()), dest, params, errorListener, null, null);
             if (timing) {
               stopwatch.stop();
               duration =  Int64Value.makeIntegerValue(stopwatch.getTime(TimeUnit.MICROSECONDS));

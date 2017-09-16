@@ -34,7 +34,7 @@ public class QueryTest {
           logger.info("Executing XQuery...");
           StopWatch sw = new StopWatch();
           sw.start();
-          session.query(new StringReader(xquery), queryFile.toURI(), out, null, null, null);
+          session.query(new StringReader(xquery), queryFile.toURI(), out, null, null, null, queryFile.getAbsolutePath());
           logger.info("XQuery execution time: " + sw.toString());
           sw.stop();
         }

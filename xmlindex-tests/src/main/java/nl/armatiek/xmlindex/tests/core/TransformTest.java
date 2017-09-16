@@ -31,7 +31,7 @@ public class TransformTest {
         logger.info("Executing transformation...");
         StopWatch sw = new StopWatch();
         sw.start();
-        session.transform(new StreamSource(new File(xsltPath)), out, null, null, null);
+        session.transform(new StreamSource(new File(xsltPath)), out, null, null, null, xsltPath);
         logger.info("Transformation execution time: " + sw.toString());
         sw.stop();
       } finally {

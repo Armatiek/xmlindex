@@ -38,6 +38,7 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.s9api.Processor;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.error.XMLIndexException;
+import nl.armatiek.xmlindex.utils.XMLUtils;
 
 public class IndexConfig extends ConfigBase implements ErrorHandler {
   
@@ -45,6 +46,7 @@ public class IndexConfig extends ConfigBase implements ErrorHandler {
   
   private final Configuration configuration;
   private final Processor processor;
+  private final boolean developmentMode;
   private final TypedValueDefConfig typedValueConfig;
   private final VirtualAttributeDefConfig virtualAttributeConfig;
   private final PluggableIndexConfig pluggableIndexConfig;
@@ -71,11 +73,11 @@ public class IndexConfig extends ConfigBase implements ErrorHandler {
       DocumentBuilder db = dbf.newDocumentBuilder();
       db.setErrorHandler(this);
       Element configElem = db.parse(configFile).getDocumentElement();
-      
       File analyzerConfigDir = new File(index.getConfigPath().toFile(), Definitions.FOLDERNAME_ANALYZER);
       if (!analyzerConfigDir.isDirectory() && !analyzerConfigDir.mkdirs())
         throw new FileNotFoundException("Error creating directory \"" + analyzerConfigDir.getAbsolutePath() + "\"");
       this.analyzerConfigPath = analyzerConfigDir.toPath();
+      this.developmentMode = XMLUtils.getBooleanValue(XMLUtils.getValueOfChildElementByLocalName(configElem, "development-mode"), false);
       this.typedValueConfig = new TypedValueDefConfig(configElem);
       this.virtualAttributeConfig = new VirtualAttributeDefConfig(index, processor, configElem, analyzerPerField, analyzerConfigPath);    
       this.pluggableIndexConfig = new PluggableIndexConfig(index, configElem);
@@ -93,6 +95,10 @@ public class IndexConfig extends ConfigBase implements ErrorHandler {
   
   public Processor getProcessor() {
     return processor;
+  }
+  
+  public boolean getDevelopmentMode() {
+    return developmentMode;
   }
   
   public TypedValueDefConfig getTypedValueConfig() {

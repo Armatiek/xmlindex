@@ -22,6 +22,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.parsers.DocumentBuilder;
@@ -37,9 +38,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import net.sf.saxon.om.NamespaceBinding;
 
 /**
  * Helper class containing several XML/DOM/JAXP related methods.  
@@ -192,6 +196,13 @@ public class XMLUtils {
     return null;
   }
   
+  public static Element getNextSiblingElementByLocalName(Element contextElem, String localName) {
+    Element elem;
+    while ((elem = getNextSiblingElement(contextElem)) != null && !getLocalName(elem).equals(localName))
+      contextElem = elem;
+    return contextElem;
+  }
+  
   public static int getNodePosition(Node node) {
     int index = 0;
     Node tmp = node;
@@ -259,6 +270,29 @@ public class XMLUtils {
     default:
       return 0;
     }
+  }
+  
+  public static void getNamespaceDeclarationsInScope(Node node, Map<String, String> declarations) {
+    if (node.getNodeType() == Node.DOCUMENT_NODE)
+      return;
+    if (node.getNodeType() != Node.ELEMENT_NODE)
+      getNamespaceDeclarationsInScope(node.getParentNode(), declarations);
+    NamedNodeMap atts = node.getAttributes();
+    final int attsLen = atts.getLength();
+    for (int i = 0; i < attsLen; i++) {
+      Attr att = (Attr) atts.item(i);
+      String attName = att.getName();
+      if (attName.equals("xmlns")) {
+        String prefix = "";
+        String uri = att.getValue();
+        declarations.put(uri, prefix);
+      } else if (attName.startsWith("xmlns:")) {
+        String prefix = attName.substring(6);
+        String uri = att.getValue();
+        declarations.put(uri, prefix);
+      }
+    }
+    getNamespaceDeclarationsInScope(node.getParentNode(), declarations);
   }
   
 }

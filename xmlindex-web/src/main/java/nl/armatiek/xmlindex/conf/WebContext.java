@@ -58,7 +58,6 @@ public class WebContext {
   
   private ServletContext servletContext;
   private Properties properties;
-  private boolean developmentMode;
   private boolean parserHardening;
   private boolean trustAllCerts;
   private File indexesDir;
@@ -158,7 +157,6 @@ public class WebContext {
       sc.init(null, trustAllCertsManager, new java.security.SecureRandom());
       HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
     }
-    this.developmentMode = new Boolean(this.properties.getProperty(WebDefinitions.PROPERTYNAME_DEVELOPMENTMODE, "false"));
     this.parserHardening = new Boolean(this.properties.getProperty(WebDefinitions.PROPERTYNAME_PARSER_HARDENING, "false"));
     String indexesPath = this.properties.getProperty(WebDefinitions.PROPERTYNAME_INDEXPATH, "indexes");
     this.indexesDir = new File(indexesPath);
@@ -221,10 +219,6 @@ public class WebContext {
   
   public Properties getProperties() {     
     return this.properties;    
-  }
-  
-  public boolean getDevelopmentMode() {
-    return this.developmentMode;
   }
   
   public boolean getParserHardening() {     

@@ -17,6 +17,14 @@
       <bindings>
         <element-name>expression</element-name>  
       </bindings>
+      <virtual-attribute-name>bwb-id</virtual-attribute-name>
+      <function-name>va:expression-bwb-id</function-name>
+      <item-type>xs:string</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <bindings>
+        <element-name>expression</element-name>  
+      </bindings>
       <virtual-attribute-name>inwerkingtredingsdatum</virtual-attribute-name>
       <function-name>va:expression-inwerkingtredingsdatum</function-name>
       <item-type>xs:date</item-type>
@@ -25,8 +33,8 @@
       <bindings>
         <element-name>expression</element-name>  
       </bindings>
-      <virtual-attribute-name>zichtdatum-eind</virtual-attribute-name>
-      <function-name>va:expression-zichtdatum-eind</function-name>
+      <virtual-attribute-name>einddatum</virtual-attribute-name>
+      <function-name>va:expression-einddatum</function-name>
       <item-type>xs:date</item-type>
     </virtual-attribute-def>
     <virtual-attribute-def>
@@ -35,6 +43,14 @@
       </bindings>
       <virtual-attribute-name>zichtdatum-start</virtual-attribute-name>
       <function-name>va:expression-zichtdatum-start</function-name>
+      <item-type>xs:date</item-type>
+    </virtual-attribute-def>
+    <virtual-attribute-def>
+      <bindings>
+        <element-name>expression</element-name>  
+      </bindings>
+      <virtual-attribute-name>zichtdatum-eind</virtual-attribute-name>
+      <function-name>va:expression-zichtdatum-eind</function-name>
       <item-type>xs:date</item-type>
     </virtual-attribute-def>
     <virtual-attribute-def>
@@ -76,22 +92,6 @@
         <analyzer class="org.apache.lucene.analysis.standard.StandardAnalyzer"/>
       </query-analyzer>
       -->
-    </virtual-attribute-def>
-    <virtual-attribute-def>
-      <bindings>
-        <element-name>expression</element-name>  
-      </bindings>
-      <virtual-attribute-name>einddatum</virtual-attribute-name>
-      <function-name>va:expression-einddatum</function-name>
-      <item-type>xs:date</item-type>
-    </virtual-attribute-def>
-    <virtual-attribute-def>
-      <bindings>
-        <element-name>expression</element-name>  
-      </bindings>
-      <virtual-attribute-name>bwb-id</virtual-attribute-name>
-      <function-name>va:expression-bwb-id</function-name>
-      <item-type>xs:string</item-type>
     </virtual-attribute-def>
   </virtual-attribute-config>
   

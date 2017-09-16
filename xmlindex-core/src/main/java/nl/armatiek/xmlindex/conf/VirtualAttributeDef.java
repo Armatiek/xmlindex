@@ -19,9 +19,7 @@ package nl.armatiek.xmlindex.conf;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.xml.XMLConstants;
@@ -34,7 +32,6 @@ import org.apache.lucene.util.Version;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.NodeList;
 
 import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.XQueryEvaluator;
@@ -49,7 +46,6 @@ import nl.armatiek.xmlindex.utils.XMLUtils;
 public class VirtualAttributeDef {
   
   private final XMLIndex index;
-  private final List<QName> elemNames;
   private final String virtualAttrName;
   private final QName functionName;
   private final ItemType itemType;
@@ -61,8 +57,6 @@ public class VirtualAttributeDef {
   public VirtualAttributeDef(XMLIndex index, String virtualAttrName, QName functionName, ItemType itemType, 
       boolean storeValue, XQueryEvaluator eval) {
     this.index = index;
-    this.elemNames = new ArrayList<QName>();
-    this.elemNames.add(Definitions.QNAME_VA_BINDING_DOCUMENT_ELEMENT);
     this.virtualAttrName = virtualAttrName;
     this.functionName = functionName;
     this.itemType = itemType;
@@ -75,13 +69,6 @@ public class VirtualAttributeDef {
   public VirtualAttributeDef(XMLIndex index, Element virtualAttributeDefElem, Path analyzerConfigPath,
       XQueryEvaluator eval) {
     this.index = index;
-    this.elemNames = new ArrayList<QName>();
-    Element bindingsElement = XMLUtils.getChildElementByLocalName(virtualAttributeDefElem, "bindings");
-    if (XMLUtils.getChildElementByLocalName(bindingsElement, "document-element") != null)
-      elemNames.add(Definitions.QNAME_VA_BINDING_DOCUMENT_ELEMENT);
-    NodeList elemNameNodes = bindingsElement.getElementsByTagName("element-name");
-    for (int i=0; i<elemNameNodes.getLength(); i++)
-      elemNames.add(SaxonUtils.getQName(elemNameNodes.item(i)));
     virtualAttrName = XMLUtils.getValueOfChildElementByLocalName(virtualAttributeDefElem, "virtual-attribute-name");
     functionName = SaxonUtils.getQName(XMLUtils.getChildElementByLocalName(virtualAttributeDefElem, "function-name"));
     String type = XMLUtils.getValueOfChildElementByLocalName(virtualAttributeDefElem, "item-type");
@@ -90,10 +77,6 @@ public class VirtualAttributeDef {
     indexAnalyzer = getAnalyzer(virtualAttributeDefElem, "query-analyzer", analyzerConfigPath);
     storeValue = XMLUtils.getBooleanValue(XMLUtils.getValueOfChildElementByLocalName(virtualAttributeDefElem, "store-value"), false);
     this.eval = eval; 
-  }
-  
-  public List<QName> getElemNames() {
-    return elemNames;
   }
     
   public String getVirtualAttributeName() {

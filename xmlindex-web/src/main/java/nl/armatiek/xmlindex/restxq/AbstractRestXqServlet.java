@@ -45,7 +45,6 @@ import net.sf.saxon.s9api.XQueryExecutable;
 import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmValue;
 import net.sf.saxon.value.AtomicValue;
-import net.sf.saxon.value.BooleanValue;
 import net.sf.saxon.value.ObjectValue;
 import net.sf.saxon.value.StringValue;
 import nl.armatiek.xmlindex.conf.WebContext;
@@ -76,7 +75,6 @@ public abstract class AbstractRestXqServlet extends HttpServlet {
   public void init() throws ServletException {    
     super.init();                    
     context = WebContext.getInstance();
-    developmentMode = context.getDevelopmentMode();
   }
   
   protected void doService(RestXqDynamicContext dynamicContext, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -95,8 +93,7 @@ public abstract class AbstractRestXqServlet extends HttpServlet {
         service.service(
             request,
             new HttpServletResponseAdapter(resp, os),
-            new ResourceFunctionExecutorImpl(staticContext.getRestXQuery(), dynamicContext.getAllExternalVariables(), 
-                dynamicContext.getContextItem(), staticContext.getConfiguration(), resp),
+            new ResourceFunctionExecutorImpl(staticContext, dynamicContext,  resp),
             new RestXqServiceSerializerImpl(staticContext.getProcessor()));
         
         if (developmentMode) {     
@@ -190,7 +187,6 @@ public abstract class AbstractRestXqServlet extends HttpServlet {
     vars.put(XQ_VAR_URI, new XdmAtomicValue(req.getRequestURI()));
     vars.put(XI_VAR_REQUEST,  XdmValue.wrap(new ObjectValue<HttpServletRequest>(req)));
     vars.put(XI_VAR_RESPONSE,  XdmValue.wrap(new ObjectValue<HttpServletResponse>(resp)));
-    vars.put(XI_DEV_MODE, XdmValue.wrap(BooleanValue.get(context.getDevelopmentMode())));
     vars.put(XI_HOME_DIR, XdmValue.wrap(new StringValue(context.getHomeDir().getAbsolutePath())));
     vars.put(XI_INDEX_DIR, XdmValue.wrap(new StringValue(context.getIndexesDir().getAbsolutePath())));
     return vars;

@@ -9,27 +9,27 @@ declare function va:toestand-expression-id($elem as element()) as xs:string {
   concat($elem/@bwb-id, '_', $elem/@inwerkingtreding, '_', functx:substring-after-last($elem/@bwb-ng-vast-deel, '/'))
 };
 
-declare function va:expression-bwb-id($elem as element()) as xs:string {
+declare function va:expression-bwb-id($elem as element(expression)) as xs:string {
   xs:string($elem/root()/work/@label)
 };
 
-declare function va:expression-inwerkingtredingsdatum($elem as element()) as xs:date {
+declare function va:expression-inwerkingtredingsdatum($elem as element(expression)) as xs:date {
   xs:date($elem/metadata/datum_inwerkingtreding)
 };
 
-declare function va:expression-einddatum($elem as element()) as xs:date {
+declare function va:expression-einddatum($elem as element(expression)) as xs:date {
   xs:date($elem/metadata/einddatum)
 };
 
-declare function va:expression-zichtdatum-start($elem as element()) as xs:date {
+declare function va:expression-zichtdatum-start($elem as element(expression)) as xs:date {
   xs:date($elem/metadata/zichtdatum_start)
 };
 
-declare function va:expression-zichtdatum-eind($elem as element()) as xs:date {
+declare function va:expression-zichtdatum-eind($elem as element(expression)) as xs:date {
   xs:date($elem/metadata/zichtdatum_eind)
 };
 
-declare function va:citeertitel($elem as element()) as xs:string {
+declare function va:citeertitel($elem as element(toestand)) as xs:string {
   string-join($elem/wetgeving/citeertitel//text(), ' ')
 };
 

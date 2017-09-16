@@ -75,7 +75,7 @@ public class Definitions {
   public static final StructuredQName PARAM_SESSION_SQN = new StructuredQName("", "http://www.armatiek.nl/xmlindex/param/session", "session");
   public static final QName PARAM_SESSION_QN            = new QName("http://www.armatiek.nl/xmlindex/param/session", "session");
   
-  public static final QName QNAME_VA_BINDING_DOCUMENT_ELEMENT = new QName("root()");
+  // public static final QName QNAME_VA_BINDING_DOCUMENT_ELEMENT = new QName("root()");
     
   public static final String EOL                        = System.getProperty("line.separator");
   

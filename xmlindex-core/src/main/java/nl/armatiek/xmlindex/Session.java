@@ -29,14 +29,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.Source;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.IndexSearcher;
@@ -47,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.sf.saxon.Configuration;
+import net.sf.saxon.dom.NodeOverNodeInfo;
 import net.sf.saxon.om.AxisInfo;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.pattern.NodeKindTest;
@@ -83,15 +83,20 @@ public class Session {
 
   private static final Logger logger = LoggerFactory.getLogger(Session.class);
   
+  private static final Map<String, XsltExecutable> xsltExecCache = new ConcurrentHashMap<String, XsltExecutable>();
+  private static final Map<String, XQueryExecutable> xqueryExecCache = new ConcurrentHashMap<String, XQueryExecutable>();
+  
   private final XMLIndex index;
   private final Configuration conf;
   private IndexSearcher indexSearcher;
   private final XMLIndexTreeInfo treeInfo;
   private boolean isOpen;
+  private final boolean developmentMode; 
   private final Map<QName, XdmValue> params = new HashMap<QName, XdmValue>();
   
   public Session(XMLIndex index) {
     this.index = index;
+    this.developmentMode = index.getConfiguration().getDevelopmentMode();
     this.conf = index.getSaxonConfiguration();
     this.treeInfo = new XMLIndexTreeInfo(this);
     this.params.put(Definitions.PARAM_SESSION_QN, XdmValue.wrap(new ObjectValue<Session>(this)));
@@ -133,18 +138,25 @@ public class Session {
     return indexSearcher;
   }
   
-  public void transform(Source stylesheet, Destination dest, Map<QName, XdmValue> params, 
-      ErrorListener errorListener, MessageListener messageListener, boolean explain) throws SaxonApiException {
+  public void transform(Source stylesheet, Destination dest, Map<QName, XdmValue> params, ErrorListener errorListener, 
+      MessageListener messageListener, String cacheKey, boolean explain) throws SaxonApiException {
     checkOpen();
-    XsltCompiler comp = index.getSaxonProcessor().newXsltCompiler();
-    if (errorListener != null)
-      comp.setErrorListener(errorListener);
-    XsltExecutable exec = comp.compile(stylesheet);
+    XsltExecutable exec = null;
+    if (!developmentMode && cacheKey != null)
+      exec = xsltExecCache.get(cacheKey);
+    if (exec == null) {
+      XsltCompiler comp = index.getSaxonProcessor().newXsltCompiler();
+      if (errorListener != null)
+        comp.setErrorListener(errorListener);  
+      exec = comp.compile(stylesheet);
+      if (!developmentMode)
+        xsltExecCache.put(cacheKey, exec);
+    }
     if (explain) {
       exec.explain(dest);
       return;
     }
-    /* TODO: cache compiled stylesheet */
+    
     Xslt30Transformer transformer = exec.load30();
     Map<QName, XdmValue> combinedParams;
     if (params == null)
@@ -162,21 +174,28 @@ public class Session {
     transformer.applyTemplates(treeInfo.getRootNode(), dest);
   }
   
-  public void transform(Source stylesheet, Destination dest, Map<QName, XdmValue> params, 
-      ErrorListener errorListener, MessageListener messageListener) throws SaxonApiException {
-    transform(stylesheet, dest, params, errorListener, messageListener, false);
+  public void transform(Source stylesheet, Destination dest, Map<QName, XdmValue> params, ErrorListener errorListener, 
+      MessageListener messageListener, String cacheKey) throws SaxonApiException {
+    transform(stylesheet, dest, params, errorListener, messageListener, cacheKey, false);
   }
     
-  public void query(Reader xquery, URI baseURI, Destination dest, Map<QName, XdmValue> params, 
-      ErrorListener errorListener, MessageListener messageListener, boolean explain) throws IOException, SaxonApiException {
+  public void query(Reader xquery, URI baseURI, Destination dest, Map<QName, XdmValue> params, ErrorListener errorListener, 
+      MessageListener messageListener, String cacheKey, boolean explain) throws IOException, SaxonApiException {
     checkOpen();
-    XQueryCompiler comp = index.getSaxonProcessor().newXQueryCompiler();
-    if (baseURI != null)
-      comp.setBaseURI(baseURI);
-    if (errorListener != null)
-      comp.setErrorListener(errorListener);
-    XQueryExecutable exec = comp.compile(xquery);
-    XMLIndexOptimizer.optimize(exec.getUnderlyingCompiledQuery().getExpression());
+    XQueryExecutable exec = null;
+    if (!developmentMode && cacheKey != null)
+      exec = xqueryExecCache.get(cacheKey);
+    if (exec == null) {
+      XQueryCompiler comp = index.getSaxonProcessor().newXQueryCompiler();
+      if (baseURI != null)
+        comp.setBaseURI(baseURI);
+      if (errorListener != null)
+        comp.setErrorListener(errorListener);
+      exec = comp.compile(xquery);
+      XMLIndexOptimizer.optimize(exec.getUnderlyingCompiledQuery().getExpression());
+      if (!developmentMode)
+        xqueryExecCache.put(cacheKey, exec);
+    }
     if (explain) {
       exec.explain(dest);
       return;
@@ -198,24 +217,28 @@ public class Session {
     evaluator.run(dest);
   }
   
-  public void query(Reader xquery, URI baseURI, Destination dest, Map<QName, XdmValue> params, 
-      ErrorListener errorListener, MessageListener messageListener) throws IOException, SaxonApiException {
-    query(xquery, baseURI, dest, params, errorListener, messageListener, false);
+  public void query(Reader xquery, URI baseURI, Destination dest, Map<QName, XdmValue> params, ErrorListener errorListener, 
+      MessageListener messageListener, String cacheKey) throws IOException, SaxonApiException {
+    query(xquery, baseURI, dest, params, errorListener, messageListener, cacheKey, false);
   }
   
-  public void query(File queryFile, Destination dest, Map<QName, XdmValue> params, 
-      ErrorListener errorListener, MessageListener messageListener, boolean explain) throws IOException, SaxonApiException {
+  public void query(File queryFile, Destination dest, Map<QName, XdmValue> params, ErrorListener errorListener, 
+      MessageListener messageListener, String cacheKey, boolean explain) throws IOException, SaxonApiException {
     Reader reader = new InputStreamReader(new FileInputStream(queryFile), StandardCharsets.UTF_8);
     try {
-      query(reader, queryFile.toURI(), dest, params, errorListener, messageListener, explain);
+      query(reader, queryFile.toURI(), dest, params, errorListener, messageListener, cacheKey, explain);
     } finally {
       reader.close();
     }
   }
   
-  public void query(File queryFile, Destination dest, Map<QName, XdmValue> params, 
-      ErrorListener errorListener, MessageListener messageListener) throws IOException, SaxonApiException {
-    query(queryFile, dest, params, errorListener, messageListener, false);
+  public void query(File queryFile, Destination dest, Map<QName, XdmValue> params, ErrorListener errorListener, 
+      MessageListener messageListener, String cacheKey) throws IOException, SaxonApiException {
+    query(queryFile, dest, params, errorListener, messageListener, cacheKey, false);
+  }
+  
+  public org.w3c.dom.Document getDOMDocument() {
+    return (org.w3c.dom.Document) NodeOverNodeInfo.wrap(treeInfo.getRootNode());
   }
   
   /* NodeStore operations: */
@@ -353,10 +376,13 @@ public class Session {
   public void reindexVirtualAttributeDefTypedValueDef(VirtualAttributeDef def) throws IOException {
     logger.info("Reindexing virtual attribute definition \"" + def.getVirtualAttributeName() + "\" ...");
     Builder queryBuilder = new BooleanQuery.Builder();
+    /*
+    TODO
     for (QName elemName : def.getElemNames()) {
       String fieldName = Type.ELEMENT + "_" + index.getNameCode(elemName.getNamespaceURI(), elemName.getLocalName());
       queryBuilder.add(new BooleanClause(new TermQuery(new Term(Definitions.FIELDNAME_FIELDNAMES, fieldName)), Occur.SHOULD));
     }
+    */
     indexSearcher.search(queryBuilder.build(), new ReindexCollector(this, index, def));
     commit(true);
     logger.info("Finished reindexing virtual attribute definition \"" + def.getVirtualAttributeName() + "\"");

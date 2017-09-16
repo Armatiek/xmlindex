@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -210,15 +211,15 @@ public class DocumentIndexer {
   }
   
   private void addVirtualAttributeFields(Document doc, XdmNode elem, XdmMap params) throws IOException, SaxonApiException {
-    VirtualAttributeDefConfig vad = index.getConfiguration().getVirtualAttributeConfig();
+    VirtualAttributeDefConfig vadc = index.getConfiguration().getVirtualAttributeConfig();
     vads.clear();
-    Map<String, VirtualAttributeDef> attrDefs = vad.getForElement(elem.getNodeName());  
+    Collection<VirtualAttributeDef> attrDefs = vadc.getForElement(elem);  
     if (attrDefs != null)
-      vads.addAll(attrDefs.values());
+      vads.addAll(attrDefs);
     if (elem.getParent().getNodeKind() == XdmNodeKind.DOCUMENT) {
-      attrDefs = vad.getForElement(Definitions.QNAME_VA_BINDING_DOCUMENT_ELEMENT);  
+      attrDefs = vadc.getBuiltInVirtualAttributeDef().getVirtualAttributes(); 
       if (attrDefs != null)
-        vads.addAll(attrDefs.values());
+        vads.addAll(attrDefs);
     }
       
     if (vads.isEmpty())
@@ -227,9 +228,9 @@ public class DocumentIndexer {
     for (VirtualAttributeDef attrDef : vads) {
       XdmValue values = null;
       XdmValue[] args = null;
-      if (attrDef.getFunctionName().getLocalName().startsWith("_") || vad.functionExists(attrDef.getFunctionName(), 2))
+      if (attrDef.getFunctionName().getLocalName().startsWith("_") || vadc.functionExists(attrDef.getFunctionName(), 2))
         args = new XdmValue[] { elem, params == null ? XdmEmptySequence.getInstance() : params };
-      else if (vad.functionExists(attrDef.getFunctionName(), 1))
+      else if (vadc.functionExists(attrDef.getFunctionName(), 1))
         args = new XdmValue[] { elem };
       else {
         logger.warn("No virtual attribute function with name \"" + attrDef.getFunctionName().getEQName() + "\" found with one or two arguments");

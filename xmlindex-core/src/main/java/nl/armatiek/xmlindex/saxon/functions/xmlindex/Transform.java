@@ -137,7 +137,7 @@ public class Transform extends ExtensionFunctionDefinition {
               stopwatch = new StopWatch();
               stopwatch.start();
             }
-            session.transform(new StreamSource(xslFile), dest, params, errorListener, null);
+            session.transform(new StreamSource(xslFile), dest, params, errorListener, null, path);
             if (timing) {
               stopwatch.stop();
               duration =  Int64Value.makeIntegerValue(stopwatch.getTime(TimeUnit.MICROSECONDS));

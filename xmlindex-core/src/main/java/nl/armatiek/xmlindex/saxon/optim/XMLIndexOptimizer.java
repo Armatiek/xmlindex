@@ -20,7 +20,6 @@ package nl.armatiek.xmlindex.saxon.optim;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.slf4j.Logger;
@@ -61,7 +60,6 @@ import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.pattern.NameTest;
 import net.sf.saxon.pattern.NodeKindTest;
 import net.sf.saxon.pattern.NodeTest;
-import net.sf.saxon.s9api.QName;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.type.AtomicType;
 import net.sf.saxon.type.BuiltInAtomicType;
@@ -77,9 +75,9 @@ import nl.armatiek.xmlindex.plugins.index.PluggableIndex;
 import nl.armatiek.xmlindex.plugins.index.PluggableIndexExtensionFunctionCall;
 import nl.armatiek.xmlindex.query.BooleanQueryDef;
 import nl.armatiek.xmlindex.query.ComparisonQueryDef;
-import nl.armatiek.xmlindex.query.PluggableIndexQueryDef;
 import nl.armatiek.xmlindex.query.ExistsQueryDef;
 import nl.armatiek.xmlindex.query.FullTextQueryDef;
+import nl.armatiek.xmlindex.query.PluggableIndexQueryDef;
 import nl.armatiek.xmlindex.query.QueryDef;
 import nl.armatiek.xmlindex.query.QueryDefWithRelation;
 import nl.armatiek.xmlindex.query.StringFunctionQueryDef;
@@ -109,11 +107,33 @@ public class XMLIndexOptimizer extends Optimizer {
         ((ae = (AxisExpression) expr)).getAxis() == AxisInfo.ATTRIBUTE && isAttributeNameTest(ae.getNodeTest());
   }
   
+  /*
+  private boolean isSupportedElementNodeTest(NodeTest nodeTest) {
+    if (nodeTest instanceof CombinedNodeTest) {
+      CombinedNodeTest cnt = (CombinedNodeTest) nodeTest;
+      return isSupportedElementNodeTest(cnt.getComponentNodeTests()[0]) && isSupportedElementNodeTest(cnt.getComponentNodeTests()[1]); 
+    }
+    return isElementNameTest(nodeTest) || isElementNodeTest(nodeTest);
+  }
+  */
+  
   private boolean isElementNameTest(NodeTest nodeTest) {
+    /*
+    if (nodeTest instanceof CombinedNodeTest) {
+      CombinedNodeTest cnt = (CombinedNodeTest) nodeTest;
+      return isElementNameTest(cnt.getComponentNodeTests()[0]) && isElementNameTest(cnt.getComponentNodeTests()[1]); 
+    }
+    */
     return (nodeTest instanceof NameTest) && ((NameTest) nodeTest).getNodeKind() == Type.ELEMENT;
   }
   
   private boolean isElementNodeTest(NodeTest nodeTest) {
+    /*
+    if (nodeTest instanceof CombinedNodeTest) {
+      CombinedNodeTest cnt = (CombinedNodeTest) nodeTest;
+      return isElementNodeTest(cnt.getComponentNodeTests()[0]) && isElementNodeTest(cnt.getComponentNodeTests()[1]); 
+    }
+    */
     return (nodeTest instanceof NodeKindTest) && ((NodeKindTest) nodeTest).getNodeKind() == Type.ELEMENT;
   }
   
@@ -228,7 +248,8 @@ public class XMLIndexOptimizer extends Optimizer {
     ItemType itemType = null;
     
     NodeTest baseNodeTest = base.getNodeTest();
-    if (!isElementNameTest(baseNodeTest) /* && !isElementNodeTest(baseNodeTest) */)
+    if (!isElementNameTest(baseNodeTest) && !isElementNodeTest(baseNodeTest))
+    // if (!isSupportedElementNodeTest(baseNodeTest))
       throw new OptimizationFailureException("The base axis expression does not select elements on fully qualified names");
       
     if (fieldExpression instanceof ContextItemExpression) { 
@@ -263,21 +284,17 @@ public class XMLIndexOptimizer extends Optimizer {
       }
       
       if (namespaceUri.equals(Definitions.NAMESPACE_VIRTUALATTR)) {
-        StructuredQName baseName = baseNodeTest.getMatchingNodeName();
-        Map<String, VirtualAttributeDef> attrDefs = index.getConfiguration().getVirtualAttributeConfig().getForElement(new QName(baseName.getURI(), baseName.getLocalPart()));
-        VirtualAttributeDef attrDef;
-        if (attrDefs == null || (attrDef = attrDefs.get(localPart)) == null)
-          throw new XMLIndexException("Virtual attribute definition \"" + localPart + "\" not "
-              + "found for contextitem {" + baseName.getURI() + "}" + baseName.getLocalPart());
-        // fieldName = attrDef.getVirtualAttributeName();
-        fieldName = getFieldName(Node.ATTRIBUTE_NODE, Definitions.NAMESPACE_VIRTUALATTR, attrDef.getVirtualAttributeName(), itemType);
-        if (attrDef.getQueryAnalyzer() != null) {
+        VirtualAttributeDef vad = index.getConfiguration().getVirtualAttributeConfig().getVirtualAttributeDef(localPart);
+        if (vad == null)
+          throw new XMLIndexException("Virtual attribute \"" + localPart + "\" not defined");
+        fieldName = getFieldName(Node.ATTRIBUTE_NODE, Definitions.NAMESPACE_VIRTUALATTR, localPart, itemType);
+        if (vad.getQueryAnalyzer() != null) {
           if (operator != Token.FEQ && operator != Token.EQUALS)
             throw new XPathException(String.format("Only the operator \"=\" is supported in the "
                 + "full text search expression \"%s\"", fieldExpression.toShortString()));
-          return new FullTextQueryDef(index, fieldName, valueExpression, attrDef.getQueryAnalyzer(), relation);
+          return new FullTextQueryDef(index, fieldName, valueExpression, vad.getQueryAnalyzer(), relation);
         }
-        itemType = attrDef.getItemType();
+        itemType = vad.getItemType();
       } else {
         TypedValueDef tvd = index.getConfiguration().getTypedValueConfig().get(Type.ATTRIBUTE, attrName.getURI(), attrName.getLocalPart());
         if (tvd != null) {

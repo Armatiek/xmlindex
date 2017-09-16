@@ -135,7 +135,7 @@ public class Query extends ExtensionFunctionDefinition {
               stopwatch = new StopWatch();
               stopwatch.start();
             }
-            session.query(xqueryFile, dest, params, errorListener, null);
+            session.query(xqueryFile, dest, params, errorListener, null, path);
             if (timing) {
               stopwatch.stop();
               duration =  Int64Value.makeIntegerValue(stopwatch.getTime(TimeUnit.MICROSECONDS));

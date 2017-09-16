@@ -143,7 +143,7 @@ public class QueryAdHoc extends ExtensionFunctionDefinition {
               stopwatch = new StopWatch();
               stopwatch.start();
             }
-            session.query(new StringReader(xquery), baseURI, dest, params, errorListener, null);
+            session.query(new StringReader(xquery), baseURI, dest, params, errorListener, null, null);
             if (timing) {
               stopwatch.stop();
               duration =  Int64Value.makeIntegerValue(stopwatch.getTime(TimeUnit.MICROSECONDS));
