@@ -19,10 +19,19 @@ package nl.armatiek.xmlindex.saxon.functions.xmlindex;
 
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
+import net.sf.saxon.expr.StaticProperty;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.lib.ExtensionFunctionDefinition;
+import net.sf.saxon.ma.map.HashTrieMap;
+import net.sf.saxon.ma.map.KeyValuePair;
+import net.sf.saxon.ma.map.MapType;
 import net.sf.saxon.om.Sequence;
+import net.sf.saxon.om.SequenceTool;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.om.ZeroOrOne;
 import net.sf.saxon.trans.XPathException;
@@ -50,17 +59,21 @@ public class ImportDocuments extends ExtensionFunctionDefinition {
 
   @Override
   public int getMinimumNumberOfArguments() {
-    return 1;
+    return 4;
   }
 
   @Override
   public int getMaximumNumberOfArguments() {
-    return 3;
+    return 4;
   }
 
   @Override
   public SequenceType[] getArgumentTypes() {
-    return new SequenceType[] { SequenceType.SINGLE_STRING, SequenceType.SINGLE_INTEGER, SequenceType.SINGLE_STRING };
+    return new SequenceType[] { 
+        SequenceType.SINGLE_STRING, 
+        SequenceType.SINGLE_INTEGER,
+        SequenceType.SINGLE_BOOLEAN,
+        SequenceType.makeSequenceType(MapType.ANY_MAP_TYPE, StaticProperty.ALLOWS_ZERO_OR_ONE)};
   }
 
   @Override
@@ -80,22 +93,39 @@ public class ImportDocuments extends ExtensionFunctionDefinition {
   
   private static class ImportDocumentsCall extends XMLIndexExtensionFunctionCall {
 
+    public Map<String, FileConvertor> mapToFileSpecs(XPathContext context, HashTrieMap map) throws XPathException {
+      if (map == null)
+        return null;
+      HashMap<String, FileConvertor> fileSpecs = new HashMap<String, FileConvertor>();
+      Iterator<KeyValuePair> iter =  map.iterator();
+      while (iter.hasNext()) {
+        KeyValuePair pair = iter.next();
+        String regEx = ((StringValue) pair.key).getStringValue();
+        String convertorName = SequenceTool.getStringValue(pair.value);
+        FileConvertor convertor = null;
+        if (StringUtils.isNotBlank(convertorName)) {
+          convertor = getSession(context).getIndex().getConfiguration().getPluggableFileConvertorConfig().getByName(convertorName);
+          if (convertor == null)
+            throw new XPathException("File convertor \"" + convertorName + "\" not found in configuration");
+        }
+        fileSpecs.put(regEx, convertor);
+      }
+      return fileSpecs;
+    }
+    
     @Override
     public ZeroOrOne<BooleanValue> call(XPathContext context, Sequence[] arguments) throws XPathException {            
       String path = ((StringValue) arguments[0].head()).getStringValue();
-      int length = arguments.length;
-      int maxDepth = Integer.MAX_VALUE;
-      String pattern = null;
-      if (length > 1)
-        maxDepth = (int) ((Int64Value) arguments[1].head()).longValue();
-      if (length > 2)
-        pattern = ((StringValue) arguments[2].head()).getStringValue();
       try {
-        HashMap<String, FileConvertor> fileSpecs = new HashMap<String, FileConvertor>();
-        fileSpecs.put(pattern, null);
-        getSession(context).addDocuments(Paths.get(path), maxDepth, fileSpecs, true, null);
-        getSession(context).commit();
+        int maxDepth = (int) ((Int64Value) arguments[1].head()).longValue();
+        boolean addDirectories = ((BooleanValue) arguments[2].head()).getBooleanValue();
+        Map<String, FileConvertor> fileSpecs = mapToFileSpecs(context, (HashTrieMap) arguments[3].head());
+        if (maxDepth < 0) maxDepth = Integer.MAX_VALUE;
+        getSession(context).addDocuments(Paths.get(path), maxDepth, fileSpecs, addDirectories, null);
+        getSession(context).commit(true);
         return ZeroOrOne.empty();
+      } catch (XPathException xpe) {
+        throw xpe;
       } catch (Exception e) {
         throw new XPathException("Error importing documents from \"" + path + "\"", e);
       }

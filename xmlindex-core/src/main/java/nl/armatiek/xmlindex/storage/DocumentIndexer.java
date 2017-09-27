@@ -63,7 +63,7 @@ import nl.armatiek.xmlindex.Session;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.conf.TypedValueDef;
-import nl.armatiek.xmlindex.conf.VirtualAttributeDef;
+import nl.armatiek.xmlindex.conf.VirtualAttribute;
 import nl.armatiek.xmlindex.conf.VirtualAttributeDefConfig;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.node.HierarchyNode;
@@ -105,7 +105,7 @@ public class DocumentIndexer {
   private final StoredField docLeftField_sf = new StoredField(Definitions.FIELDNAME_DOCLEFT, (long) 0);
   private final StoredField docRightField_sf = new StoredField(Definitions.FIELDNAME_DOCRIGHT, (long) 0);
   private final StringField baseUriField = new StringField(Definitions.FIELDNAME_BASEURI, "", Field.Store.NO);
-  private final List<VirtualAttributeDef> vads = new ArrayList<VirtualAttributeDef>();
+  private final List<VirtualAttribute> vads = new ArrayList<VirtualAttribute>();
   
   private final Map<XdmNode, UserData> userDataMap = new HashMap<XdmNode, UserData>();
   private NamespaceBinding[] namespaceBindings = new NamespaceBinding[12];
@@ -166,7 +166,7 @@ public class DocumentIndexer {
     IndexableField field = null;
     int nodeType = node.getUnderlyingNode().getNodeKind();
     QName nodeName = node.getNodeName();
-    TypedValueDef tvd = index.getConfiguration().getTypedValueConfig().get(nodeType, 
+    TypedValueDef tvd = index.getConfiguration().getTypedValueConfig().getTypedValueDef(nodeType, 
         nodeName.getNamespaceURI(), nodeName.getLocalName());
     if (tvd == null)
       return;
@@ -213,7 +213,7 @@ public class DocumentIndexer {
   private void addVirtualAttributeFields(Document doc, XdmNode elem, XdmMap params) throws IOException, SaxonApiException {
     VirtualAttributeDefConfig vadc = index.getConfiguration().getVirtualAttributeConfig();
     vads.clear();
-    Collection<VirtualAttributeDef> attrDefs = vadc.getForElement(elem);  
+    Collection<VirtualAttribute> attrDefs = vadc.getForElement(elem);  
     if (attrDefs != null)
       vads.addAll(attrDefs);
     if (elem.getParent().getNodeKind() == XdmNodeKind.DOCUMENT) {
@@ -225,7 +225,7 @@ public class DocumentIndexer {
     if (vads.isEmpty())
       return;
     
-    for (VirtualAttributeDef attrDef : vads) {
+    for (VirtualAttribute attrDef : vads) {
       XdmValue values = null;
       XdmValue[] args = null;
       if (attrDef.getFunctionName().getLocalName().startsWith("_") || vadc.functionExists(attrDef.getFunctionName(), 2))
@@ -510,12 +510,16 @@ public class DocumentIndexer {
     newDoc.add(baseUriField);
     baseUriMap.put(new Long(docLeft), baseUri);
   
+    NameStore nameStore = index.getNameStore();
     Iterator<IndexableField> fields = doc.iterator();
     while (fields.hasNext()) {
       IndexableField field = fields.next();
       String fieldName = field.name();
       
       if (CharUtils.isAsciiNumeric(fieldName.charAt(0)) && StringUtils.countMatches(fieldName, "_") == 1) {
+        int nameCode = Integer.parseInt(StringUtils.substringAfter(fieldName, "_"));
+        if (nameStore.isNonBuiltInVirtualAttributeName(nameCode))
+          continue;
         String value = field.stringValue();
         newDoc.add(new StoredField(fieldName, value));
         if (StringUtils.isNotBlank(value)) {
@@ -593,8 +597,6 @@ public class DocumentIndexer {
     
     for (PluggableIndex pluggableIndex : index.getConfiguration().getPluggableIndexConfig().getIndexes())
       pluggableIndex.indexElement(newDoc, node);
-    
-    // Term term = new Term(Definitions.FIELDNAME_LEFT, Long.toString(((HierarchyNode) indexNode).left));
     
     this.index.getNodeStore().deleteLuceneDocument(LongPoint.newExactQuery(Definitions.FIELDNAME_LEFT, ((HierarchyNode) indexNode).left));
     this.index.getNodeStore().addLuceneDocument(newDoc);

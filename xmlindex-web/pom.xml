@@ -21,18 +21,6 @@
       <groupId>nl.armatiek.xmlindex</groupId>
       <artifactId>xmlindex-core</artifactId>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>nl.armatiek.xmlindex</groupId>
-      <artifactId>xmlindex-spatial</artifactId>
-    </dependency>
-    -->
-    <!--
-    <dependency>
-      <groupId>nl.armatiek.xmlindex</groupId>
-      <artifactId>xmlindex-convertor-tika</artifactId>
-    </dependency>
-    -->
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>

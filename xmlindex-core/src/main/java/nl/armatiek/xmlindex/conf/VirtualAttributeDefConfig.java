@@ -45,14 +45,9 @@ import nl.armatiek.xmlindex.utils.XMLUtils;
 
 public class VirtualAttributeDefConfig extends ConfigBase {
   
-  private final String[][] STANDARD_ATTRS = {{"file-path", "string"}, {"file-parent-path", "string"}, 
-      {"file-name", "string"}, {"file-creation-time", "dateTime"}, {"file-last-modified-time", "dateTime"}, 
-      {"file-last-access-time", "dateTime"}, {"file-size", "long"}, {"file-is-symbolic-link", "boolean"},
-      {"file-extension", "string"}, {"file-is-file", "boolean"}};
-  
-  private final List<VirtualAttributeDef2> virtualAttributeDefs = new ArrayList<VirtualAttributeDef2>();
+  private final Map<String, VirtualAttributeDef> virtualAttributeDefs = new HashMap<String, VirtualAttributeDef>();
   private BuiltInVirtualAttributeDef builtInVirtualAttributeDef;
-  private final HashMap<String, VirtualAttributeDef> virtualAttributes = new HashMap<String, VirtualAttributeDef>();
+  private final HashMap<String, VirtualAttribute> virtualAttributes = new HashMap<String, VirtualAttribute>();
   
   private final Map<String, Analyzer> analyzerPerField;
   private final XMLIndex index;
@@ -75,10 +70,10 @@ public class VirtualAttributeDefConfig extends ConfigBase {
     reloadBuiltInXQueryModule(processor);
     
     while (virtualAttributeDefElem != null) {
-      VirtualAttributeDef2 virtualAttributeDef = new VirtualAttributeDef2(index, processor, virtualAttributeDefElem, 
+      VirtualAttributeDef virtualAttributeDef = new VirtualAttributeDef(index, processor, virtualAttributeDefElem, 
           analyzerConfigPath, virtualAttrsEvaluator);
-      Collection<VirtualAttributeDef> vads = virtualAttributeDef.getVirtualAttributes();
-      for (VirtualAttributeDef vad : vads) {
+      Collection<VirtualAttribute> vads = virtualAttributeDef.getVirtualAttributes();
+      for (VirtualAttribute vad : vads) {
         if (!functionExists(vad.getFunctionName(), 1) && !functionExists(vad.getFunctionName(), 2))
           throw new XMLIndexException("Error loading virtual attribute defintions. The virtual attribute function \"" + vad.getFunctionName().getEQName() + "\""
               + " that was configured in \"" + Definitions.FILENAME_INDEXCONFIG + "\" was not defined in \"" + Definitions.FILENAME_VIRTATTRMODULE + "\".");
@@ -86,19 +81,19 @@ public class VirtualAttributeDefConfig extends ConfigBase {
           analyzerPerField.put(vad.getVirtualAttributeName(), vad.getIndexAnalyzer());
         virtualAttributes.put(vad.getVirtualAttributeName(), vad);
       }
-      virtualAttributeDefs.add(virtualAttributeDef);
+      virtualAttributeDefs.put(virtualAttributeDef.getName(), virtualAttributeDef);
       virtualAttributeDefElem = XMLUtils.getNextSiblingElement(virtualAttributeDefElem);
     }
     
     loadBuiltInVirtualAttributeDef();
   }
   
-  public Collection<VirtualAttributeDef> getForElement(XdmNode node) throws SaxonApiException {
-    List<VirtualAttributeDef> vads = null;
-    for (VirtualAttributeDef2 vad : virtualAttributeDefs) {
+  public Collection<VirtualAttribute> getForElement(XdmNode node) throws SaxonApiException {
+    List<VirtualAttribute> vads = null;
+    for (VirtualAttributeDef vad : virtualAttributeDefs.values()) {
       if (vad.matches(node)) {
         if (vads == null)
-          vads = new ArrayList<VirtualAttributeDef>();
+          vads = new ArrayList<VirtualAttribute>();
         vads.addAll(vad.getVirtualAttributes());
       }
     }
@@ -109,7 +104,11 @@ public class VirtualAttributeDefConfig extends ConfigBase {
     return builtInVirtualAttributeDef;
   }
   
-  public VirtualAttributeDef getVirtualAttributeDef(String virtualAttributeName) {
+  public VirtualAttributeDef getVirtualAttributeDef(String name) {
+    return virtualAttributeDefs.get(name);
+  }
+  
+  public VirtualAttribute getVirtualAttribute(String virtualAttributeName) {
     return virtualAttributes.get(virtualAttributeName);
   }
   
@@ -146,10 +145,9 @@ public class VirtualAttributeDefConfig extends ConfigBase {
   
   private void loadBuiltInVirtualAttributeDef() throws SaxonApiException {
     builtInVirtualAttributeDef = new BuiltInVirtualAttributeDef(index, processor, buildInVirtualAttrsEvaluator);
-    for (String[] attr : STANDARD_ATTRS) {
-      VirtualAttributeDef vad =  
-          new VirtualAttributeDef(
-            index, 
+    for (String[] attr : Definitions.STANDARD_ATTRS) {
+      VirtualAttribute vad =  
+          new VirtualAttribute(
             attr[0], 
             new QName(Definitions.NAMESPACE_VIRTUALATTR, "_" + attr[0]), 
             Type.getBuiltInItemType(XMLConstants.W3C_XML_SCHEMA_NS_URI, attr[1]), 

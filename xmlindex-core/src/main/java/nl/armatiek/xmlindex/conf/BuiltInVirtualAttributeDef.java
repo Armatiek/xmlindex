@@ -7,7 +7,7 @@ import net.sf.saxon.s9api.XPathExecutable;
 import net.sf.saxon.s9api.XQueryEvaluator;
 import nl.armatiek.xmlindex.XMLIndex;
 
-public class BuiltInVirtualAttributeDef extends VirtualAttributeDef2 {
+public class BuiltInVirtualAttributeDef extends VirtualAttributeDef {
 
   public BuiltInVirtualAttributeDef(XMLIndex index, Processor processor, 
       XQueryEvaluator eval) throws SaxonApiException {
@@ -17,7 +17,7 @@ public class BuiltInVirtualAttributeDef extends VirtualAttributeDef2 {
     selector = exec.load();
   }
   
-  public void addVirtualAttribute(VirtualAttributeDef vad) {
+  public void addVirtualAttribute(VirtualAttribute vad) {
     virtualAttributes.add(vad);
   }
   

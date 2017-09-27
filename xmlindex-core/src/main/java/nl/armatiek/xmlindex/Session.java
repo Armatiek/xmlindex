@@ -27,17 +27,19 @@ import java.io.Reader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.xml.stream.XMLOutputFactory;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.Source;
 
+import org.apache.commons.io.output.NullOutputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -48,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.dom.NodeOverNodeInfo;
 import net.sf.saxon.om.AxisInfo;
+import net.sf.saxon.om.NamespaceBinding;
 import net.sf.saxon.om.StructuredQName;
 import net.sf.saxon.pattern.NodeKindTest;
 import net.sf.saxon.s9api.Destination;
@@ -62,6 +65,7 @@ import net.sf.saxon.s9api.XdmValue;
 import net.sf.saxon.s9api.Xslt30Transformer;
 import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.s9api.XsltExecutable;
+import net.sf.saxon.stax.XMLStreamWriterDestination;
 import net.sf.saxon.tree.iter.AxisIterator;
 import net.sf.saxon.type.Type;
 import net.sf.saxon.value.ObjectValue;
@@ -365,27 +369,48 @@ public class Session {
   
   /* Reindex operations */
   public void reindexTypedValueDef(TypedValueDef def) throws IOException {
-    logger.info("Reindexing typed value definition with node type \"" + def.getNodeType() + "\", qualified name \"" + def.getQName().getClarkName() + "\" and item type \"" + def.getItemType() + "\" ...");
+    logger.info("Reindexing typed value definition with node type \"" + def.getNodeType() + "\", qualified name \"" + def.getNodeName().getClarkName() + "\" and item type \"" + def.getItemType() + "\" ...");
     String fieldName = def.getNodeType() + "_" + index.getNameCode(def.getNamespaceUri(), def.getLocalPart());
     TermQuery query = new TermQuery(new Term(Definitions.FIELDNAME_FIELDNAMES, fieldName));
     indexSearcher.search(query, new ReindexCollector(this, index, def));
     commit(true);
-    logger.info("Finished reindexing typed value definition with node type \"" + def.getNodeType() + "\", qualified name \"" + def.getQName().getClarkName() + "\" and item type \"" + def.getItemType() + "\"");
+    logger.info("Finished reindexing typed value definition with node type \"" + def.getNodeType() + "\", qualified name \"" + def.getNodeName().getClarkName() + "\" and item type \"" + def.getItemType() + "\"");
   }
   
-  public void reindexVirtualAttributeDefTypedValueDef(VirtualAttributeDef def) throws IOException {
-    logger.info("Reindexing virtual attribute definition \"" + def.getVirtualAttributeName() + "\" ...");
-    Builder queryBuilder = new BooleanQuery.Builder();
-    /*
-    TODO
-    for (QName elemName : def.getElemNames()) {
-      String fieldName = Type.ELEMENT + "_" + index.getNameCode(elemName.getNamespaceURI(), elemName.getLocalName());
-      queryBuilder.add(new BooleanClause(new TermQuery(new Term(Definitions.FIELDNAME_FIELDNAMES, fieldName)), Occur.SHOULD));
+  public void reindexVirtualAttributeDef(VirtualAttributeDef def) throws IOException {
+    logger.info("Reindexing virtual attribute definition \"" + def.getName() + "\" ...");
+    try {
+      StringBuilder query = new StringBuilder();
+      query.append("declare namespace func='" + Definitions.NAMESPACE_EXT_FUNCTIONS + "';\n");
+      for (NamespaceBinding b : def.getNamespaceBindings())
+        query.append("declare namespace ").append(b.getPrefix()).append('=').append("'").append(b.getURI()).append("';\n");
+      String selector = def.getPattern();
+      String[] clauses = StringUtils.split(selector, "|"); // TODO: check on | within filters
+      ArrayList<String> fors = new ArrayList<String>();
+      for (String clause : clauses) {
+        clause = clause.trim();
+        String prefix = "";
+        if (selector.startsWith("//")) {
+        } else if (selector.startsWith("/")) {
+          prefix = "/*";
+        } else {
+          prefix = "//";
+        }
+        fors.add("for $a in " + prefix + clause + " return func:reindex-node($a)\n");
+      }
+      query.append('(').append(StringUtils.join(clauses, ",")).append(')');
+      XQueryCompiler comp = index.getSaxonProcessor().newXQueryCompiler();
+      XQueryExecutable exec = comp.compile(query.toString());
+      XMLIndexOptimizer.optimize(exec.getUnderlyingCompiledQuery().getExpression());
+      XQueryEvaluator evaluator = exec.load();
+      Map<Long, String> baseUriMap = new HashMap<Long, String>();
+      evaluator.setExternalVariable(Definitions.PARAM_BUM_QN, XdmValue.wrap(new ObjectValue<Map<Long, String>>(baseUriMap)));
+      evaluator.run(new XMLStreamWriterDestination(XMLOutputFactory.newFactory().createXMLStreamWriter(new NullOutputStream()))); 
+    } catch (Exception e) {
+      throw new IOException("Error reindexing virtual attribute definition \"" + def.getName() + "\"");
     }
-    */
-    indexSearcher.search(queryBuilder.build(), new ReindexCollector(this, index, def));
     commit(true);
-    logger.info("Finished reindexing virtual attribute definition \"" + def.getVirtualAttributeName() + "\"");
+    logger.info("Finished reindexing virtual attribute definition \"" + def.getName() + "\"");
   }
   
   public void reindexPluggableIndex(PluggableIndex pluggableIndex) throws IOException {

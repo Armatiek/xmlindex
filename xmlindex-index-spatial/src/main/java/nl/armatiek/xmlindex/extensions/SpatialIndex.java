@@ -142,7 +142,7 @@ public class SpatialIndex extends PluggableIndex {
   }
   
   @Override
-  public void init(Map<String, String> params) {
+  public void init(Map<String, String> params) throws Exception {
     super.init(params);
     fieldName = DEFAULT_FIELDNAME;
     prefixTreeMaxLevels = DEFAULT_MAXLEVELS;

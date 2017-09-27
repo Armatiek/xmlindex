@@ -68,7 +68,7 @@ import net.sf.saxon.type.Type;
 import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.conf.Definitions;
 import nl.armatiek.xmlindex.conf.TypedValueDef;
-import nl.armatiek.xmlindex.conf.VirtualAttributeDef;
+import nl.armatiek.xmlindex.conf.VirtualAttribute;
 import nl.armatiek.xmlindex.error.OptimizationFailureException;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.plugins.index.PluggableIndex;
@@ -257,7 +257,7 @@ public class XMLIndexOptimizer extends Optimizer {
       StructuredQName name = baseNodeTest.getMatchingNodeName();
       String namespaceUri = name.getURI();
       String localPart = name.getLocalPart();
-      TypedValueDef tvd = index.getConfiguration().getTypedValueConfig().get(Type.ELEMENT, namespaceUri, localPart);
+      TypedValueDef tvd = index.getConfiguration().getTypedValueConfig().getTypedValueDef(Type.ELEMENT, namespaceUri, localPart);
       if (tvd != null) {
         itemType = tvd.getItemType();
         ItemType valueType = valueExpression.getItemType();
@@ -284,7 +284,7 @@ public class XMLIndexOptimizer extends Optimizer {
       }
       
       if (namespaceUri.equals(Definitions.NAMESPACE_VIRTUALATTR)) {
-        VirtualAttributeDef vad = index.getConfiguration().getVirtualAttributeConfig().getVirtualAttributeDef(localPart);
+        VirtualAttribute vad = index.getConfiguration().getVirtualAttributeConfig().getVirtualAttribute(localPart);
         if (vad == null)
           throw new XMLIndexException("Virtual attribute \"" + localPart + "\" not defined");
         fieldName = getFieldName(Node.ATTRIBUTE_NODE, Definitions.NAMESPACE_VIRTUALATTR, localPart, itemType);
@@ -296,7 +296,7 @@ public class XMLIndexOptimizer extends Optimizer {
         }
         itemType = vad.getItemType();
       } else {
-        TypedValueDef tvd = index.getConfiguration().getTypedValueConfig().get(Type.ATTRIBUTE, attrName.getURI(), attrName.getLocalPart());
+        TypedValueDef tvd = index.getConfiguration().getTypedValueConfig().getTypedValueDef(Type.ATTRIBUTE, attrName.getURI(), attrName.getLocalPart());
         if (tvd != null) {
           itemType = tvd.getItemType();
           ItemType valueType = valueExpression.getItemType();

@@ -24,6 +24,7 @@ import nl.armatiek.xmlindex.conf.Definitions;
 
 public abstract class HierarchyNode extends Node {
   
+  public Document doc;
   public long left;
   public long right;
   public long docLeft = -1;
@@ -37,6 +38,7 @@ public abstract class HierarchyNode extends Node {
   
   public HierarchyNode(byte type, Document doc) { 
     super(type, ((StoredField) doc.getField(Definitions.FIELDNAME_PARENT)).numericValue().longValue());
+    this.doc = doc;
     this.left = ((StoredField) doc.getField(Definitions.FIELDNAME_LEFT)).numericValue().longValue();
     this.right = ((StoredField) doc.getField(Definitions.FIELDNAME_RIGHT)).numericValue().longValue();
     StoredField docLeftField = (StoredField) doc.getField(Definitions.FIELDNAME_DOCLEFT);

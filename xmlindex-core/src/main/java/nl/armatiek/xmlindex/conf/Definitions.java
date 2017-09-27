@@ -73,10 +73,28 @@ public class Definitions {
   public static final String NAMESPACE_DIRECTORY        = "http://www.armatiek.nl/xmlindex/directory";
   
   public static final StructuredQName PARAM_SESSION_SQN = new StructuredQName("", "http://www.armatiek.nl/xmlindex/param/session", "session");
+  public static final StructuredQName PARAM_BUM_SQN     = new StructuredQName("", "http://www.armatiek.nl/xmlindex/param/base-uri-map", "base-uri-map");
   public static final QName PARAM_SESSION_QN            = new QName("http://www.armatiek.nl/xmlindex/param/session", "session");
+  public static final QName PARAM_BUM_QN                = new QName("http://www.armatiek.nl/xmlindex/param/base-uri-map", "base-uri-map");
   
   // public static final QName QNAME_VA_BINDING_DOCUMENT_ELEMENT = new QName("root()");
     
   public static final String EOL                        = System.getProperty("line.separator");
+  
+  public static final String ATTRNAME_FILEPATH          = "file-path";
+  public static final String ATTRNAME_FILEPARENTPATH    = "file-parent-path";
+  public static final String ATTRNAME_FILENAME          = "file-name";
+  public static final String ATTRNAME_FILECREATIONTIME  = "file-creation-time";
+  public static final String ATTRNAME_FILEMODIFIEDTIME  = "file-last-modified-time";
+  public static final String ATTRNAME_FILEACCESSEDTIME  = "file-last-access-time";
+  public static final String ATTRNAME_FILESIZE          = "file-size";
+  public static final String ATTRNAME_FILEISSYMLINK     = "file-is-symbolic-link";
+  public static final String ATTRNAME_FILEEXTENSION     = "file-extension";
+  public static final String ATTRNAME_FILEISFILE        = "file-is-file";
+  
+  public static final String[][] STANDARD_ATTRS         = {{ATTRNAME_FILEPATH, "string"}, {ATTRNAME_FILEPARENTPATH, "string"}, 
+      {ATTRNAME_FILENAME, "string"}, {ATTRNAME_FILECREATIONTIME, "dateTime"}, {ATTRNAME_FILEMODIFIEDTIME, "dateTime"}, 
+      {ATTRNAME_FILEACCESSEDTIME, "dateTime"}, {ATTRNAME_FILESIZE, "long"}, {ATTRNAME_FILEISSYMLINK, "boolean"},
+      {ATTRNAME_FILEEXTENSION, "string"}, {ATTRNAME_FILEISFILE, "boolean"}};
   
 }

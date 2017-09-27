@@ -17,7 +17,7 @@ public abstract class XMLIndexPlugin {
     this.name = name;
   }
   
-  public void init(Map<String, String> params) {
+  public void init(Map<String, String> params) throws Exception {
     this.params = params;
   }
   

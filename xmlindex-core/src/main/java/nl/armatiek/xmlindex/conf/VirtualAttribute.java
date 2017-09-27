@@ -17,7 +17,6 @@
 
 package nl.armatiek.xmlindex.conf;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,15 +36,12 @@ import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.XQueryEvaluator;
 import net.sf.saxon.type.ItemType;
 import net.sf.saxon.type.Type;
-import nl.armatiek.xmlindex.Session;
-import nl.armatiek.xmlindex.XMLIndex;
 import nl.armatiek.xmlindex.error.XMLIndexException;
 import nl.armatiek.xmlindex.saxon.util.SaxonUtils;
 import nl.armatiek.xmlindex.utils.XMLUtils;
 
-public class VirtualAttributeDef {
+public class VirtualAttribute {
   
-  private final XMLIndex index;
   private final String virtualAttrName;
   private final QName functionName;
   private final ItemType itemType;
@@ -54,9 +50,8 @@ public class VirtualAttributeDef {
   private final boolean storeValue;
   private final XQueryEvaluator eval;
   
-  public VirtualAttributeDef(XMLIndex index, String virtualAttrName, QName functionName, ItemType itemType, 
+  public VirtualAttribute(String virtualAttrName, QName functionName, ItemType itemType, 
       boolean storeValue, XQueryEvaluator eval) {
-    this.index = index;
     this.virtualAttrName = virtualAttrName;
     this.functionName = functionName;
     this.itemType = itemType;
@@ -66,9 +61,8 @@ public class VirtualAttributeDef {
     this.eval = eval;
   }
   
-  public VirtualAttributeDef(XMLIndex index, Element virtualAttributeDefElem, Path analyzerConfigPath,
+  public VirtualAttribute(Element virtualAttributeDefElem, Path analyzerConfigPath,
       XQueryEvaluator eval) {
-    this.index = index;
     virtualAttrName = XMLUtils.getValueOfChildElementByLocalName(virtualAttributeDefElem, "virtual-attribute-name");
     functionName = SaxonUtils.getQName(XMLUtils.getChildElementByLocalName(virtualAttributeDefElem, "function-name"));
     String type = XMLUtils.getValueOfChildElementByLocalName(virtualAttributeDefElem, "item-type");
@@ -107,15 +101,6 @@ public class VirtualAttributeDef {
     return eval;
   }
 
-  public void reindex() throws IOException {
-    Session session = index.aquireSession();
-    try {  
-      session.reindexVirtualAttributeDefTypedValueDef(this);
-    } finally {
-      index.returnSession(session);
-    }
-  }
-  
   private Analyzer getAnalyzer(Element parentElem, String elemName, Path analyzerConfigPath) {
     Element analyzerElem = XMLUtils.getChildElementByLocalName(parentElem, elemName);
     if (analyzerElem != null)

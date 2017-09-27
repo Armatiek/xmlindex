@@ -77,6 +77,9 @@ import nl.armatiek.xmlindex.saxon.functions.xmlindex.LocalVariableReferencer;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.OwnerDocument;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.Query;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.QueryAdHoc;
+import nl.armatiek.xmlindex.saxon.functions.xmlindex.ReindexNode;
+import nl.armatiek.xmlindex.saxon.functions.xmlindex.ReindexTypedValueDef;
+import nl.armatiek.xmlindex.saxon.functions.xmlindex.ReindexVirtualAttributeDef;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.RemoveDocument;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.Transform;
 import nl.armatiek.xmlindex.saxon.functions.xmlindex.TransformAdHoc;
@@ -93,26 +96,28 @@ public class XMLIndexInitializer implements Initializer {
     configuration.setConfigurationProperty(FeatureKeys.SUPPRESS_XSLT_NAMESPACE_CHECK, Boolean.TRUE);
     
     /* XMLIndex */
-    registerFunction(new LocalVariableReferencer(), configuration);
-    registerFunction(new CopyToMemory(), configuration);
-    
-    registerFunction(new CreateIndex(), configuration);
     registerFunction(new AddDocument(), configuration);
+    registerFunction(new CreateIndex(), configuration);
     registerFunction(new Collection(), configuration);
     registerFunction(new Commit(), configuration);
+    registerFunction(new CopyToMemory(), configuration);
     registerFunction(new Document(), configuration);
     registerFunction(new DocumentAvailable(), configuration);
     registerFunction(new DocumentURI(), configuration);
-    registerFunction(new OwnerDocument(), configuration);
+    registerFunction(new ExplainQuery(), configuration);
+    registerFunction(new ExplainTransformation(), configuration);
+    registerFunction(new GetConfiguration(), configuration);
     registerFunction(new IndexRoot(), configuration);
+    registerFunction(new LocalVariableReferencer(), configuration);
+    registerFunction(new OwnerDocument(), configuration);
+    registerFunction(new ReindexNode(), configuration);
+    registerFunction(new ReindexTypedValueDef(), configuration);
+    registerFunction(new ReindexVirtualAttributeDef(), configuration);
     registerFunction(new RemoveDocument(), configuration);
     registerFunction(new Transform(), configuration);
     registerFunction(new TransformAdHoc(), configuration);
     registerFunction(new Query(), configuration);
     registerFunction(new QueryAdHoc(), configuration);
-    registerFunction(new ExplainQuery(), configuration);
-    registerFunction(new ExplainTransformation(), configuration);
-    registerFunction(new GetConfiguration(), configuration);
     
     /* EXPath File: */
     registerFunction(new Append(), configuration);

@@ -11,6 +11,7 @@
               <xs:element name="typed-value-def" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                   <xs:all>
+                    <xs:element name="name" type="xs:string"/>
                     <xs:element name="node-type" type="node-type"/>
                     <xs:element name="node-name" type="xs:QName"/>
                     <xs:element name="item-type" type="item-type"/>
@@ -19,6 +20,10 @@
               </xs:element>
             </xs:sequence>
           </xs:complexType>
+          <xs:unique name="unique-typed-value-def-name">
+            <xs:selector xpath="typed-value-def"/> 
+            <xs:field xpath="name"/> 
+          </xs:unique>
         </xs:element>
         <xs:element name="virtual-attribute-config" minOccurs="0">
           <xs:complexType>
@@ -26,6 +31,7 @@
               <xs:element name="virtual-attribute-def" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                   <xs:sequence>
+                    <xs:element name="name" type="xs:string"/>
                     <xs:element name="pattern" type="xs:string"/>
                     <xs:element name="virtual-attribute" minOccurs="0" maxOccurs="unbounded">
                       <xs:complexType>
@@ -44,6 +50,10 @@
               </xs:element>
             </xs:sequence>
           </xs:complexType>
+          <xs:unique name="unique-virtual-attribute-def-name">
+            <xs:selector xpath="virtual-attribute-def"/> 
+            <xs:field xpath="name"/> 
+          </xs:unique>
           <xs:unique name="unique-virtual-attribute-name">
             <xs:selector xpath="virtual-attribute-def/virtual-attribute"/> 
             <xs:field xpath="virtual-attribute-name"/> 
@@ -55,6 +65,10 @@
               <xs:element name="pluggable-index-def" type="plugin-type" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
           </xs:complexType>
+          <xs:unique name="unique-pluggable-index-def-name">
+            <xs:selector xpath="pluggable-index-def"/> 
+            <xs:field xpath="name"/> 
+          </xs:unique>
         </xs:element>
         <xs:element name="pluggable-file-convertor-config" minOccurs="0">
           <xs:complexType>
@@ -62,6 +76,10 @@
               <xs:element name="pluggable-file-convertor-def" type="plugin-type" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
           </xs:complexType>
+          <xs:unique name="unique-pluggable-file-convertor-def-name">
+            <xs:selector xpath="pluggable-file-convertor-def"/> 
+            <xs:field xpath="name"/> 
+          </xs:unique>
         </xs:element>
       </xs:all>
     </xs:complexType>

@@ -92,7 +92,8 @@ public class IDERestXqServlet extends AbstractRestXqServlet {
       RestXqDynamicContext dynamicContext;
       try {
         Map<QName, XdmValue> vars = getDefaultExternalVariables(req, resp);
-        boolean developmentMode = index.getConfiguration().getDevelopmentMode();
+        // boolean developmentMode = index.getConfiguration().getDevelopmentMode();
+        boolean developmentMode = true; // TODO
         vars.put(XI_DEV_MODE, XdmValue.wrap(BooleanValue.get(developmentMode)));
         if (session != null)
           vars.put(Definitions.PARAM_SESSION_QN, XdmValue.wrap(new ObjectValue<Session>(session)));

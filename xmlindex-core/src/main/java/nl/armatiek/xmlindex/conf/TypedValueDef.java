@@ -34,33 +34,41 @@ import nl.armatiek.xmlindex.utils.XMLUtils;
 
 public class TypedValueDef {
  
+  private final String name;
   private final XMLIndex index;
   private int nodeType;
-  private QName name;
+  private QName nodeName;
   private ItemType itemType;
   
+  /*
   public TypedValueDef(XMLIndex index, int nodeType, QName name, ItemType itemType) {
     this.index = index;
     this.nodeType = nodeType;
-    this.name = name;
+    this.nodeName = name;
     this.itemType = itemType;
   }
+  */
   
   public TypedValueDef(Element typedValueDefElem) {
     this.index = null;
+    this.name = XMLUtils.getValueOfChildElementByLocalName(typedValueDefElem, "name");
     nodeType = XMLUtils.toNodeType(XMLUtils.getValueOfChildElementByLocalName(typedValueDefElem, "node-type"));
-    name = SaxonUtils.getQName(XMLUtils.getChildElementByLocalName(typedValueDefElem, "node-name"));
+    nodeName = SaxonUtils.getQName(XMLUtils.getChildElementByLocalName(typedValueDefElem, "node-name"));
     String type = XMLUtils.getValueOfChildElementByLocalName(typedValueDefElem, "item-type");
     itemType = Type.getBuiltInItemType(XMLConstants.W3C_XML_SCHEMA_NS_URI, StringUtils.substringAfter(type, ":"));
   }
   
+  public String getName() {
+    return name;
+  }
+  
   public String getKey() {
-    return nodeType + name.getNamespaceURI() + name.getLocalName();
+    return nodeType + nodeName.getNamespaceURI() + nodeName.getLocalName();
   }
   
   @Override
   public int hashCode() {
-    String str = nodeType + "_" + name.getClarkName() + "_" + itemType.getPrimitiveType();
+    String str = nodeType + "_" + nodeName.getClarkName() + "_" + itemType.getPrimitiveType();
     return str.hashCode();
   }
 
@@ -73,23 +81,23 @@ public class TypedValueDef {
     return 
         def.getNodeType() == nodeType &&
         def.getItemType().getPrimitiveType() == itemType.getPrimitiveType() &&
-        def.name.equals(name);
+        def.nodeName.equals(nodeName);
   }
     
   public int getNodeType() {
     return nodeType;
   }
   
-  public QName getQName() {
-    return name;
+  public QName getNodeName() {
+    return nodeName;
   }
 
   public String getNamespaceUri() {
-    return name.getNamespaceURI();
+    return nodeName.getNamespaceURI();
   }
 
   public String getLocalPart() {
-    return name.getLocalName();
+    return nodeName.getLocalName();
   }
   
   public ItemType getItemType() {

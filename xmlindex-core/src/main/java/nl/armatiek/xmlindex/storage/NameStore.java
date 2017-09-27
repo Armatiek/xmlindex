@@ -154,6 +154,21 @@ public class NameStore {
     return code;
   }
   
+  public boolean hasVirtualAttributeURI(int nameCode) {
+    Name name = codeToNameMapping.get(nameCode);
+    return StringUtils.equals(Definitions.NAMESPACE_VIRTUALATTR, name.namespaceUri);
+  }
+  
+  public boolean isBuiltInVirtualAttributeName(int nameCode) {
+    Name name = codeToNameMapping.get(nameCode);
+    return StringUtils.equals(Definitions.NAMESPACE_VIRTUALATTR, name.namespaceUri) && name.localPart.startsWith("file-");
+  }
+  
+  public boolean isNonBuiltInVirtualAttributeName(int nameCode) {
+    Name name = codeToNameMapping.get(nameCode);
+    return StringUtils.equals(Definitions.NAMESPACE_VIRTUALATTR, name.namespaceUri) && !name.localPart.startsWith("file-");
+  }
+  
   public static final class Name {
     
     public String namespaceUri;

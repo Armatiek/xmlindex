@@ -28,7 +28,8 @@ import nl.armatiek.xmlindex.utils.XMLUtils;
 
 public class TypedValueDefConfig {
   
-  private final HashMap<String, TypedValueDef> typedValueDefs = new HashMap<String, TypedValueDef>(); 
+  private final HashMap<String, TypedValueDef> typedValueDefsByKey = new HashMap<String, TypedValueDef>(); 
+  private final HashMap<String, TypedValueDef> typedValueDefsByName = new HashMap<String, TypedValueDef>(); 
   
   public TypedValueDefConfig(Element configElem) {
     Element typedValueConfigElem = XMLUtils.getFirstChildElementByLocalName(configElem, "typed-value-config");
@@ -37,27 +38,32 @@ public class TypedValueDefConfig {
     Element typedValueDefElem = XMLUtils.getFirstChildElement(typedValueConfigElem);
     while (typedValueDefElem != null) {
       TypedValueDef typedValueDef = new TypedValueDef(typedValueDefElem);
-      typedValueDefs.put(typedValueDef.getKey(), typedValueDef);
+      typedValueDefsByName.put(typedValueDef.getName(), typedValueDef);
+      typedValueDefsByKey.put(typedValueDef.getKey(), typedValueDef);
       typedValueDefElem = XMLUtils.getNextSiblingElement(typedValueDefElem);
     } 
   }
   
   public Collection<TypedValueDef> get() {
-    return typedValueDefs.values();
+    return typedValueDefsByKey.values();
   }
   
-  public TypedValueDef get(int nodeType, QName name) {
+  public TypedValueDef getTypeValueDef(String name) {
+    return typedValueDefsByName.get(name);
+  }
+  
+  public TypedValueDef getTypedValueDef(int nodeType, QName name) {
     String key = nodeType + name.getNamespaceURI() + name.getLocalName();
-    return typedValueDefs.get(key);
+    return typedValueDefsByKey.get(key);
   }
   
-  public TypedValueDef get(int nodeType, String namespaceURI, String localName) {
+  public TypedValueDef getTypedValueDef(int nodeType, String namespaceURI, String localName) {
     String key = nodeType + StringUtils.defaultString(namespaceURI) + localName;
-    return typedValueDefs.get(key);
+    return typedValueDefsByKey.get(key);
   }
   
   public boolean exists(int nodeType, QName name) {
-    return get(nodeType, name) != null;
+    return getTypedValueDef(nodeType, name) != null;
   }
   
 }
