@@ -24,6 +24,7 @@
         <meta name="author" content="Armatiek BV, Maarten Kroon"/>
         <link href="{$app-path}/ide/css/ide.css" rel="stylesheet" />
         <link href="{$app-path}/jquery-ui/jquery-ui.min.css" rel="stylesheet"/>
+        <link href="{$app-path}/jquery-ui-iconfont/jquery-ui.icon-font.min.css" rel="stylesheet"/>
         <link href="{$app-path}/codemirror/lib/codemirror.css" rel="stylesheet"/>
         <link href="{$app-path}/codemirror/addon/display/fullscreen.css" rel="stylesheet"/>
         <link href="{$app-path}/codemirror/addon/dialog/dialog.css" rel="stylesheet"/>
@@ -68,6 +69,27 @@
             </fieldset>
           </form>
         </div>
+        <!--
+        <div id="batchImportDlg" title="Batch import">
+          <form>
+            <fieldset class="ui-helper-reset">
+              <label for="indexName">Name of new index:</label>
+              <input type="text" name="indexName" id="indexName" class="ui-widget-content ui-corner-all"/>
+              <label for="startDir">Start directory (on server):</label>
+              <input name="startDir" id="startDir" class="ui-widget-content ui-corner-all"/>
+              
+              
+              
+              <label for="compression">Index compression:</label>
+              <select name="compression" id="compression" class="ui-widget-content ui-corner-all">
+                <option value="NO_COMPRESSION" selected="selected">No compression</option>
+                <option value="BEST_SPEED">Best speed</option>
+                <option value="BEST_COMPRESSION">Best compression</option>
+              </select>
+            </fieldset>
+          </form>
+        </div>
+        -->
         
         <div id="saveConfirmDlg" title="Save">
           <p><span class="ui-icon ui-icon-alert" style="float:left; margin-right:10px;"></span>Do you want to save changes?</p>

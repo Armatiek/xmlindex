@@ -37,31 +37,31 @@ tabs.on( "keyup", function( event ) {
 var toolbar = $("#toolbar").controlgroup();
 $("#index").selectmenu();
 $("#newIndexBtn").button({
-  "icon": "ui-icon-plus",
+  "icon": "ui-button-icon ui-icon ui-icon-plusthick",
   "showLabel": true
 });
 $("#saveBtn").button({
-  "icon": "ui-icon-arrowstop-1-s",
+  "icon": "ui-button-icon ui-icon ui-icon-save",
   "showLabel": true
 });
 $("#runBtn").button({
-  "icon": "ui-icon-play",
+  "icon": "ui-button-icon ui-icon ui-icon-play",
   "showLabel": true
 });
 $("#explainBtn").button({
-  "icon": "ui-icon-help",
+  "icon": "ui-button-icon ui-icon ui-icon-help",
   "showLabel": true
 });
 $("#uploadBtn").button({
-  "icon": " ui-icon-arrowthick-1-n",
+  "icon": "ui-button-icon ui-icon ui-icon-arrowthick-1-n",
   "showLabel": true
 });
 $("#searchBtn").button({
-  "icon": "ui-icon-search",
+  "icon": "ui-button-icon ui-icon ui-icon-search",
   "showLabel": true
 });
 $("#replaceBtn").button({
-  "icon": "ui-icon-circle-zoomin",
+  "icon": "ui-button-icon ui-icon ui-icon-circle-zoomin",
   "showLabel": true
 });
 
